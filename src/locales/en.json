@@ -1,0 +1,13 @@
+{
+  "home": {
+    "title": "Standoff (working title)",
+    "subtitle": "A digital adaptation of *Cash'n Guns*.",
+    "newGame": "New Game",
+    "resumeGame": "Resume Game",
+    "howToPlay": "How to Play"
+  },
+  "howToPlay": {
+    "title": "How to Play",
+    "back": "Back"
+  }
+}
