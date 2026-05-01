@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Chip,
@@ -16,11 +15,16 @@ import {
 import type { BulletCard, Game, Player } from "../game/types";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
+import { FlagFor } from "../components/flags";
+import { PowderLoadCard } from "../components/PowderLoadCard";
+import { FlintlockBarrel } from "../components/FlintlockBarrel";
+import { YieldButton } from "../components/YieldButton";
+import { flagColor, palette } from "../theme/colors";
 
-const BULLET_LABEL: Record<BulletCard, string> = {
-  clic: "clic",
-  bang: "BANG",
-  bang_bang_bang: "B!B!B!",
+const LOAD_LABEL: Record<BulletCard, string> = {
+  clic: "Click",
+  bang: "Shot",
+  bang_bang_bang: "Broadside",
 };
 
 export default function PlayerPage() {
@@ -55,14 +59,14 @@ export default function PlayerPage() {
     );
   }
 
-  // Lobby state — no game doc yet.
   if (roomState.status === "lobby" || !game) {
+    const flagId = slot.data?.colorOrAvatar ?? "generic";
     return (
       <Container maxWidth="sm" sx={{ py: 4 }}>
         <Stack spacing={3} sx={{ alignItems: "center" }}>
-          <Avatar sx={{ bgcolor: slot.data?.colorOrAvatar ?? "#bdbdbd", width: 80, height: 80, fontSize: 32 }}>
-            {(slot.name ?? "?").charAt(0).toUpperCase()}
-          </Avatar>
+          <Box sx={{ color: flagColor(flagId) }}>
+            <FlagFor id={flagId} size={96} />
+          </Box>
           <Typography variant="h5">{slot.name}</Typography>
           <Box sx={{ textAlign: "center", py: 4 }}>
             <CircularProgress size={32} sx={{ mb: 2 }} />
@@ -86,14 +90,14 @@ export default function PlayerPage() {
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Stack spacing={3}>
         <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-          <Avatar sx={{ bgcolor: me.colorOrAvatar, width: 56, height: 56, opacity: me.status === "dead" ? 0.4 : 1 }}>
-            {me.displayName.charAt(0).toUpperCase()}
-          </Avatar>
+          <Box sx={{ color: flagColor(me.colorOrAvatar), opacity: me.status === "dead" ? 0.4 : 1 }}>
+            <FlagFor id={me.colorOrAvatar} size={56} />
+          </Box>
           <Box>
             <Typography variant="h6">{me.displayName}</Typography>
             <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
               <Chip size="small" label={`wounds ${me.wounds}/3`} color={me.wounds >= 2 ? "warning" : "default"} />
-              <Chip size="small" label={`shame ${me.shame}`} />
+              <Chip size="small" label={`yellow ×${me.shame}`} />
               <Chip size="small" label={`$${me.cash.reduce((s, n) => s + n.value, 0).toLocaleString()}`} color="success" />
             </Stack>
           </Box>
@@ -118,11 +122,12 @@ function PhaseView({ game, me, submitCommit, submitDuck }: {
   submitCommit: (id: string, b: BulletCard, t: string) => Promise<void>;
   submitDuck: (id: string, w: boolean) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   if (game.phase === "ended") {
-    return <Typography variant="h5">Game over</Typography>;
+    return <Typography variant="h5">{t("phase.ended")}</Typography>;
   }
   if (me.status === "dead") {
-    return <Typography color="text.secondary">You're out — spectator mode.</Typography>;
+    return <Typography color="text.secondary">{t("player.spectator")}</Typography>;
   }
   const phase = game.round.phase;
   const myCommit = game.round.commits[me.id];
@@ -133,12 +138,12 @@ function PhaseView({ game, me, submitCommit, submitDuck }: {
   }
 
   if (phase === "standoff") {
-    const targetName = game.players.find(p => p.id === myCommit?.target)?.displayName ?? "?";
+    const target = game.players.find(p => p.id === myCommit?.target);
     return (
-      <Stack spacing={2} sx={{ alignItems: "center", py: 2 }}>
-        <Typography variant="h5">Aiming at {targetName}</Typography>
-        <Typography color="text.secondary">Standoff…</Typography>
-      </Stack>
+      <FlintlockBarrel
+        targetFlag={target?.colorOrAvatar ?? "generic"}
+        targetName={target?.displayName ?? "?"}
+      />
     );
   }
 
@@ -149,24 +154,20 @@ function PhaseView({ game, me, submitCommit, submitDuck }: {
     return (
       <Stack spacing={2}>
         {aimedAtMe.length > 0 ? (
-          <Alert severity="warning">Aimed at by: {aimedAtMe.join(", ")}</Alert>
+          <Alert severity="warning">{t("phase.withdraw.aimedAt", { names: aimedAtMe.join(", ") })}</Alert>
         ) : (
-          <Alert severity="info">Nobody is aiming at you.</Alert>
+          <Alert severity="info">{t("phase.withdraw.noOne")}</Alert>
         )}
-        <Button
-          variant={myCommit?.withdrew ? "contained" : "outlined"}
-          color="warning"
-          size="large"
-          onClick={() => submitDuck(me.id, !myCommit?.withdrew)}
-        >
-          {myCommit?.withdrew ? "Ducked (tap to undo)" : "DUCK"}
-        </Button>
+        <YieldButton
+          yielded={!!myCommit?.withdrew}
+          onToggle={() => submitDuck(me.id, !myCommit?.withdrew)}
+        />
       </Stack>
     );
   }
 
   if (phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
-    return <Typography color="text.secondary">Watch the big screen…</Typography>;
+    return <Typography color="text.secondary">{t("player.watchScreen")}</Typography>;
   }
 
   return null;
@@ -178,7 +179,8 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
   myCommit?: { bullet?: BulletCard; target?: string };
   onSubmit: (id: string, b: BulletCard, t: string) => Promise<void>;
 }) {
-  const [bullet, setBullet] = useState<BulletCard | null>(null);
+  const { t } = useTranslation();
+  const [load, setLoad] = useState<BulletCard | null>(null);
   const [target, setTarget] = useState<string | null>(null);
   const counts = countBullets(me.bullets);
   const ready = myCommit?.bullet && myCommit.target;
@@ -187,48 +189,57 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
     const targetName = opponents.find(o => o.id === myCommit?.target)?.displayName ?? myCommit?.target;
     return (
       <Stack spacing={1}>
-        <Alert severity="success">Locked: {BULLET_LABEL[myCommit.bullet!]} → {targetName}</Alert>
-        <Typography color="text.secondary">Waiting for others…</Typography>
+        <Alert severity="success">
+          {t("phase.commit.locked", { load: LOAD_LABEL[myCommit.bullet!], target: targetName })}
+        </Alert>
+        <Typography color="text.secondary">{t("phase.commit.waiting")}</Typography>
       </Stack>
     );
   }
 
-  // Distinct bullet types still in hand
-  const bulletTypes: BulletCard[] = (["bang_bang_bang", "bang", "clic"] as BulletCard[])
-    .filter(b => counts[b] > 0);
+  const loadOrder: BulletCard[] = ["bang_bang_bang", "bang", "clic"];
 
   return (
     <Stack spacing={3}>
       <Box>
-        <Typography variant="overline" color="text.secondary">Pick a bullet</Typography>
-        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mt: 1 }} useFlexGap>
-          {bulletTypes.map(b => (
-            <Button
+        <Typography variant="overline" color="text.secondary">{t("phase.commit.pickLoad")}</Typography>
+        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", mt: 1 }} useFlexGap>
+          {loadOrder.map(b => (
+            <PowderLoadCard
               key={b}
-              variant={bullet === b ? "contained" : "outlined"}
-              onClick={() => setBullet(b)}
-            >
-              {BULLET_LABEL[b]} ({counts[b]})
-            </Button>
+              load={b}
+              count={counts[b]}
+              selected={load === b}
+              onSelect={() => setLoad(b)}
+            />
           ))}
         </Stack>
       </Box>
 
       <Box>
-        <Typography variant="overline" color="text.secondary">Pick a target</Typography>
+        <Typography variant="overline" color="text.secondary">{t("phase.commit.pickTarget")}</Typography>
         <Stack spacing={1} sx={{ mt: 1 }}>
           {opponents.map(o => (
-            <Button
+            <Box
               key={o.id}
-              variant={target === o.id ? "contained" : "outlined"}
+              role="button"
               onClick={() => setTarget(o.id)}
-              sx={{ justifyContent: "flex-start" }}
+              sx={{
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                p: 1,
+                bgcolor: palette.parchment,
+                border: `2px solid ${target === o.id ? palette.signal : palette.ink}`,
+                borderRadius: 1,
+              }}
             >
-              <Avatar sx={{ bgcolor: o.colorOrAvatar, width: 24, height: 24, mr: 1.5, fontSize: 14 }}>
-                {o.displayName.charAt(0).toUpperCase()}
-              </Avatar>
-              {o.displayName}
-            </Button>
+              <Box sx={{ color: flagColor(o.colorOrAvatar) }}>
+                <FlagFor id={o.colorOrAvatar} size={36} />
+              </Box>
+              <Typography sx={{ color: palette.ink, fontWeight: 600 }}>{o.displayName}</Typography>
+            </Box>
           ))}
         </Stack>
       </Box>
@@ -236,10 +247,10 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
       <Button
         variant="contained"
         size="large"
-        disabled={!bullet || !target}
-        onClick={() => bullet && target && onSubmit(me.id, bullet, target)}
+        disabled={!load || !target}
+        onClick={() => load && target && onSubmit(me.id, load, target)}
       >
-        Ready
+        {t("phase.commit.ready")}
       </Button>
     </Stack>
   );
