@@ -1,12 +1,13 @@
 import { Box, Stack, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import type { Game, RoundShot } from "../game/types";
+import { palette } from "../theme/colors";
 
-// Throwaway-but-clear text takeovers for the reveal phases. No animations —
-// just the events of the round laid out for everyone to read.
 export function RevealOverlay({ game, slotName }: {
   game: Game;
   slotName: (id: string) => string;
 }) {
+  const { t } = useTranslation();
   const { phase, resolution } = game.round;
   if (!resolution) return null;
   if (phase !== "reveal_bbb" && phase !== "reveal_others") return null;
@@ -17,15 +18,15 @@ export function RevealOverlay({ game, slotName }: {
 
   if (shots.length === 0) return null;
 
-  const headline = phase === "reveal_bbb" ? "B! B! B!" : "BANG!";
-  const headlineColor = phase === "reveal_bbb" ? "#ff5252" : "#ffb74d";
+  const headline = phase === "reveal_bbb" ? t("reveal.broadside") : t("reveal.shot");
+  const headlineColor = palette.signal;
 
   return (
     <Box
       sx={{
         position: "fixed",
         inset: 0,
-        bgcolor: "rgba(8, 8, 12, 0.94)",
+        bgcolor: "rgba(40, 25, 15, 0.94)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -38,10 +39,10 @@ export function RevealOverlay({ game, slotName }: {
       <Typography
         sx={{
           color: headlineColor,
-          fontWeight: 900,
-          fontSize: { xs: "4rem", md: "7rem" },
+          fontFamily: "Pirata One, serif",
+          fontSize: { xs: "5rem", md: "9rem" },
           letterSpacing: 8,
-          textShadow: `0 0 24px ${headlineColor}`,
+          textShadow: `0 0 24px ${headlineColor}, 4px 4px 0 ${palette.ink}`,
         }}
       >
         {headline}
@@ -55,9 +56,10 @@ export function RevealOverlay({ game, slotName }: {
               fontSize: { xs: "1.4rem", md: "2rem" },
               textAlign: "center",
               fontWeight: 600,
+              fontFamily: "Pirata One, serif",
             }}
           >
-            {shotPhrase(s, slotName)}
+            {shotPhrase(s, slotName, t as (k: string, v?: object) => string)}
           </Typography>
         ))}
       </Stack>
@@ -65,27 +67,27 @@ export function RevealOverlay({ game, slotName }: {
   );
 }
 
-function shotPhrase(s: RoundShot, slotName: (id: string) => string): string {
+function shotPhrase(s: RoundShot, slotName: (id: string) => string, t: (k: string, v?: object) => string): string {
   const shooter = slotName(s.shooter);
   const target = slotName(s.target);
   switch (s.outcome) {
     case "hit":
-      return `${shooter} shot ${target}!`;
+      return t("reveal.hit", { shooter, target });
     case "no_effect_clic":
-      return `${shooter} aimed at ${target}… *click*`;
+      return t("reveal.click", { shooter, target });
     case "voided_target_ducked":
-      return `${shooter}'s bullet was wasted — ${target} ducked.`;
+      return t("reveal.voidedDuck", { shooter, target });
     case "voided_shooter_surprised":
-      return `${shooter} was caught off guard — bullet wasted.`;
+      return t("reveal.voidedSurprised", { shooter });
   }
 }
 
 function shotColor(s: RoundShot): string {
   switch (s.outcome) {
-    case "hit": return "#ffffff";
-    case "no_effect_clic": return "#90caf9";
+    case "hit": return palette.parchment;
+    case "no_effect_clic": return palette.gold;
     case "voided_target_ducked":
     case "voided_shooter_surprised":
-      return "#9e9e9e";
+      return palette.parchmentDark;
   }
 }
