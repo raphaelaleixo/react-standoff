@@ -15,6 +15,8 @@ const theme = createTheme({
     primary: { main: palette.ink },
     error: { main: palette.signal },
     warning: { main: palette.yellow },
+    // success → gold is deliberate: in this game the green-checkmark semantic and
+    // the "treasure / cash chip" semantic are the same thing.
     success: { main: palette.goldDeep },
   },
   typography: {

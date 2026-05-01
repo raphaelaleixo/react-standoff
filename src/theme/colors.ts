@@ -14,7 +14,7 @@ export const palette = {
 } as const;
 
 // Per-flag signature color used for card borders, target-picker accents, and chips.
-// Keys match flag ids in `playerFlags.ts`.
+// Keys are the canonical pirate-flag ids.
 export const flagSignatureColors = {
   calico_jack: "#c93a30",   // red
   blackbeard: "#1e2a3a",    // deep navy
