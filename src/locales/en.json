@@ -1,7 +1,7 @@
 {
   "home": {
-    "title": "Standoff (working title)",
-    "subtitle": "A digital adaptation of *Cash'n Guns*.",
+    "title": "Standoff",
+    "subtitle": "A mutiny at sea — eight rounds, one captain's hoard.",
     "newGame": "New Game",
     "resumeGame": "Resume Game",
     "howToPlay": "How to Play"
@@ -9,5 +9,80 @@
   "howToPlay": {
     "title": "How to Play",
     "back": "Back"
+  },
+  "join": {
+    "title": "New voyage or join a crew",
+    "createNew": "Create new game",
+    "or": "or",
+    "codeLabel": "Room code",
+    "codePlaceholder": "Enter room code",
+    "joinSubmit": "Board",
+    "joinSubmitting": "Boarding…",
+    "notFound": "Ship not found"
+  },
+  "playerJoin": {
+    "title": "Join the standoff",
+    "nameLabel": "Yer name",
+    "namePlaceholder": "Enter your name",
+    "flagLabel": "Sail under whose colors?",
+    "submit": "Hoist the colors",
+    "submitting": "Hoisting…",
+    "lobbyFull": "Crew is full — voyage starting soon",
+    "rejoinTitle": "Rejoin yer post"
+  },
+  "room": {
+    "loading": "Loading the ship…",
+    "notFound": "Ship not found",
+    "lobbyTitle": "Below decks",
+    "code": "Room code",
+    "scanToJoin": "Scan to board",
+    "playersHeading": "Crew",
+    "waitingForPlayers": "Waiting for at least 4 mates…",
+    "startGame": "Begin the standoff",
+    "started": "Standoff in progress"
+  },
+  "player": {
+    "lobbyWaiting": "Waiting for the captain to call it…",
+    "started": "Standoff in progress",
+    "spectator": "Ye walked the plank.",
+    "watchScreen": "Watch the big screen…"
+  },
+  "phase": {
+    "commit": {
+      "pickLoad": "Choose a powder load",
+      "pickTarget": "Pick yer mark",
+      "ready": "Ready",
+      "locked": "Locked: {{load}} → {{target}}",
+      "waiting": "Waiting for the others…"
+    },
+    "standoff": {
+      "aimingAt": "Aiming at {{target}}",
+      "label": "Aim true."
+    },
+    "withdraw": {
+      "aimedAt": "Aimed at by: {{names}}",
+      "noOne": "Nobody is aiming at ye.",
+      "yield": "YIELD",
+      "yielded": "Yielded (tap to undo)"
+    },
+    "ended": "Game over"
+  },
+  "load": {
+    "click": "Click",
+    "shot": "Shot",
+    "broadside": "Broadside"
+  },
+  "round": {
+    "of": "Round {{n}} of {{total}}",
+    "navyHours": "Navy ~{{hours}} hours out",
+    "sailsOnHorizon": "Sails on the horizon."
+  },
+  "reveal": {
+    "broadside": "BROADSIDE!",
+    "shot": "SHOT!",
+    "hit": "{{shooter}} shot {{target}}!",
+    "click": "{{shooter}} aimed at {{target}}… *click*",
+    "voidedDuck": "{{shooter}}'s shot wasted — {{target}} yielded.",
+    "voidedSurprised": "{{shooter}} caught off guard — shot wasted."
   }
 }
