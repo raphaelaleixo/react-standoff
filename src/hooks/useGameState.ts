@@ -1,0 +1,161 @@
+import { useEffect, useState, useCallback } from "react";
+import { ref, onValue, set, update, remove, serverTimestamp } from "firebase/database";
+import { database } from "../firebase";
+import type { BulletCard, Commit, Game, Player } from "../game/types";
+import { normalizeGame } from "../game/deserialize";
+import { resolveRound } from "../game/resolver";
+import { startNextRound, endGameStatus } from "../game/transitions";
+import { useServerTime } from "./useServerTime";
+
+const STANDOFF_MS = 4000;
+const WITHDRAW_MS = 10000;
+const REVEAL_BBB_MS = 5000;
+const REVEAL_OTHERS_MS = 5000;
+const SPLIT_MS = 5000;
+
+function alivePlayers(game: Game): Player[] {
+  return game.players.filter(p => p.status === "alive");
+}
+
+function allAliveCommitted(game: Game): boolean {
+  return alivePlayers(game).every(p => {
+    const c = game.round.commits[p.id];
+    return !!c && c.bullet !== undefined && c.target !== undefined;
+  });
+}
+
+export function useGameState(roomId: string | undefined) {
+  const [game, setGame] = useState<Game | null>(null);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const { serverNow } = useServerTime();
+
+  useEffect(() => {
+    if (!roomId) return;
+    const gameRef = ref(database, `rooms/${roomId}/game`);
+    const unsub = onValue(gameRef, snap => {
+      setGame(normalizeGame(snap.val()));
+      setLoadedFor(roomId);
+    });
+    return unsub;
+  }, [roomId]);
+
+  // ─────────── Auto-transitions (every-client idempotent) ───────────
+
+  // commit → standoff
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "commit") return;
+    if (!allAliveCommitted(game)) return;
+    update(ref(database, `rooms/${roomId}/game/round`), {
+      phase: "standoff",
+      phaseStartedAt: serverTimestamp(),
+    });
+  }, [roomId, game]);
+
+  // standoff → withdraw (timed)
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "standoff") return;
+    const remaining = STANDOFF_MS - (serverNow() - game.round.phaseStartedAt);
+    const fire = () => {
+      update(ref(database, `rooms/${roomId}/game/round`), {
+        phase: "withdraw",
+        phaseStartedAt: serverTimestamp(),
+      });
+    };
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // withdraw → reveal_bbb (timed; computes & persists resolution at transition)
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "withdraw") return;
+    const remaining = WITHDRAW_MS - (serverNow() - game.round.phaseStartedAt);
+    const fire = () => {
+      const result = resolveRound(game.round.commits, game.players, game.round.loot);
+      update(ref(database, `rooms/${roomId}/game`), {
+        "round/phase": "reveal_bbb",
+        "round/phaseStartedAt": serverTimestamp(),
+        "round/resolution": result.resolution,
+        players: result.players,
+        discardedBullets: [...game.discardedBullets, ...result.discardedBullets],
+      });
+    };
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // reveal_bbb → reveal_others (animation pace)
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "reveal_bbb") return;
+    const remaining = REVEAL_BBB_MS - (serverNow() - game.round.phaseStartedAt);
+    const fire = () => update(ref(database, `rooms/${roomId}/game/round`), {
+      phase: "reveal_others",
+      phaseStartedAt: serverTimestamp(),
+    });
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // reveal_others → split
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "reveal_others") return;
+    const remaining = REVEAL_OTHERS_MS - (serverNow() - game.round.phaseStartedAt);
+    const fire = () => update(ref(database, `rooms/${roomId}/game/round`), {
+      phase: "split",
+      phaseStartedAt: serverTimestamp(),
+    });
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // split → next round (commit) OR ended (no recap pause; commit phase is itself
+  // untimed and serves as the disconnect-pause boundary)
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "split") return;
+    const remaining = SPLIT_MS - (serverNow() - game.round.phaseStartedAt);
+    const fire = () => {
+      const status = endGameStatus(game);
+      if (status.ended) {
+        update(ref(database, `rooms/${roomId}/game`), { phase: "ended" });
+        return;
+      }
+      const nextGame = startNextRound(game, serverNow());
+      set(ref(database, `rooms/${roomId}/game`), nextGame);
+    };
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // ─────────── Player-side write helpers ───────────
+
+  const submitCommit = useCallback(
+    async (playerId: string, bullet: BulletCard, target: string) => {
+      if (!roomId) return;
+      const c: Commit = { bullet, target };
+      await update(ref(database, `rooms/${roomId}/game/round/commits/${playerId}`), c);
+    },
+    [roomId],
+  );
+
+  const submitDuck = useCallback(
+    async (playerId: string, withdrew: boolean) => {
+      if (!roomId) return;
+      if (withdrew) {
+        await update(ref(database, `rooms/${roomId}/game/round/commits/${playerId}`), { withdrew: true });
+      } else {
+        // Stay: ensure the field is cleared (default behavior). Use remove to avoid persisting `false`.
+        await remove(ref(database, `rooms/${roomId}/game/round/commits/${playerId}/withdrew`));
+      }
+    },
+    [roomId],
+  );
+
+  const loading = roomId !== undefined && loadedFor !== roomId;
+
+  return { game, loading, submitCommit, submitDuck };
+}
