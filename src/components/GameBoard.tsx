@@ -1,5 +1,6 @@
 import { Avatar, Box, Stack, Typography } from "@mui/material";
 import type { Game, Player, RoundPhase } from "../game/types";
+import { CaptainsChest } from "./loot/CaptainsChest";
 
 const RADIUS = 240;
 const CANVAS = 700;
@@ -95,7 +96,7 @@ export function GameBoard({ game }: { game: Game }) {
         />
       ))}
 
-      <LootPile loot={game.round.loot} centerX={center} centerY={center} />
+      <CaptainsChest loot={game.round.loot} centerX={center} centerY={center} />
     </Box>
   );
 }
@@ -260,36 +261,3 @@ function CommitBadge({ status }: { status: "ready" | "choosing" }) {
   );
 }
 
-function LootPile({ loot, centerX, centerY }: { loot: { id: string; value: number }[]; centerX: number; centerY: number }) {
-  const total = loot.reduce((s, n) => s + n.value, 0);
-  return (
-    <Box
-      sx={{
-        position: "absolute",
-        left: centerX,
-        top: centerY,
-        marginLeft: "-70px",
-        marginTop: "-70px",
-        width: 140,
-        height: 140,
-        bgcolor: "#2e7d32",
-        border: "4px solid",
-        borderColor: "#1b5e20",
-        borderRadius: "50%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 0.5,
-        zIndex: 5,
-      }}
-    >
-      <Typography variant="h5" sx={{ color: "#fff", fontWeight: 700 }}>
-        ${total.toLocaleString()}
-      </Typography>
-      <Typography variant="caption" sx={{ color: "#c8e6c9" }}>
-        {loot.length} note{loot.length === 1 ? "" : "s"}
-      </Typography>
-    </Box>
-  );
-}
