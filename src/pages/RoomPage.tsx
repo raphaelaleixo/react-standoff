@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Chip,
@@ -19,6 +18,8 @@ import type { Player } from "../game/types";
 import { initGame } from "../game/setup";
 import { GameBoard } from "../components/GameBoard";
 import { RevealOverlay } from "../components/RevealOverlay";
+import { FlagFor } from "../components/flags";
+import { flagColor, palette } from "../theme/colors";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
 import { useServerTime } from "../hooks/useServerTime";
@@ -98,9 +99,9 @@ export default function RoomPage() {
             <Stack spacing={1.5}>
               {claimed.map(p => (
                 <Stack key={p.id} direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                  <Avatar sx={{ bgcolor: p.data?.colorOrAvatar ?? "#bdbdbd", width: 40, height: 40 }}>
-                    {(p.name ?? "?").charAt(0).toUpperCase()}
-                  </Avatar>
+                  <Box sx={{ color: flagColor(p.data?.colorOrAvatar ?? "generic"), width: 48, height: 48 }}>
+                    <FlagFor id={p.data?.colorOrAvatar ?? "generic"} size={48} />
+                  </Box>
                   <Typography variant="h6">{p.name}</Typography>
                 </Stack>
               ))}
@@ -130,6 +131,7 @@ export default function RoomPage() {
 // real game UI (player cards in a hex layout, targeting lines, animations).
 
 function GameView({ roomState, game }: { roomState: RoomState<Player>; game: ReturnType<typeof useGameState>["game"] }) {
+  const { t } = useTranslation();
   if (!game) {
     return (
       <Container sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -141,7 +143,7 @@ function GameView({ roomState, game }: { roomState: RoomState<Player>; game: Ret
   if (game.phase === "ended") {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <Typography variant="h3" gutterBottom>Game over</Typography>
+        <Typography variant="h3" gutterBottom>{t("phase.ended")}</Typography>
         <Stack spacing={1}>
           {[...game.players]
             .sort((a, b) => totalScore(b) - totalScore(a))
@@ -162,8 +164,17 @@ function GameView({ roomState, game }: { roomState: RoomState<Player>; game: Ret
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <Stack spacing={2} sx={{ alignItems: "center" }}>
         <Stack direction="row" spacing={3} sx={{ alignItems: "baseline" }}>
-          <Typography variant="overline" color="text.secondary">Round {round.number} / 8</Typography>
-          <Typography variant="h5" sx={{ textTransform: "uppercase", letterSpacing: 2 }}>{round.phase}</Typography>
+          <Typography variant="overline" color="text.secondary">
+            {t("round.of", { n: round.number, total: 8 })}
+          </Typography>
+          <Typography variant="caption" sx={{ color: palette.signal, fontFamily: "Pirata One, serif", fontSize: 14 }}>
+            {round.number === 8
+              ? t("round.sailsOnHorizon")
+              : t("round.navyHours", { hours: 9 - round.number })}
+          </Typography>
+          <Typography variant="h5" sx={{ textTransform: "uppercase", letterSpacing: 2 }}>
+            {round.phase}
+          </Typography>
         </Stack>
 
         <Countdown phase={round.phase} startedAt={round.phaseStartedAt} />
@@ -242,9 +253,9 @@ function PlayerCard({ player, score }: { player: Player; score?: number }) {
   const cashTotal = player.cash.reduce((s, n) => s + n.value, 0);
   return (
     <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-      <Avatar sx={{ bgcolor: player.colorOrAvatar, width: 32, height: 32, opacity: player.status === "dead" ? 0.4 : 1 }}>
-        {player.displayName.charAt(0).toUpperCase()}
-      </Avatar>
+      <Box sx={{ color: flagColor(player.colorOrAvatar), opacity: player.status === "dead" ? 0.4 : 1, width: 32, height: 32 }}>
+        <FlagFor id={player.colorOrAvatar} size={32} />
+      </Box>
       <Typography sx={{ minWidth: 120, textDecoration: player.status === "dead" ? "line-through" : "none" }}>
         {player.displayName}
       </Typography>
