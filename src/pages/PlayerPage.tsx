@@ -21,12 +21,6 @@ import { FlintlockBarrel } from "../components/FlintlockBarrel";
 import { YieldButton } from "../components/YieldButton";
 import { flagColor, palette } from "../theme/colors";
 
-const LOAD_LABEL: Record<BulletCard, string> = {
-  clic: "Click",
-  bang: "Shot",
-  bang_bang_bang: "Broadside",
-};
-
 export default function PlayerPage() {
   const { t } = useTranslation();
   const { id, playerId } = useParams();
@@ -190,7 +184,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
     return (
       <Stack spacing={1}>
         <Alert severity="success">
-          {t("phase.commit.locked", { load: LOAD_LABEL[myCommit.bullet!], target: targetName })}
+          {t("phase.commit.locked", { load: t(`load.${myCommit.bullet!}`), target: targetName })}
         </Alert>
         <Typography color="text.secondary">{t("phase.commit.waiting")}</Typography>
       </Stack>

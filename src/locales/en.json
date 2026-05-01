@@ -68,9 +68,14 @@
     "ended": "Game over"
   },
   "load": {
-    "click": "Click",
-    "shot": "Shot",
-    "broadside": "Broadside"
+    "clic": "Click",
+    "bang": "Shot",
+    "bang_bang_bang": "Broadside",
+    "description": {
+      "clic": "Empty hammer-snap",
+      "bang": "A clean shot",
+      "bang_bang_bang": "Triple-loaded — devastating"
+    }
   },
   "round": {
     "of": "Round {{n}} of {{total}}",

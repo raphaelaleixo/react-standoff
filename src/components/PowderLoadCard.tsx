@@ -1,18 +1,7 @@
 import { Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import type { BulletCard } from "../game/types";
 import { palette } from "../theme/colors";
-
-const LOAD_LABELS: Record<BulletCard, string> = {
-  clic: "Click",
-  bang: "Shot",
-  bang_bang_bang: "Broadside",
-};
-
-const LOAD_DESCRIPTIONS: Record<BulletCard, string> = {
-  clic: "Empty hammer-snap",
-  bang: "A clean shot",
-  bang_bang_bang: "Triple-loaded — devastating",
-};
 
 export function PowderLoadCard({ load, count, selected, onSelect }: {
   load: BulletCard;
@@ -20,6 +9,7 @@ export function PowderLoadCard({ load, count, selected, onSelect }: {
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Box
       role="button"
@@ -43,10 +33,10 @@ export function PowderLoadCard({ load, count, selected, onSelect }: {
     >
       <LoadIllustration load={load} />
       <Typography variant="h6" sx={{ color: palette.ink, fontFamily: "Pirata One, serif" }}>
-        {LOAD_LABELS[load]}
+        {t(`load.${load}`)}
       </Typography>
       <Typography variant="caption" sx={{ color: palette.inkSoft, textAlign: "center" }}>
-        {LOAD_DESCRIPTIONS[load]}
+        {t(`load.description.${load}`)}
       </Typography>
       <Typography variant="caption" sx={{ color: palette.ink, fontWeight: 700 }}>
         ×{count}
