@@ -76,7 +76,7 @@ export default function PlayerJoinPage() {
   }
 
   const taken = takenFlags(roomState.players.map(p => p.data));
-  const availableFlags = FLAG_IDS.filter(id => !taken.has(id));
+  const availableFlags = FLAG_IDS.filter(flagId => !taken.has(flagId));
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,27 +122,27 @@ export default function PlayerJoinPage() {
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>{t("playerJoin.flagLabel")}</Typography>
             <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: "wrap" }}>
-              {availableFlags.map(id => (
+              {availableFlags.map(flagId => (
                 <Box
-                  key={id}
+                  key={flagId}
                   role="button"
-                  aria-label={`flag ${FLAG_LABELS[id]}`}
-                  onClick={() => setFlag(id)}
+                  aria-label={`flag ${FLAG_LABELS[flagId]}`}
+                  onClick={() => setFlag(flagId)}
                   sx={{
                     width: 64,
                     height: 64,
                     borderRadius: 1,
                     backgroundColor: "#e8d8b0",
-                    color: flagColor(id),
+                    color: flagColor(flagId),
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: "pointer",
-                    outline: flag === id ? `3px solid ${flagColor(id)}` : "1px solid #5a371d",
+                    outline: flag === flagId ? `3px solid ${flagColor(flagId)}` : "1px solid #5a371d",
                     outlineOffset: 2,
                   }}
                 >
-                  <FlagFor id={id} size={56} />
+                  <FlagFor id={flagId} size={56} />
                 </Box>
               ))}
             </Stack>

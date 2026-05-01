@@ -8,8 +8,9 @@ import { EdwardLowFlag } from "./EdwardLowFlag";
 import { StedeBonnetFlag } from "./StedeBonnetFlag";
 import { GenericFlag } from "./GenericFlag";
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const FLAG_COMPONENTS: Record<FlagId, ComponentType<{ size?: number }>> = {
+// Module-local registry — kept private so the file's only public export is
+// `FlagFor`, which is the entry point for the rest of the app.
+const FLAG_COMPONENTS: Record<FlagId, ComponentType<{ size?: number }>> = {
   calico_jack: CalicoJackFlag,
   blackbeard: BlackbeardFlag,
   black_bart: BlackBartFlag,
