@@ -1,10 +1,13 @@
-import { Avatar, Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import type { Game, Player, RoundPhase } from "../game/types";
 import { CaptainsChest } from "./loot/CaptainsChest";
+import { MapFrame } from "./MapFrame";
+import { FlagFor } from "./flags";
+import { flagColor, palette } from "../theme/colors";
 
 const RADIUS = 240;
 const CANVAS = 700;
-const NODE_WIDTH = 150;
+const NODE_WIDTH = 130;
 const LINE_GAP = 10;
 const LANE_THICKNESS = 3;
 
@@ -62,7 +65,7 @@ export function GameBoard({ game }: { game: Game }) {
   const center = CANVAS / 2;
 
   return (
-    <Box sx={{ position: "relative", width: CANVAS, height: CANVAS, mx: "auto" }}>
+    <MapFrame size={CANVAS}>
       {pairs.map(({ i, j, length, rotation }) => {
         const pi = players[i];
         const pj = players[j];
@@ -79,8 +82,6 @@ export function GameBoard({ game }: { game: Game }) {
             rotation={rotation}
             forward={forward}
             backward={backward}
-            colorForward={pi.colorOrAvatar}
-            colorBackward={pj.colorOrAvatar}
           />
         );
       })}
@@ -97,19 +98,17 @@ export function GameBoard({ game }: { game: Game }) {
       ))}
 
       <CaptainsChest loot={game.round.loot} centerX={center} centerY={center} />
-    </Box>
+    </MapFrame>
   );
 }
 
-function PairLine({ originX, originY, length, rotation, forward, backward, colorForward, colorBackward }: {
+function PairLine({ originX, originY, length, rotation, forward, backward }: {
   originX: number;
   originY: number;
   length: number;
   rotation: number;
   forward: boolean;
   backward: boolean;
-  colorForward: string;
-  colorBackward: string;
 }) {
   return (
     <Box
@@ -121,8 +120,8 @@ function PairLine({ originX, originY, length, rotation, forward, backward, color
         height: LINE_GAP,
         transformOrigin: "0 50%",
         transform: `translateY(-${LINE_GAP / 2}px) rotate(${rotation}deg)`,
-        borderTop: `${LANE_THICKNESS}px solid ${forward ? colorForward : "transparent"}`,
-        borderBottom: `${LANE_THICKNESS}px solid ${backward ? colorBackward : "transparent"}`,
+        borderTop: `${LANE_THICKNESS}px solid ${forward ? palette.signal : "transparent"}`,
+        borderBottom: `${LANE_THICKNESS}px solid ${backward ? palette.signal : "transparent"}`,
         boxSizing: "content-box",
         pointerEvents: "none",
         transition: "border-color 0.3s ease",
@@ -136,7 +135,7 @@ function PairLine({ originX, originY, length, rotation, forward, backward, color
           height: 0,
           borderTop: "5px solid transparent",
           borderBottom: "5px solid transparent",
-          borderLeft: `10px solid ${colorForward}`,
+          borderLeft: `10px solid ${palette.signal}`,
         } : undefined,
         // Backward arrow head, opposite end.
         "&::after": backward ? {
@@ -148,7 +147,7 @@ function PairLine({ originX, originY, length, rotation, forward, backward, color
           height: 0,
           borderTop: "5px solid transparent",
           borderBottom: "5px solid transparent",
-          borderRight: `10px solid ${colorBackward}`,
+          borderRight: `10px solid ${palette.signal}`,
         } : undefined,
       }}
     />
@@ -164,6 +163,7 @@ function PlayerNode({ player, x, y, ducked, commitStatus }: {
 }) {
   const cash = player.cash.reduce((s, n) => s + n.value, 0);
   const dead = player.status === "dead";
+  const accent = flagColor(player.colorOrAvatar);
   const transform =
     `translate(-50%, -50%)` +
     (ducked ? " rotate(8deg) scale(0.9)" : "");
@@ -174,9 +174,8 @@ function PlayerNode({ player, x, y, ducked, commitStatus }: {
         left: x,
         top: y,
         width: NODE_WIDTH,
-        bgcolor: "background.paper",
-        border: "3px solid",
-        borderColor: dead ? "grey.500" : player.colorOrAvatar,
+        bgcolor: palette.parchment,
+        border: `3px solid ${dead ? palette.inkSoft : accent}`,
         borderRadius: 2,
         py: 1,
         px: 1,
@@ -188,18 +187,19 @@ function PlayerNode({ player, x, y, ducked, commitStatus }: {
         flexDirection: "column",
         alignItems: "center",
         gap: 0.5,
-        boxShadow: 1,
+        boxShadow: `0 2px 4px rgba(90, 55, 29, 0.3)`,
         zIndex: 10,
+        color: accent,
       }}
     >
       {commitStatus && !dead && <CommitBadge status={commitStatus} />}
-      <Avatar sx={{ bgcolor: player.colorOrAvatar, width: 40, height: 40, fontSize: 18 }}>
-        {player.displayName.charAt(0).toUpperCase()}
-      </Avatar>
+      <Box sx={{ width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <FlagFor id={player.colorOrAvatar} size={48} />
+      </Box>
       <Typography
         variant="body2"
         noWrap
-        sx={{ width: "100%", textAlign: "center", fontWeight: 600 }}
+        sx={{ width: "100%", textAlign: "center", fontWeight: 600, color: palette.ink }}
       >
         {player.displayName}
       </Typography>
@@ -211,19 +211,30 @@ function PlayerNode({ player, x, y, ducked, commitStatus }: {
               width: 10,
               height: 10,
               borderRadius: "50%",
-              bgcolor: i < player.wounds ? "error.main" : "grey.300",
+              bgcolor: i < player.wounds ? palette.signal : "transparent",
+              border: `1px solid ${palette.ink}`,
             }}
           />
         ))}
       </Box>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <Typography variant="caption" sx={{ fontWeight: 700 }}>
+        <Typography variant="caption" sx={{ fontWeight: 700, color: palette.ink }}>
           ${cash.toLocaleString()}
         </Typography>
         {player.shame > 0 && (
-          <Typography variant="caption" sx={{ color: "warning.dark" }}>
-            ⚠ ×{player.shame}
-          </Typography>
+          <Box sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            px: 0.5,
+            bgcolor: palette.yellow,
+            border: `1px solid ${palette.ink}`,
+            borderRadius: 0.5,
+            fontSize: 10,
+            color: palette.ink,
+            fontWeight: 700,
+          }}>
+            ⚐ ×{player.shame}
+          </Box>
         )}
       </Stack>
     </Box>
@@ -241,14 +252,14 @@ function CommitBadge({ status }: { status: "ready" | "choosing" }) {
         zIndex: 11,
         px: 1,
         py: 0.25,
-        bgcolor: isReady ? "success.main" : "grey.700",
-        color: "common.white",
+        bgcolor: isReady ? palette.goldDeep : palette.inkSoft,
+        color: palette.parchment,
         borderRadius: 999,
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: 0.5,
         textTransform: "uppercase",
-        boxShadow: 2,
+        boxShadow: `0 1px 3px rgba(90,55,29,0.5)`,
         animation: isReady ? "none" : "pulse 1.4s ease-in-out infinite",
         "@keyframes pulse": {
           "0%, 100%": { opacity: 1 },
@@ -260,4 +271,3 @@ function CommitBadge({ status }: { status: "ready" | "choosing" }) {
     </Box>
   );
 }
-
