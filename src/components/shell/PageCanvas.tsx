@@ -17,8 +17,10 @@ export function PageCanvas({ aspectRatio, borderRadius, children, sx, ...rest }:
   return (
     <Box
       {...rest}
+      // aspectRatio + borderRadius applied as inline style (not sx) so they're
+      // observable on element.style — the test contract asserts on node.style.*
       style={{
-        aspectRatio: aspectRatio as any,
+        aspectRatio,
         borderRadius: borderRadius != null ? `${borderRadius}px` : undefined,
       }}
       sx={[
