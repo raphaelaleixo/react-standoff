@@ -2,14 +2,17 @@ import { Box } from "@mui/material";
 import { palette } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { DenominationIcon } from "../icons/DenominationIcon";
+import type { Denomination } from "../../game/types";
 
-const NAMES: Record<number, string> = {
+const NAMES: Record<Denomination, string> = {
   5000: "SILVER PIECE",
   10000: "GOLD DOUBLOON",
   20000: "JEWELED PIECE",
 };
 
-const SUBLINES: Record<number, string | undefined> = {
+const SUBLINES: Record<Denomination, string | undefined> = {
+  5000: undefined,
+  10000: undefined,
   20000: "cut emerald",
 };
 
@@ -18,7 +21,7 @@ const ROMAN: Record<number, string> = {
 };
 
 interface HoardItemProps {
-  value: 5000 | 10000 | 20000;
+  value: Denomination;
   carry?: boolean;
   carryFromRound?: number;
 }

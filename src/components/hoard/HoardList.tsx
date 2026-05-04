@@ -2,9 +2,10 @@ import { Box } from "@mui/material";
 import { palette } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { HoardItem } from "./HoardItem";
+import type { Denomination } from "../../game/types";
 
 interface HoardListEntry {
-  value: 5000 | 10000 | 20000;
+  value: Denomination;
   carryFromRound?: number;
 }
 

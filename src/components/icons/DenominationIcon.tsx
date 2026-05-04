@@ -1,6 +1,5 @@
 import { palette } from "../../theme/colors";
-
-type Denomination = 5000 | 10000 | 20000;
+import type { Denomination } from "../../game/types";
 
 interface DenominationIconProps {
   value: Denomination;

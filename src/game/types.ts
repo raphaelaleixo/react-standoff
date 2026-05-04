@@ -5,6 +5,8 @@ export interface Banknote {
   value: 5000 | 10000 | 20000;
 }
 
+export type Denomination = Banknote["value"];
+
 // Reserved hook for v2 super powers / secret roles. Not instantiated in v1.
 export interface Effect {
   kind: string;
