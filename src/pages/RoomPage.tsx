@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -14,16 +13,18 @@ import {
 import { ref, update } from "firebase/database";
 import { buildJoinUrl, RoomQRCode, startGame, useRoomState } from "react-gameroom";
 import type { RoomState } from "react-gameroom";
-import type { Player } from "../game/types";
+import type { Game, Player } from "../game/types";
 import { initGame } from "../game/setup";
 import { GameBoard } from "../components/GameBoard";
-import { RevealOverlay } from "../components/RevealOverlay";
 import { FlagFor } from "../components/flags";
-import { flagColor, palette } from "../theme/colors";
+import { flagColor } from "../theme/colors";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
-import { useServerTime } from "../hooks/useServerTime";
 import { database } from "../firebase";
+import { PageCanvas } from "../components/shell/PageCanvas";
+import { Masthead } from "../components/shell/Masthead";
+import { Foot } from "../components/shell/Foot";
+import { navyHoursLabel, toRoman } from "../lib/navyHours";
 
 const EMPTY_ROOM: RoomState<Player> = {
   roomId: "",
@@ -56,7 +57,7 @@ export default function RoomPage() {
   }
 
   if (roomState.status === "started") {
-    return <GameView roomState={roomState} game={game} />;
+    return <GameView game={game} />;
   }
 
   const claimed = roomState.players.filter(p => p.status !== "empty");
@@ -126,11 +127,7 @@ export default function RoomPage() {
   );
 }
 
-// ─────────────────── In-game skeleton view ───────────────────
-// Throwaway scaffolding for step 4 verification — step 5 will replace with the
-// real game UI (player cards in a hex layout, targeting lines, animations).
-
-function GameView({ roomState, game }: { roomState: RoomState<Player>; game: ReturnType<typeof useGameState>["game"] }) {
+function GameView({ game }: { game: ReturnType<typeof useGameState>["game"] }) {
   const { t } = useTranslation();
   if (!game) {
     return (
@@ -145,109 +142,36 @@ function GameView({ roomState, game }: { roomState: RoomState<Player>; game: Ret
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Typography variant="h3" gutterBottom>{t("phase.ended")}</Typography>
         <Stack spacing={1}>
-          {[...game.players]
-            .sort((a, b) => totalScore(b) - totalScore(a))
-            .map(p => (
-              <PlayerCard key={p.id} player={p} score={totalScore(p)} />
-            ))}
+          {[...game.players].sort((a, b) => totalScore(b) - totalScore(a)).map(p => (
+            <PlayerCard key={p.id} player={p} score={totalScore(p)} />
+          ))}
         </Stack>
       </Container>
     );
   }
 
-  const { round } = game;
-  const slotName = (id: string) => roomState.players.find(s => String(s.id) === id)?.name ?? id;
-  const showPrevSummary = round.phase === "commit" && !!game.previousRoundSummary;
-  const showShotLog = round.resolution && round.phase === "split";
-
+  const round = game.round;
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <Stack spacing={2} sx={{ alignItems: "center" }}>
-        <Stack direction="row" spacing={3} sx={{ alignItems: "baseline" }}>
-          <Typography variant="overline" color="text.secondary">
-            {t("round.of", { n: round.number, total: 8 })}
-          </Typography>
-          <Typography variant="caption" sx={{ color: palette.blood, fontFamily: "Pirata One, serif", fontSize: 14 }}>
-            {round.number === 8
-              ? t("round.sailsOnHorizon")
-              : t("round.navyHours", { hours: 9 - round.number })}
-          </Typography>
-          <Typography variant="h5" sx={{ textTransform: "uppercase", letterSpacing: 2 }}>
-            {round.phase}
-          </Typography>
-        </Stack>
-
-        <Countdown phase={round.phase} startedAt={round.phaseStartedAt} />
-
+    <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
+      <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
+        <Masthead
+          left={<>ROUND <em>{toRoman(round.number)} of VIII</em></>}
+          right={<>PHASE <em>{round.phase}</em></>}
+        />
         <GameBoard game={game} />
-
-        {showPrevSummary && game.previousRoundSummary && (
-          <PrevRoundSummary summary={game.previousRoundSummary} slotName={slotName} />
-        )}
-
-        {showShotLog && round.resolution && (
-          <ShotLog resolution={round.resolution} slotName={slotName} />
-        )}
-      </Stack>
-
-      <RevealOverlay game={game} slotName={slotName} />
-    </Container>
-  );
-}
-
-function PrevRoundSummary({ summary, slotName }: {
-  summary: { round: number; resolution: import("../game/types").RoundResolution };
-  slotName: (id: string) => string;
-}) {
-  const { round, resolution } = summary;
-  return (
-    <Box sx={{ width: "100%", maxWidth: 700, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
-      <Typography variant="overline" color="text.secondary">Last round (round {round})</Typography>
-      <Stack spacing={0.5}>
-        {resolution.shots.length === 0 && resolution.ducks.length === 0 && (
-          <Typography color="text.secondary">A quiet round.</Typography>
-        )}
-        {resolution.ducks.length > 0 && (
-          <Typography>Ducked: {resolution.ducks.map(slotName).join(", ")}</Typography>
-        )}
-        {resolution.shots.map((s, i) => (
-          <Typography key={i} variant="body2">
-            {slotName(s.shooter)} → {slotName(s.target)} [{s.card}] {outcomeLabel(s.outcome)}
-          </Typography>
-        ))}
-        {resolution.eliminated.length > 0 && (
-          <Typography color="error">Eliminated: {resolution.eliminated.map(slotName).join(", ")}</Typography>
-        )}
-      </Stack>
+        <Foot
+          left={`${countAlive(game)} ALIVE · ${countYielded(game)} YIELDED · ${countDead(game)} DEAD`}
+          cry={navyHoursLabel(round.number)}
+          right="NEXT · WHO SHALL FALL?"
+        />
+      </PageCanvas>
     </Box>
   );
 }
 
-function ShotLog({ resolution, slotName }: {
-  resolution: import("../game/types").RoundResolution;
-  slotName: (id: string) => string;
-}) {
-  return (
-    <Box sx={{ width: "100%", maxWidth: 700, p: 2, bgcolor: "grey.50", borderRadius: 2 }}>
-      <Stack spacing={0.5}>
-        {resolution.shots.map((s, i) => (
-          <Typography key={i} variant="body2">
-            {slotName(s.shooter)} → {slotName(s.target)} [{s.card}] {outcomeLabel(s.outcome)}
-          </Typography>
-        ))}
-      </Stack>
-    </Box>
-  );
-}
-
-function outcomeLabel(outcome: import("../game/types").ShotOutcome): string {
-  switch (outcome) {
-    case "hit": return "✓ HIT";
-    case "no_effect_clic": return "*click*";
-    case "voided_target_ducked": return "(target ducked)";
-    case "voided_shooter_surprised": return "(surprised)";
-  }
-}
+const countAlive = (g: Game) => g.players.filter(p => p.status === "alive").length;
+const countYielded = (g: Game) => Object.values(g.round.commits).filter(c => c?.withdrew).length;
+const countDead = (g: Game) => g.players.filter(p => p.status === "dead").length;
 
 function PlayerCard({ player, score }: { player: Player; score?: number }) {
   const cashTotal = player.cash.reduce((s, n) => s + n.value, 0);
@@ -271,25 +195,4 @@ function PlayerCard({ player, score }: { player: Player; score?: number }) {
 function totalScore(p: Player): number {
   if (p.status !== "alive") return 0;
   return p.cash.reduce((s, n) => s + n.value, 0) - 5000 * p.shame;
-}
-
-// Live countdown for timed phases. Renders nothing for untimed phases.
-function Countdown({ phase, startedAt }: { phase: string; startedAt: number }) {
-  const duration = phase === "standoff" ? 4000
-    : phase === "withdraw" ? 10000
-    : 0;
-  if (!duration) return null;
-  return <CountdownTicker startedAt={startedAt} duration={duration} />;
-}
-
-function CountdownTicker({ startedAt, duration }: { startedAt: number; duration: number }) {
-  const { serverNow } = useServerTime();
-  const [now, setNow] = useState(() => serverNow());
-  useEffect(() => {
-    const t = setInterval(() => setNow(serverNow()), 100);
-    return () => clearInterval(t);
-  }, [serverNow]);
-  const elapsed = now - startedAt;
-  const remaining = Math.max(0, duration - elapsed);
-  return <Typography variant="h2" sx={{ fontFamily: "monospace" }}>{(remaining / 1000).toFixed(1)}s</Typography>;
 }
