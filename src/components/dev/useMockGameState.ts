@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { BulletCard, Commit, Game, Player, RoundPhase } from "../../game/types";
 
 export interface MockGameActions {
@@ -26,6 +26,7 @@ const updatePlayer = (game: Game, playerId: string, patch: Partial<Player>): Gam
 
 export function useMockGameState(initial: Game): UseMockGameStateResult {
   const [game, setGame] = useState<Game>(initial);
+  const initialRef = useRef(initial);
 
   const actions = useMemo<MockGameActions>(() => ({
     setPhase: (phase) =>
@@ -62,8 +63,8 @@ export function useMockGameState(initial: Game): UseMockGameStateResult {
       setGame(g => updatePlayer(g, playerId, { shame }));
     },
 
-    reset: () => setGame(initial),
-  }), [initial]);
+    reset: () => setGame(initialRef.current),
+  }), []);
 
   return { game, actions };
 }
