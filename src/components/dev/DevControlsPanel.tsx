@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Box,
   Button,
@@ -13,7 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import type { BulletCard, Game, RoundPhase } from "../../game/types";
+import type { BulletCard, Game, Player, RoundPhase } from "../../game/types";
 import type { MockGameActions } from "./useMockGameState";
 
 const PHASES: RoundPhase[] = [
@@ -41,7 +42,7 @@ export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPa
       anchor="right"
       variant="persistent"
       open={open}
-      slotProps={{ paper: { sx: { width: 360, padding: 2 } } }}
+      slotProps={{ paper: { sx: { width: 360, padding: 2, display: "flex", flexDirection: "column" } } }}
     >
       <Stack
         direction="row"
@@ -93,7 +94,7 @@ export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPa
               const commit = game.round.commits[player.id] ?? {};
               const targetOptions = game.players.filter(p => p.id !== player.id);
               return (
-                <Box key={player.id} sx={{ borderTop: "1px solid rgba(0,0,0,0.12)", pt: 1 }}>
+                <Box key={player.id} sx={{ borderTop: 1, borderColor: "divider", pt: 1 }}>
                   <Stack
                     direction="row"
                     sx={{ alignItems: "center", justifyContent: "space-between" }}
@@ -103,7 +104,7 @@ export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPa
                       exclusive
                       size="small"
                       value={player.status}
-                      onChange={(_, value) => value && actions.setStatus(player.id, value)}
+                      onChange={(_, value: Player["status"] | null) => value && actions.setStatus(player.id, value)}
                     >
                       <ToggleButton value="alive">alive</ToggleButton>
                       <ToggleButton value="dead">dead</ToggleButton>
@@ -203,7 +204,7 @@ export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPa
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Box sx={{ mb: 2 }}>
       <Typography variant="overline" color="text.secondary">{title}</Typography>
