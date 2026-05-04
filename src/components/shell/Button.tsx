@@ -37,6 +37,10 @@ export function Button({
     transition: "transform 0.1s ease, box-shadow 0.1s ease",
     border: "none",
     "&:active": disabled ? undefined : { transform: "translateY(1px)" },
+    "&:focus-visible": {
+      outline: `2px solid ${palette.paper}`,
+      outlineOffset: "2px",
+    },
   };
 
   const variantSx =

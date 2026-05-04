@@ -32,4 +32,17 @@ describe("Button", () => {
     rerender(<Button variant="text">B</Button>);
     expect(screen.getByRole("button")).toHaveAttribute("data-variant", "text");
   });
+
+  it("calls onClick on Enter and Space, but not when disabled", () => {
+    const fn = vi.fn();
+    const { rerender } = render(<Button onClick={fn}>OK</Button>);
+    const btn = screen.getByRole("button");
+    fireEvent.keyDown(btn, { key: "Enter" });
+    fireEvent.keyDown(btn, { key: " " });
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    rerender(<Button onClick={fn} disabled>OK</Button>);
+    fireEvent.keyDown(screen.getByRole("button"), { key: "Enter" });
+    expect(fn).toHaveBeenCalledTimes(2); // unchanged
+  });
 });
