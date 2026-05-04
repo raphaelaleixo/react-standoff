@@ -2,8 +2,18 @@ import { describe, expect, test, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useDevPanelToggle } from "./useDevPanelToggle";
 
-const fireKey = (key: string, code?: string) => {
-  window.dispatchEvent(new KeyboardEvent("keydown", { key, code, bubbles: true }));
+const fireKey = (
+  key: string,
+  options: { code?: string; metaKey?: boolean } = {},
+) => {
+  window.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key,
+      code: options.code,
+      metaKey: options.metaKey,
+      bubbles: true,
+    }),
+  );
 };
 
 afterEach(() => {
@@ -21,14 +31,20 @@ describe("useDevPanelToggle", () => {
     expect(result.current.open).toBe(false);
   });
 
-  test("backtick toggles open/closed", () => {
+  test("Cmd+\\ toggles open/closed", () => {
     const { result } = renderHook(() => useDevPanelToggle(false));
     expect(result.current.open).toBe(false);
 
-    act(() => fireKey("`", "Backquote"));
+    act(() => fireKey("\\", { code: "Backslash", metaKey: true }));
     expect(result.current.open).toBe(true);
 
-    act(() => fireKey("`", "Backquote"));
+    act(() => fireKey("\\", { code: "Backslash", metaKey: true }));
+    expect(result.current.open).toBe(false);
+  });
+
+  test("plain \\ without modifier does nothing", () => {
+    const { result } = renderHook(() => useDevPanelToggle(false));
+    act(() => fireKey("\\", { code: "Backslash" }));
     expect(result.current.open).toBe(false);
   });
 
@@ -43,7 +59,7 @@ describe("useDevPanelToggle", () => {
     expect(result.current.open).toBe(false);
   });
 
-  test("ignores backtick and Escape when an <input> is focused", () => {
+  test("ignores Cmd+\\ and Escape when an <input> is focused", () => {
     const input = document.createElement("input");
     document.body.appendChild(input);
     input.focus();
@@ -51,14 +67,14 @@ describe("useDevPanelToggle", () => {
 
     const { result } = renderHook(() => useDevPanelToggle(true));
 
-    act(() => fireKey("`", "Backquote"));
+    act(() => fireKey("\\", { code: "Backslash", metaKey: true }));
     expect(result.current.open).toBe(true); // unchanged
 
     act(() => fireKey("Escape"));
     expect(result.current.open).toBe(true); // unchanged
   });
 
-  test("ignores backtick and Escape when a <textarea> is focused", () => {
+  test("ignores Cmd+\\ and Escape when a <textarea> is focused", () => {
     const textarea = document.createElement("textarea");
     document.body.appendChild(textarea);
     textarea.focus();
@@ -66,14 +82,14 @@ describe("useDevPanelToggle", () => {
 
     const { result } = renderHook(() => useDevPanelToggle(true));
 
-    act(() => fireKey("`", "Backquote"));
+    act(() => fireKey("\\", { code: "Backslash", metaKey: true }));
     expect(result.current.open).toBe(true); // unchanged
 
     act(() => fireKey("Escape"));
     expect(result.current.open).toBe(true); // unchanged
   });
 
-  test("ignores backtick when a contenteditable element is focused", () => {
+  test("ignores Cmd+\\ when a contenteditable element is focused", () => {
     const div = document.createElement("div");
     div.setAttribute("contenteditable", "true");
     div.tabIndex = 0;
@@ -81,7 +97,7 @@ describe("useDevPanelToggle", () => {
     div.focus();
 
     const { result } = renderHook(() => useDevPanelToggle(false));
-    act(() => fireKey("`", "Backquote"));
+    act(() => fireKey("\\", { code: "Backslash", metaKey: true }));
     expect(result.current.open).toBe(false);
   });
 

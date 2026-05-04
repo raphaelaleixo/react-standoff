@@ -28,7 +28,7 @@ export function useDevPanelToggle(initialOpen = true): UseDevPanelToggleResult {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isEditableTarget(document.activeElement)) return;
-      if (event.code === "Backquote") {
+      if ((event.metaKey || event.ctrlKey) && event.code === "Backslash") {
         event.preventDefault();
         setOpen(o => !o);
       } else if (event.key === "Escape") {
