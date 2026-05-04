@@ -16,6 +16,7 @@ describe("HoardItem", () => {
     render(<HoardItem value={20000} />);
     expect(screen.getByText("JEWELED PIECE")).toBeInTheDocument();
     expect(screen.getByText("$20,000")).toBeInTheDocument();
+    expect(screen.getByText("cut emerald")).toBeInTheDocument();
   });
   it("shows a carry-over tag when carry is true", () => {
     render(<HoardItem value={5000} carry />);
