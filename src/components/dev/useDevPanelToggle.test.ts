@@ -2,8 +2,8 @@ import { describe, expect, test, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useDevPanelToggle } from "./useDevPanelToggle";
 
-const fireKey = (key: string) => {
-  window.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+const fireKey = (key: string, code?: string) => {
+  window.dispatchEvent(new KeyboardEvent("keydown", { key, code, bubbles: true }));
 };
 
 afterEach(() => {
@@ -25,10 +25,10 @@ describe("useDevPanelToggle", () => {
     const { result } = renderHook(() => useDevPanelToggle(false));
     expect(result.current.open).toBe(false);
 
-    act(() => fireKey("`"));
+    act(() => fireKey("`", "Backquote"));
     expect(result.current.open).toBe(true);
 
-    act(() => fireKey("`"));
+    act(() => fireKey("`", "Backquote"));
     expect(result.current.open).toBe(false);
   });
 
@@ -51,7 +51,7 @@ describe("useDevPanelToggle", () => {
 
     const { result } = renderHook(() => useDevPanelToggle(true));
 
-    act(() => fireKey("`"));
+    act(() => fireKey("`", "Backquote"));
     expect(result.current.open).toBe(true); // unchanged
 
     act(() => fireKey("Escape"));
@@ -66,7 +66,7 @@ describe("useDevPanelToggle", () => {
 
     const { result } = renderHook(() => useDevPanelToggle(true));
 
-    act(() => fireKey("`"));
+    act(() => fireKey("`", "Backquote"));
     expect(result.current.open).toBe(true); // unchanged
 
     act(() => fireKey("Escape"));
@@ -81,7 +81,7 @@ describe("useDevPanelToggle", () => {
     div.focus();
 
     const { result } = renderHook(() => useDevPanelToggle(false));
-    act(() => fireKey("`"));
+    act(() => fireKey("`", "Backquote"));
     expect(result.current.open).toBe(false);
   });
 
