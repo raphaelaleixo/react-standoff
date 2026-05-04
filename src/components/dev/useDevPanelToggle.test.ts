@@ -58,6 +58,21 @@ describe("useDevPanelToggle", () => {
     expect(result.current.open).toBe(true); // unchanged
   });
 
+  test("ignores backtick and Escape when a <textarea> is focused", () => {
+    const textarea = document.createElement("textarea");
+    document.body.appendChild(textarea);
+    textarea.focus();
+    expect(document.activeElement).toBe(textarea);
+
+    const { result } = renderHook(() => useDevPanelToggle(true));
+
+    act(() => fireKey("`"));
+    expect(result.current.open).toBe(true); // unchanged
+
+    act(() => fireKey("Escape"));
+    expect(result.current.open).toBe(true); // unchanged
+  });
+
   test("ignores backtick when a contenteditable element is focused", () => {
     const div = document.createElement("div");
     div.setAttribute("contenteditable", "true");

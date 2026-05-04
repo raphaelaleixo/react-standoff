@@ -32,7 +32,7 @@ export function useDevPanelToggle(initialOpen = true): UseDevPanelToggleResult {
         event.preventDefault();
         setOpen(o => !o);
       } else if (event.key === "Escape") {
-        setOpen(o => (o ? false : o));
+        setOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
