@@ -40,4 +40,24 @@ describe("CrewRow", () => {
     render(<CrewRow player={p()} flagName="X" status="aiming" />);
     expect(screen.getByText(/empty pockets/i)).toBeInTheDocument();
   });
+
+  it("renders the OUT pill with dashed border to distinguish from choosing", () => {
+    const { rerender } = render(<CrewRow player={p()} flagName="X" status="out" />);
+    const outPill = screen.getByText("OUT");
+    expect(outPill).toBeInTheDocument();
+    expect(outPill.getAttribute("data-status")).toBe("out");
+    const outClass = outPill.className;
+
+    rerender(<CrewRow player={p()} flagName="X" status="choosing" />);
+    const choosingPill = screen.getByText("CHOOSING");
+    expect(choosingPill.getAttribute("data-status")).toBe("choosing");
+    // sx differs between out and choosing → emotion-generated className differs
+    expect(choosingPill.className).not.toBe(outClass);
+  });
+
+  it("renders dead pill without compounding opacity (relies on outer row opacity only)", () => {
+    render(<CrewRow player={p({ status: "dead" })} flagName="X" status="dead" data-testid="r" />);
+    const pill = screen.getByText("DEAD");
+    expect(pill.getAttribute("style") ?? "").not.toMatch(/opacity:\s*0\.6/);
+  });
 });

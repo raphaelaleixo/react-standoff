@@ -125,19 +125,20 @@ function StatusPill({ status, label }: { status: CrewStatus; label: string }) {
   const isReady = status === "ready";
   const isYielded = status === "yielded";
   const isStruck = status === "struck";
-  const isDead = status === "dead";
+  const isOut = status === "out";
   return (
     <Box
+      data-status={status}
       sx={{
         fontFamily: fonts.displayCaps,
         fontSize: "0.5rem",
         letterSpacing: "0.2em",
         padding: "0.12rem 0.35rem",
         whiteSpace: "nowrap",
-        border: `1.5px ${isYielded ? "dashed" : "solid"} ${isYielded ? palette.paperDim : palette.paper}`,
+        border: `1.5px ${isYielded || isOut ? "dashed" : "solid"} ${isYielded || isOut ? palette.paperDim : palette.paper}`,
         background: isAim ? palette.paper : isReady ? palette.gold : isStruck ? palette.blood : "transparent",
-        color: isAim || isReady ? palette.ink : isStruck ? palette.paper : isYielded ? palette.paperDim : palette.paper,
-        opacity: isDead ? 0.6 : 1,
+        color: isAim || isReady ? palette.ink : isStruck ? palette.paper : isYielded || isOut ? palette.paperDim : palette.paper,
+        opacity: isOut ? 0.55 : 1,
       }}
     >
       {label}
