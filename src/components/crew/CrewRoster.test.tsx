@@ -45,4 +45,40 @@ describe("CrewRoster", () => {
     render(<CrewRoster game={g} />);
     expect(screen.getAllByText("AIMING")).toHaveLength(4);
   });
+
+  it("derives status=yielded for withdrawn players in withdraw phase", () => {
+    const g = makeGame();
+    g.round.phase = "withdraw";
+    g.round.commits = { a: { bullet: "bang", target: "b", withdrew: true } };
+    render(<CrewRoster game={g} />);
+    expect(screen.getByText("YIELDED")).toBeInTheDocument();
+  });
+
+  it("derives status=struck for freshlyStruck players in reveal_bbb", () => {
+    const g = makeGame();
+    g.round.phase = "reveal_bbb";
+    g.round.commits = { a: { bullet: "bang", target: "b" } };
+    render(<CrewRoster game={g} freshlyStruck={new Set(["a"])} />);
+    expect(screen.getByText("STRUCK")).toBeInTheDocument();
+  });
+
+  it("derives status=dead for dead players regardless of round phase", () => {
+    const g = makeGame();
+    g.round.phase = "standoff";
+    g.players[0].status = "dead";
+    render(<CrewRoster game={g} />);
+    expect(screen.getByText("DEAD")).toBeInTheDocument();
+  });
+
+  it("derives status=out for survivors and yielded for withdrawers in split phase", () => {
+    const g = makeGame();
+    g.round.phase = "split";
+    g.round.commits = {
+      a: { bullet: "bang", target: "b", withdrew: true },
+      b: { bullet: "bang", target: "c" },
+    };
+    render(<CrewRoster game={g} />);
+    expect(screen.getByText("YIELDED")).toBeInTheDocument();
+    expect(screen.getAllByText("OUT").length).toBeGreaterThanOrEqual(1);
+  });
 });
