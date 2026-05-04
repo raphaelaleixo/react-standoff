@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Box } from "@mui/material";
 import { palette } from "../../theme/colors";
 import type { Game, RoundPhase } from "../../game/types";
@@ -15,6 +16,9 @@ interface TargetingMapProps {
 }
 
 export function TargetingMap({ game, dim }: TargetingMapProps) {
+  const uid = useId();
+  const arrowId = `ah-${uid}`;
+  const glowId = `glow-${uid}`;
   const players = game.players;
   const positions = seatPositions(players.length, RADIUS);
   const pairs = pairGeometry(positions);
@@ -42,10 +46,10 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
         style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       >
         <defs>
-          <marker id="ah-tm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <marker id={arrowId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M0,0 L10,5 L0,10 z" fill={palette.blood} />
           </marker>
-          <filter id="glow-tm" x="-50%" y="-50%" width="200%" height="200%">
+          <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -54,7 +58,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
           </filter>
         </defs>
         {showLines && (
-          <g filter="url(#glow-tm)">
+          <g filter={`url(#${glowId})`}>
             {pairs.map(({ i, j }) => {
               const pi = players[i];
               const pj = players[j];
@@ -72,14 +76,14 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
                     <line
                       x1={x1} y1={y1} x2={x2} y2={y2}
                       stroke={palette.blood} strokeWidth={2.4}
-                      markerEnd="url(#ah-tm)"
+                      markerEnd={`url(#${arrowId})`}
                     />
                   )}
                   {backward && (
                     <line
                       x1={x2} y1={y2} x2={x1} y2={y1}
                       stroke={palette.blood} strokeWidth={2.4}
-                      markerEnd="url(#ah-tm)"
+                      markerEnd={`url(#${arrowId})`}
                     />
                   )}
                 </g>
