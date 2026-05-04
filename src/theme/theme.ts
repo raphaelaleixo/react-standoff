@@ -1,34 +1,43 @@
 import { createTheme } from "@mui/material/styles";
 import { palette } from "./colors";
+import { fonts } from "./typography";
 
 const theme = createTheme({
   palette: {
-    mode: "light",
+    mode: "dark",
     background: {
-      default: palette.parchment,
-      paper: palette.parchment,
+      default: palette.ink,
+      paper: palette.inkUp,
     },
     text: {
-      primary: palette.ink,
-      secondary: palette.inkSoft,
+      primary: palette.paper,
+      secondary: palette.paperDim,
+      disabled: palette.paperFaint,
     },
-    primary: { main: palette.ink },
-    error: { main: palette.signal },
+    primary: { main: palette.paper, contrastText: palette.ink },
+    error: { main: palette.blood },
     warning: { main: palette.yellow },
-    // success → gold is deliberate: in this game the green-checkmark semantic and
-    // the "treasure / cash chip" semantic are the same thing.
-    success: { main: palette.goldDeep },
+    success: { main: palette.gold, contrastText: palette.ink },
+    divider: palette.ruleStrong,
   },
   typography: {
-    fontFamily: '"Iowan Old Style", Georgia, serif',
-    h1: { fontFamily: '"Pirata One", Georgia, serif', letterSpacing: 2 },
-    h2: { fontFamily: '"Pirata One", Georgia, serif', letterSpacing: 2 },
-    h3: { fontFamily: '"Pirata One", Georgia, serif', letterSpacing: 1 },
-    h4: { fontFamily: '"Pirata One", Georgia, serif' },
-    h5: { fontFamily: '"Pirata One", Georgia, serif' },
-    h6: { fontFamily: '"Pirata One", Georgia, serif' },
-    button: { fontFamily: '"Pirata One", Georgia, serif', letterSpacing: 1 },
-    overline: { fontFamily: '"Pirata One", Georgia, serif', letterSpacing: 2 },
+    fontFamily: fonts.body,
+    h1: { fontFamily: fonts.blackletter, letterSpacing: "0.02em" },
+    h2: { fontFamily: fonts.blackletter, letterSpacing: "0.02em" },
+    h3: { fontFamily: fonts.displayCaps, letterSpacing: "0.04em" },
+    h4: { fontFamily: fonts.displayCaps, letterSpacing: "0.06em" },
+    h5: { fontFamily: fonts.displayCaps, letterSpacing: "0.18em" },
+    h6: { fontFamily: fonts.displayCaps, letterSpacing: "0.18em" },
+    button: {
+      fontFamily: fonts.displayCaps,
+      letterSpacing: "0.32em",
+      fontWeight: 400,
+    },
+    overline: {
+      fontFamily: fonts.displayCaps,
+      letterSpacing: "0.36em",
+      fontSize: "0.75rem",
+    },
   },
 });
 
