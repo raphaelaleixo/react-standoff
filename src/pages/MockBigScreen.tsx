@@ -7,6 +7,9 @@ import { Foot } from "../components/shell/Foot";
 import { GameBoard } from "../components/GameBoard";
 import { navyHoursLabel } from "../lib/navyHours";
 import type { Game, Player } from "../game/types";
+import { useMockGameState } from "../components/dev/useMockGameState";
+import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
+import { DevControlsPanel } from "../components/dev/DevControlsPanel";
 
 const PLAYERS: Player[] = [
   { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",  bullets: ["bang","clic","clic","clic","clic","bang","bang_bang_bang"], cash: [{ id: "bn-a1", value: 10000 }, { id: "bn-a2", value: 5000 }], wounds: 1, shame: 0, status: "alive", effects: [] },
@@ -46,20 +49,33 @@ const FIXTURE_GAME: Game = {
 };
 
 export default function MockBigScreen() {
+  const { game, actions } = useMockGameState(FIXTURE_GAME);
+  const { open, setOpen } = useDevPanelToggle(true);
+
+  const aliveCount = game.players.filter(p => p.status === "alive").length;
+  const deadCount = game.players.filter(p => p.status === "dead").length;
+  const yieldedCount = Object.values(game.round.commits).filter(c => c.withdrew).length;
+
   return (
     <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={<>ROUND <em>III of VIII</em></>}
-          right={<>PHASE <em>{FIXTURE_GAME.round.phase}</em></>}
+          left={<>ROUND <em>{game.round.number} of VIII</em></>}
+          right={<>PHASE <em>{game.round.phase}</em></>}
         />
-        <GameBoard game={FIXTURE_GAME} />
+        <GameBoard game={game} />
         <Foot
-          left="VI ALIVE · I YIELDED · 0 DEAD"
-          cry={navyHoursLabel(FIXTURE_GAME.round.number)}
+          left={`${aliveCount} ALIVE · ${yieldedCount} YIELDED · ${deadCount} DEAD`}
+          cry={navyHoursLabel(game.round.number)}
           right="NEXT · WHO SHALL FALL?"
         />
       </PageCanvas>
+      <DevControlsPanel
+        open={open}
+        game={game}
+        actions={actions}
+        onClose={() => setOpen(false)}
+      />
     </Box>
   );
 }
