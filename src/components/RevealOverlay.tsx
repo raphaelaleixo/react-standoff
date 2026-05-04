@@ -19,7 +19,7 @@ export function RevealOverlay({ game, slotName }: {
   if (shots.length === 0) return null;
 
   const headline = phase === "reveal_bbb" ? t("reveal.broadside") : t("reveal.shot");
-  const headlineColor = palette.signal;
+  const headlineColor = palette.blood;
 
   return (
     <Box
@@ -84,10 +84,10 @@ function shotPhrase(s: RoundShot, slotName: (id: string) => string, t: (k: strin
 
 function shotColor(s: RoundShot): string {
   switch (s.outcome) {
-    case "hit": return palette.parchment;
+    case "hit": return palette.paper;
     case "no_effect_clic": return palette.gold;
     case "voided_target_ducked":
     case "voided_shooter_surprised":
-      return palette.parchmentDark;
+      return palette.paperDim;
   }
 }

@@ -15,7 +15,7 @@ export function YieldButton({ yielded, onToggle }: {
         userSelect: "none",
         py: 4,
         px: 3,
-        bgcolor: yielded ? palette.yellow : palette.parchment,
+        bgcolor: yielded ? palette.yellow : palette.paper,
         border: `3px solid ${palette.ink}`,
         borderRadius: 2,
         position: "relative",
@@ -41,7 +41,7 @@ export function YieldButton({ yielded, onToggle }: {
         {yielded ? "YIELDED" : "YIELD"}
       </Typography>
       {yielded && (
-        <Typography variant="body2" sx={{ color: palette.inkSoft, mt: 1 }}>
+        <Typography variant="body2" sx={{ color: palette.paperDim, mt: 1 }}>
           (tap to undo)
         </Typography>
       )}

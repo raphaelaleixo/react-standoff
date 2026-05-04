@@ -35,7 +35,7 @@ function JeweledCoin({ size }: { size: number }) {
     <svg viewBox="0 0 32 32" width={size} height={size} role="img" aria-label="jeweled treasure">
       <circle cx="16" cy="16" r="15" fill={palette.gold} stroke={palette.ink} strokeWidth="1.5" />
       <circle cx="16" cy="16" r="11" fill="none" stroke={palette.ink} strokeWidth="0.8" opacity="0.6" />
-      <polygon points="16,8 20,14 16,20 12,14" fill={palette.signal} stroke={palette.ink} strokeWidth="0.8" />
+      <polygon points="16,8 20,14 16,20 12,14" fill={palette.blood} stroke={palette.ink} strokeWidth="0.8" />
       <text x="16" y="29" textAnchor="middle" fontFamily="Pirata One, serif" fontSize="9" fill={palette.ink}>20</text>
     </svg>
   );

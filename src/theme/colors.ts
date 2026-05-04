@@ -1,28 +1,41 @@
-// Semantic color tokens for the pirate theme. The palette is two-color (parchment +
-// ink) with three accent roles (gold, signal, yellow ribbon). Each flag also has a
-// signature accent used on player cards and chips.
+// Semantic color tokens. The broadside metaphor is preserved: "ink" is the dark
+// tone, "paper" is the cream tone. Their roles are inverted vs. a printed page —
+// the canvas is ink, the type is paper.
 
 export const palette = {
-  parchment: "#e8d8b0",
-  parchmentDark: "#c9a874",
-  ink: "#5a371d",
-  inkSoft: "#7a4d2a",
+  // Page surfaces — dark
+  ink: "#14110d",
+  inkDeep: "#0a0807",
+  inkUp: "#2a2118",
+
+  // Type & line work — cream
+  paper: "#ede0c4",
+  paperDim: "#b8a888",
+  paperFaint: "#6e5c40",
+
+  // Hairlines & rules — translucent cream
+  rule: "rgba(237, 224, 196, 0.22)",
+  ruleStrong: "rgba(237, 224, 196, 0.45)",
+
+  // Accents — calibrated for dark backgrounds
+  blood: "#c93a30",
   gold: "#d4a85a",
   goldDeep: "#a8842c",
-  signal: "#c93a30",
   yellow: "#e6c440",
+  jewelPurple: "#b48ac8",
+  silverGray: "#d8d2c4",
 } as const;
 
 // Per-flag signature color used for card borders, target-picker accents, and chips.
-// Keys are the canonical pirate-flag ids.
+// Lifted vs. previous values where dark contrast required it (blackbeard, edward_low).
 export const flagSignatureColors = {
-  calico_jack: "#c93a30",   // red
-  blackbeard: "#1e2a3a",    // deep navy
-  black_bart: "#a8842c",    // gold
-  henry_avery: "#2a6b5a",   // sea green
-  edward_low: "#7a1f1f",    // burgundy
-  stede_bonnet: "#5a2a6b",  // purple
-  generic: "#5a371d",       // ink (fallback)
+  calico_jack: "#e0473e",  // red, lifted
+  blackbeard: "#5a7290",   // navy → slate-blue, lifted for dark contrast
+  black_bart: "#d4a85a",   // gold
+  henry_avery: "#3a8a78",  // sea green, lifted
+  edward_low: "#c0423a",   // burgundy → red, lifted for dark contrast
+  stede_bonnet: "#9069a8", // purple, lifted
+  generic: "#b8a888",      // paperDim (was ink — unusable on dark)
 } as const;
 
 export type FlagId = keyof typeof flagSignatureColors;

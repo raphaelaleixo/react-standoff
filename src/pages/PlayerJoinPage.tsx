@@ -16,7 +16,7 @@ import type { Player } from "../game/types";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { FLAG_IDS, FLAG_LABELS, takenFlags } from "../game/playerFlags";
 import { FlagFor } from "../components/flags";
-import { flagColor } from "../theme/colors";
+import { flagColor, palette } from "../theme/colors";
 
 export default function PlayerJoinPage() {
   const { t } = useTranslation();
@@ -132,13 +132,13 @@ export default function PlayerJoinPage() {
                     width: 64,
                     height: 64,
                     borderRadius: 1,
-                    backgroundColor: "#e8d8b0",
+                    backgroundColor: palette.paper,
                     color: flagColor(flagId),
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: "pointer",
-                    outline: flag === flagId ? `3px solid ${flagColor(flagId)}` : "1px solid #5a371d",
+                    outline: flag === flagId ? `3px solid ${flagColor(flagId)}` : `1px solid ${palette.ink}`,
                     outlineOffset: 2,
                   }}
                 >

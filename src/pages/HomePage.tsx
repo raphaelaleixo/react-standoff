@@ -16,7 +16,7 @@ export default function HomePage() {
         <Typography variant="h1" sx={{ fontSize: { xs: "3rem", md: "4.5rem" } }}>
           {t("home.title")}
         </Typography>
-        <Typography variant="h6" sx={{ color: palette.inkSoft, fontFamily: "Iowan Old Style, Georgia, serif" }}>
+        <Typography variant="h6" sx={{ color: palette.paperDim, fontFamily: "Iowan Old Style, Georgia, serif" }}>
           {t("home.subtitle")}
         </Typography>
         <Stack spacing={2} sx={{ width: "100%", maxWidth: 320 }}>

@@ -224,8 +224,8 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
                 alignItems: "center",
                 gap: 1.5,
                 p: 1,
-                bgcolor: palette.parchment,
-                border: `2px solid ${target === o.id ? palette.signal : palette.ink}`,
+                bgcolor: palette.paper,
+                border: `2px solid ${target === o.id ? palette.blood : palette.ink}`,
                 borderRadius: 1,
               }}
             >

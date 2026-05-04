@@ -14,8 +14,8 @@ export function MapFrame({ children, size = 700 }: { children: ReactNode; size?:
         height: size,
         mx: "auto",
         background: `
-          radial-gradient(ellipse at 30% 20%, ${palette.parchment} 0%, ${palette.parchmentDark} 80%),
-          ${palette.parchment}
+          radial-gradient(ellipse at 30% 20%, ${palette.paper} 0%, ${palette.paperDim} 80%),
+          ${palette.paper}
         `,
         boxShadow: `inset 0 0 80px rgba(90, 55, 29, 0.25)`,
         borderRadius: "8px",

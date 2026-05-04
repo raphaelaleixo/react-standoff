@@ -23,14 +23,14 @@ export function FlintlockBarrel({ targetFlag, targetName }: {
           width: 220,
           height: 220,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${palette.parchment} 0%, ${palette.parchment} 55%, ${palette.ink} 60%, ${palette.ink} 100%)`,
+          background: `radial-gradient(circle, ${palette.paper} 0%, ${palette.paper} 55%, ${palette.ink} 60%, ${palette.ink} 100%)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           boxShadow: `inset 0 0 30px rgba(90,55,29,0.6)`,
         }}
       >
-        <Box sx={{ color: palette.signal }}>
+        <Box sx={{ color: palette.blood }}>
           <FlagFor id={targetFlag} size={120} />
         </Box>
         <Box
@@ -38,7 +38,7 @@ export function FlintlockBarrel({ targetFlag, targetName }: {
             position: "absolute",
             inset: "50% 0 auto 0",
             height: 2,
-            bgcolor: palette.signal,
+            bgcolor: palette.blood,
             opacity: 0.5,
           }}
         />
@@ -48,7 +48,7 @@ export function FlintlockBarrel({ targetFlag, targetName }: {
             inset: "0 50% auto auto",
             width: 2,
             height: "100%",
-            bgcolor: palette.signal,
+            bgcolor: palette.blood,
             opacity: 0.5,
           }}
         />
@@ -56,7 +56,7 @@ export function FlintlockBarrel({ targetFlag, targetName }: {
       <Typography variant="h4" sx={{ color: palette.ink, letterSpacing: 4 }}>
         AIM TRUE
       </Typography>
-      <Typography variant="body1" sx={{ color: palette.inkSoft }}>
+      <Typography variant="body1" sx={{ color: palette.paperDim }}>
         Aiming at {targetName}
       </Typography>
     </Box>

@@ -167,7 +167,7 @@ function GameView({ roomState, game }: { roomState: RoomState<Player>; game: Ret
           <Typography variant="overline" color="text.secondary">
             {t("round.of", { n: round.number, total: 8 })}
           </Typography>
-          <Typography variant="caption" sx={{ color: palette.signal, fontFamily: "Pirata One, serif", fontSize: 14 }}>
+          <Typography variant="caption" sx={{ color: palette.blood, fontFamily: "Pirata One, serif", fontSize: 14 }}>
             {round.number === 8
               ? t("round.sailsOnHorizon")
               : t("round.navyHours", { hours: 9 - round.number })}

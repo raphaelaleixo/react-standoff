@@ -120,8 +120,8 @@ function PairLine({ originX, originY, length, rotation, forward, backward }: {
         height: LINE_GAP,
         transformOrigin: "0 50%",
         transform: `translateY(-${LINE_GAP / 2}px) rotate(${rotation}deg)`,
-        borderTop: `${LANE_THICKNESS}px solid ${forward ? palette.signal : "transparent"}`,
-        borderBottom: `${LANE_THICKNESS}px solid ${backward ? palette.signal : "transparent"}`,
+        borderTop: `${LANE_THICKNESS}px solid ${forward ? palette.blood : "transparent"}`,
+        borderBottom: `${LANE_THICKNESS}px solid ${backward ? palette.blood : "transparent"}`,
         boxSizing: "content-box",
         pointerEvents: "none",
         transition: "border-color 0.3s ease",
@@ -135,7 +135,7 @@ function PairLine({ originX, originY, length, rotation, forward, backward }: {
           height: 0,
           borderTop: "5px solid transparent",
           borderBottom: "5px solid transparent",
-          borderLeft: `10px solid ${palette.signal}`,
+          borderLeft: `10px solid ${palette.blood}`,
         } : undefined,
         // Backward arrow head, opposite end.
         "&::after": backward ? {
@@ -147,7 +147,7 @@ function PairLine({ originX, originY, length, rotation, forward, backward }: {
           height: 0,
           borderTop: "5px solid transparent",
           borderBottom: "5px solid transparent",
-          borderRight: `10px solid ${palette.signal}`,
+          borderRight: `10px solid ${palette.blood}`,
         } : undefined,
       }}
     />
@@ -174,8 +174,8 @@ function PlayerNode({ player, x, y, ducked, commitStatus }: {
         left: x,
         top: y,
         width: NODE_WIDTH,
-        bgcolor: palette.parchment,
-        border: `3px solid ${dead ? palette.inkSoft : accent}`,
+        bgcolor: palette.paper,
+        border: `3px solid ${dead ? palette.paperDim : accent}`,
         borderRadius: 2,
         py: 1,
         px: 1,
@@ -211,7 +211,7 @@ function PlayerNode({ player, x, y, ducked, commitStatus }: {
               width: 10,
               height: 10,
               borderRadius: "50%",
-              bgcolor: i < player.wounds ? palette.signal : "transparent",
+              bgcolor: i < player.wounds ? palette.blood : "transparent",
               border: `1px solid ${palette.ink}`,
             }}
           />
@@ -252,8 +252,8 @@ function CommitBadge({ status }: { status: "ready" | "choosing" }) {
         zIndex: 11,
         px: 1,
         py: 0.25,
-        bgcolor: isReady ? palette.goldDeep : palette.inkSoft,
-        color: palette.parchment,
+        bgcolor: isReady ? palette.goldDeep : palette.paperDim,
+        color: palette.paper,
         borderRadius: 999,
         fontSize: 11,
         fontWeight: 700,
