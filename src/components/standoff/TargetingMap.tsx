@@ -75,6 +75,27 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
       if (!tc?.withdrew) bbbVictims.add(c.target);
     }
   }
+  // Bang victims: from reveal_others on, any non-yielded non-BBB-victim bang
+  // shooter lands a wound on a non-yielded non-BBB-victim target.
+  const bangVictims = new Set<string>();
+  if (game.round.phase === "reveal_others" || game.round.phase === "split") {
+    for (const p of players) {
+      const c = game.round.commits[p.id];
+      if (c?.bullet === "bang" && !c.withdrew && c.target) {
+        if (bbbVictims.has(p.id)) continue; // shooter's bullet was discarded by surprise
+        const tc = game.round.commits[c.target];
+        if (tc?.withdrew) continue;        // gangster rule
+        if (bbbVictims.has(c.target)) continue; // target already laid down
+        bangVictims.add(c.target);
+      }
+    }
+  }
+  // Wounded-this-round = anyone who's taken a hit by the current phase. They
+  // stay laid down (struck visual) through the rest of the round.
+  const wounded = new Set<string>([...bbbVictims, ...bangVictims]);
+  const struck = (id: string) =>
+    wounded.has(id) &&
+    (game.round.phase === "reveal_bbb" || game.round.phase === "reveal_others" || game.round.phase === "split");
   const center = CANVAS / 2;
 
   return (
@@ -101,7 +122,14 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
           <marker id={arrowBeigeId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
             <path d="M0,0 L10,5 L0,10 z" fill={palette.paperDim} />
           </marker>
-          <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
+          <filter
+            id={glowId}
+            filterUnits="userSpaceOnUse"
+            x="0"
+            y="0"
+            width={CANVAS}
+            height={CANVAS}
+          >
             <feGaussianBlur stdDeviation="1.8" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -136,13 +164,14 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
             }
             return true;
           };
-          // A line "fires" — gets ink-filled with blood-red + glow — the instant
-          // its bullet is dramatically revealed. Reveal_bbb fires only
-          // bang_bang_bang shots; reveal_others fires the rest. Earlier phases
-          // stay in the provisional beige style.
+          // A line "fires" — gets ink-filled with blood-red + glow — when its
+          // bullet lands a wound. BBB lines fire from reveal_bbb on (and stay
+          // red through reveal_others). Bang lines join in reveal_others. Clic
+          // shots are revealed too but don't hit anything, so they stay in the
+          // provisional beige style (a "click" sigh-of-relief, not an ink fill).
           const lineFired = (bullet?: string) => {
             if (phase === "reveal_bbb") return bullet === "bang_bang_bang";
-            if (phase === "reveal_others") return true;
+            if (phase === "reveal_others") return bullet === "bang" || bullet === "bang_bang_bang";
             return false;
           };
           const FIRE_FILL_DURATION = 0.55; // seconds to fill the line source→target
@@ -224,17 +253,21 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
                           x1={forwardLane.x1} y1={forwardLane.y1}
                           x2={forwardArrowEnd.x} y2={forwardArrowEnd.y}
                           stroke={palette.blood} strokeWidth={1.8}
-                          strokeDasharray={`${segLong} ${segLong}`}
-                          strokeDashoffset={forwardFired ? 0 : segLong}
-                          style={{ transition: `stroke-dashoffset ${durLong}s ease-out` }}
+                          style={{
+                            strokeDasharray: `${segLong} ${segLong}`,
+                            strokeDashoffset: forwardFired ? 0 : segLong,
+                            transition: `stroke-dashoffset ${durLong}s ease-out`,
+                          }}
                         />
                         <line
                           x1={forwardArrowEnd.x} y1={forwardArrowEnd.y}
                           x2={forwardLane.x2} y2={forwardLane.y2}
                           stroke={palette.blood} strokeWidth={1.8}
-                          strokeDasharray={`${segShort} ${segShort}`}
-                          strokeDashoffset={forwardFired ? 0 : segShort}
-                          style={{ transition: `stroke-dashoffset ${durShort}s ease-out ${durLong}s` }}
+                          style={{
+                            strokeDasharray: `${segShort} ${segShort}`,
+                            strokeDashoffset: forwardFired ? 0 : segShort,
+                            transition: `stroke-dashoffset ${durShort}s ease-out ${durLong}s`,
+                          }}
                         />
                       </g>
                       {/* Arrow — beige until the line fills, then turns red */}
@@ -274,17 +307,21 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
                           x1={backwardLane.x2} y1={backwardLane.y2}
                           x2={backwardArrowEnd.x} y2={backwardArrowEnd.y}
                           stroke={palette.blood} strokeWidth={1.8}
-                          strokeDasharray={`${segLong} ${segLong}`}
-                          strokeDashoffset={backwardFired ? 0 : segLong}
-                          style={{ transition: `stroke-dashoffset ${durLong}s ease-out` }}
+                          style={{
+                            strokeDasharray: `${segLong} ${segLong}`,
+                            strokeDashoffset: backwardFired ? 0 : segLong,
+                            transition: `stroke-dashoffset ${durLong}s ease-out`,
+                          }}
                         />
                         <line
                           x1={backwardArrowEnd.x} y1={backwardArrowEnd.y}
                           x2={backwardLane.x1} y2={backwardLane.y1}
                           stroke={palette.blood} strokeWidth={1.8}
-                          strokeDasharray={`${segShort} ${segShort}`}
-                          strokeDashoffset={backwardFired ? 0 : segShort}
-                          style={{ transition: `stroke-dashoffset ${durShort}s ease-out ${durLong}s` }}
+                          style={{
+                            strokeDasharray: `${segShort} ${segShort}`,
+                            strokeDashoffset: backwardFired ? 0 : segShort,
+                            transition: `stroke-dashoffset ${durShort}s ease-out ${durLong}s`,
+                          }}
                         />
                       </g>
                       {/* Arrow — beige until the line fills, then turns red */}
@@ -322,7 +359,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
             colorId={p.colorOrAvatar}
             ducked={ducked(p.id)}
             dim={p.status === "dead"}
-            struck={game.round.phase === "reveal_bbb" && bbbVictims.has(p.id)}
+            struck={struck(p.id)}
           />
         </Box>
       ))}

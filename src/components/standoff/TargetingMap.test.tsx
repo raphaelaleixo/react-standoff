@@ -56,6 +56,37 @@ describe("TargetingMap", () => {
     expect(container.querySelectorAll('[data-line-fired="false"]')).toHaveLength(2);
   });
 
+  it("fires bang and BBB lines red in reveal_others; clic stays provisional", () => {
+    const g = makeGame();
+    g.round = {
+      ...g.round,
+      phase: "reveal_others",
+      commits: {
+        a: { bullet: "bang", target: "b" },           // bang fires now
+        c: { bullet: "bang_bang_bang", target: "d" }, // BBB stays red from reveal_bbb
+        e: { bullet: "clic", target: "f" },           // clic doesn't hit → stays beige
+      },
+    };
+    const { container } = render(<TargetingMap game={g} />);
+    expect(container.querySelectorAll('[data-line-fired="true"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-line-fired="false"]')).toHaveLength(1);
+  });
+
+  it("keeps the struck state on BBB victims through reveal_others and split", () => {
+    const g = makeGame();
+    g.round = {
+      ...g.round,
+      phase: "reveal_others",
+      commits: {
+        a: { bullet: "bang_bang_bang", target: "b" },  // b struck in reveal_bbb, stays laid down
+        c: { bullet: "bang", target: "d" },            // d takes the bang in reveal_others
+      },
+    };
+    const { container } = render(<TargetingMap game={g} />);
+    // b (BBB victim from earlier) and d (bang victim now) both struck.
+    expect(container.querySelectorAll('[data-state="struck"]')).toHaveLength(2);
+  });
+
   it("marks BBB victims with the struck state during reveal_bbb", () => {
     const g = makeGame();
     g.round = {
