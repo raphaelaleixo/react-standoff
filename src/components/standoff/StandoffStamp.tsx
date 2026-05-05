@@ -47,6 +47,10 @@ export function StandoffStamp({ count }: StandoffStampProps) {
             lineHeight: 1,
             color: palette.paper,
             textShadow: "0 0 24px rgba(255, 195, 120, 0.25)",
+            // UnifrakturCook digits sit low in their em-box, so the flex-
+            // centered line box leaves the visible glyph below the map's
+            // geometric middle. Nudge the rendered digit up to compensate.
+            transform: "translateY(-0.18em)",
           }}
         >
           {count}
