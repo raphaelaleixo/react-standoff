@@ -14,10 +14,10 @@ export function Masthead({ left, center = "The Standoff", right }: MastheadProps
       component="header"
       sx={{
         borderBottom: `4px double ${palette.ruleStrong}`,
-        padding: "0.7rem 1.5rem 0.55rem",
+        padding: "1.2rem 1.5rem",
         display: "grid",
         gridTemplateColumns: "1fr auto 1fr",
-        alignItems: "end",
+        alignItems: "center",
         gap: "1.2rem",
         flexShrink: 0,
       }}
@@ -29,7 +29,6 @@ export function Masthead({ left, center = "The Standoff", right }: MastheadProps
           fontSize: "0.99rem",
           letterSpacing: "0.32em",
           color: palette.paperDim,
-          paddingBottom: "0.45rem",
         }}
       >
         {left}
@@ -39,6 +38,7 @@ export function Masthead({ left, center = "The Standoff", right }: MastheadProps
           textAlign: "center",
           fontFamily: fonts.blackletter,
           fontSize: "2.1rem",
+          fontWeight: 700,
           lineHeight: 0.9,
           letterSpacing: "0.02em",
           color: palette.paper,
@@ -55,7 +55,6 @@ export function Masthead({ left, center = "The Standoff", right }: MastheadProps
           fontSize: "0.99rem",
           letterSpacing: "0.32em",
           color: palette.paperDim,
-          paddingBottom: "0.45rem",
         }}
       >
         {right}

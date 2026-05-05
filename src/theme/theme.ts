@@ -22,6 +22,7 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: fonts.body,
+    fontWeightRegular: 500,
     h1: { fontFamily: fonts.blackletter, letterSpacing: "0.02em" },
     h2: { fontFamily: fonts.blackletter, letterSpacing: "0.02em" },
     h3: { fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', letterSpacing: "0.04em" },

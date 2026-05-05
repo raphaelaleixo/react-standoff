@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 import { palette } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
+import { SectionHeader } from "../shell/SectionHeader";
 import { HoardItem } from "./HoardItem";
 import type { Denomination } from "../../game/types";
 
@@ -21,24 +22,7 @@ export function HoardList({ loot }: HoardListProps) {
 
   return (
     <Box sx={{ minHeight: 0, display: "flex", flexDirection: "column" }}>
-      <Box
-        sx={{
-          textAlign: "center",
-          fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "0.86rem",
-          letterSpacing: "0.4em",
-          color: palette.paperDim,
-          padding: "0 0 0.25rem",
-          borderBottom: `1px solid ${palette.ruleStrong}`,
-          marginBottom: "0.45rem",
-        }}
-      >
-        ON THE TABLE
-        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.92rem", letterSpacing: "0.05em", color: palette.paper, marginTop: "0.1rem" }}>
-          the captain's hoard
-        </Box>
-      </Box>
+      <SectionHeader title="On the Table" subtitle="the captain's hoard" />
       <Box
         sx={{
           textAlign: "center",

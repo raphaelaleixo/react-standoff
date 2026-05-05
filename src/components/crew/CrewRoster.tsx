@@ -1,8 +1,7 @@
 import { Box } from "@mui/material";
-import { palette } from "../../theme/colors";
-import { fonts } from "../../theme/typography";
 import type { Game, Player } from "../../game/types";
 import { CrewRow, type CrewStatus } from "./CrewRow";
+import { SectionHeader } from "../shell/SectionHeader";
 import { FLAG_LABELS } from "../../game/playerFlags";
 
 interface CrewRosterProps {
@@ -37,24 +36,7 @@ export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
   const fresh = freshlyStruck ?? new Set<string>();
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-      <Box
-        sx={{
-          textAlign: "center",
-          fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "0.86rem",
-          letterSpacing: "0.4em",
-          color: palette.paperDim,
-          paddingBottom: "0.25rem",
-          borderBottom: `1px solid ${palette.ruleStrong}`,
-          marginBottom: "0.45rem",
-        }}
-      >
-        THE CREW
-        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.92rem", color: palette.paper, marginTop: "0.1rem" }}>
-          six souls, one prize
-        </Box>
-      </Box>
+      <SectionHeader title="The Crew" subtitle="six souls, one prize" />
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         {game.players.map(p => (
           <CrewRow
