@@ -29,9 +29,13 @@ const PHASES: RoundPhase[] = [
 
 // How long each phase should linger when "Play round" walks the mock through
 // the round. Tuned for at-the-table watchability, not real-game speed.
+//
+// `standoff` matches STANDOFF_DURATION_MS in GameBoard so the count animation
+// finishes exactly when MockBigScreen's auto-advance fires; this timer is a
+// belt-and-suspenders fallback that calls setPhase('withdraw') idempotently.
 const PHASE_HOLD_MS: Record<RoundPhase, number> = {
   commit: 900,
-  standoff: 2500,
+  standoff: 3000,
   withdraw: 2500,
   reveal_withdraw: 1500,
   reveal_bbb: 2500,

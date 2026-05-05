@@ -9,23 +9,28 @@ describe("useStandoffCount", () => {
     expect(result.current).toBeNull();
   });
 
-  it("counts down from 3 toward 1 over the duration when active", () => {
+  it("counts down from 3 to 0 over the duration when active", () => {
     vi.useFakeTimers();
     const startedAt = Date.now();
     const { result, rerender } = renderHook(() =>
-      useStandoffCount({ active: true, durationMs: 4000, startedAt })
+      useStandoffCount({ active: true, durationMs: 3000, startedAt })
     );
     expect(result.current).toBe(3);
     act(() => {
-      vi.advanceTimersByTime(1400);
+      vi.advanceTimersByTime(1100);
     });
     rerender();
     expect(result.current).toBe(2);
     act(() => {
-      vi.advanceTimersByTime(1400);
+      vi.advanceTimersByTime(1000);
     });
     rerender();
     expect(result.current).toBe(1);
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+    rerender();
+    expect(result.current).toBe(0);
     vi.useRealTimers();
   });
 });

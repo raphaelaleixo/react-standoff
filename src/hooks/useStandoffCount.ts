@@ -17,8 +17,9 @@ export function useStandoffCount({ active, startedAt, durationMs }: Args): numbe
   const elapsed = now - startedAt;
   const remaining = Math.max(0, durationMs - elapsed);
   const stepMs = durationMs / 3;
-  // Bucket remaining time into 3 / 2 / 1. Cap to 1 minimum so the stamp
-  // keeps reading "1" until the phase actually transitions out.
-  const step = Math.max(1, Math.ceil(remaining / stepMs));
+  // Bucket remaining time into 3 / 2 / 1 / 0. Once it lands on 0 the
+  // mock auto-advances the phase, and in production the server-driven
+  // phase change snaps the active flag off, so the 0 state is fleeting.
+  const step = Math.ceil(remaining / stepMs);
   return Math.min(3, step);
 }

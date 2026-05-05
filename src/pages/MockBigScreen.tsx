@@ -1,6 +1,6 @@
 // DEV-only mock for the big-screen view. Renders the new GameBoard with
 // fixture data so you can iterate on layout without a live room.
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { PageCanvas } from "../components/shell/PageCanvas";
@@ -14,6 +14,9 @@ import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel } from "../components/dev/DevControlsPanel";
 import { useRevealBanner } from "../hooks/useRevealBanner";
+import { useStandoffCount } from "../hooks/useStandoffCount";
+
+const STANDOFF_DURATION_MS = 3000;
 
 const PLAYERS: Player[] = [
   { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",  bullets: ["bang","clic","clic","clic","clic","bang","bang_bang_bang"], cash: [{ id: "bn-a1", value: 10000 }, { id: "bn-a2", value: 5000 }], wounds: 1, shame: 0, status: "alive", effects: [] },
@@ -98,6 +101,21 @@ export default function MockBigScreen() {
   }, [game]);
 
   const banner = useRevealBanner(displayGame);
+
+  // Mock-only auto-advance: in production the server transitions the round
+  // out of standoff. Here, watch the StandoffStamp's count and advance to
+  // withdraw the moment it reads 0 so the dev mock matches the on-screen
+  // animation instead of a separate Play-round timer.
+  const standoffCount = useStandoffCount({
+    active: game.round.phase === "standoff",
+    startedAt: game.round.phaseStartedAt,
+    durationMs: STANDOFF_DURATION_MS,
+  });
+  useEffect(() => {
+    if (game.round.phase === "standoff" && standoffCount === 0) {
+      actions.setPhase("withdraw");
+    }
+  }, [game.round.phase, standoffCount, actions]);
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
