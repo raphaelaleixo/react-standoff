@@ -1,9 +1,10 @@
-import { useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { palette } from "../../theme/colors";
 import type { Game, RoundPhase } from "../../game/types";
 import { Roundel } from "./Roundel";
 import { seatPositions, pairGeometry } from "./geometry";
+import { durations } from "../../theme/animations";
 
 const CANVAS = 480;
 const RADIUS = 180;
@@ -61,6 +62,27 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   const positions = seatPositions(players.length, RADIUS);
   const pairs = pairGeometry(positions);
   const showLines = PHASES_WITH_LINES.includes(game.round.phase);
+
+  // Draw-in animation state: lines transition from invisible (offset = full
+  // segment length) to fully drawn (offset = 0) over `durations.draw` the
+  // first time the round enters PHASES_WITH_LINES. Subsequent phase changes
+  // within the same round keep the lines stable.
+  const drewForRoundRef = useRef<number | null>(null);
+  const [drawState, setDrawState] = useState<"pre" | "active" | "done">("done");
+  useEffect(() => {
+    if (!showLines) return;
+    if (drewForRoundRef.current === game.round.number) return;
+    setDrawState("pre");
+    const raf = requestAnimationFrame(() => setDrawState("active"));
+    const t = setTimeout(() => {
+      setDrawState("done");
+      drewForRoundRef.current = game.round.number;
+    }, durations.draw);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
+  }, [showLines, game.round.number]);
   const ducked = (id: string) =>
     !!game.round.commits[id]?.withdrew &&
     (game.round.phase === "reveal_withdraw" || game.round.phase === "reveal_bbb" || game.round.phase === "reveal_others" || game.round.phase === "split");
@@ -177,6 +199,32 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
             return false;
           };
           const FIRE_FILL_DURATION = 0.55; // seconds to fill the line source→target
+          // Draw-in style for the beige tracks: pre = invisible (offset = full
+          // segment length), active = transitioning to offset 0, done = the
+          // normal dashed "6 4" pattern. Caller passes per-segment timing so
+          // the long source→arrow piece animates first, then the short
+          // arrow→target piece starts with a delay.
+          const beigeDrawStyle = (segLen: number, delayMs: number, durMs: number): React.CSSProperties => {
+            if (drawState === "done") return { strokeDasharray: "6 4" };
+            if (drawState === "active") {
+              return {
+                strokeDasharray: `${segLen} ${segLen}`,
+                strokeDashoffset: 0,
+                transition: `stroke-dashoffset ${durMs}ms ease-out ${delayMs}ms`,
+              };
+            }
+            return {
+              strokeDasharray: `${segLen} ${segLen}`,
+              strokeDashoffset: segLen,
+            };
+          };
+          // Arrow polygons stay hidden until the beige lines finish drawing,
+          // then fade in. Once visible they carry on with their existing
+          // fire-fill colour shift (handled inline below).
+          const arrowDrawStyle: React.CSSProperties = {
+            opacity: drawState === "done" ? 1 : 0,
+            transition: `opacity ${durations.fast}ms ease-out`,
+          };
           return (
           <g>
             {pairs.map(({ i, j }) => {
@@ -236,18 +284,18 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                       data-line-fired={forwardFired ? "true" : "false"}
                       style={{ opacity: forwardVisible ? 1 : 0, transition: "opacity 0.4s ease" }}
                     >
-                      {/* Beige dashed track — always painted */}
+                      {/* Beige dashed track — draws in source→arrow→target */}
                       <line
                         x1={forwardLane.x1} y1={forwardLane.y1}
                         x2={forwardArrowEnd.x} y2={forwardArrowEnd.y}
                         stroke={palette.paperDim} strokeWidth={1.8}
-                        strokeDasharray="6 4"
+                        style={beigeDrawStyle(segLong, 0, durLong * 1000)}
                       />
                       <line
                         x1={forwardArrowEnd.x} y1={forwardArrowEnd.y}
                         x2={forwardLane.x2} y2={forwardLane.y2}
                         stroke={palette.paperDim} strokeWidth={1.8}
-                        strokeDasharray="6 4"
+                        style={beigeDrawStyle(segShort, durLong * 1000, durShort * 1000)}
                       />
                       {/* Red ink overlay — fills source→target on fire */}
                       <g filter={`url(#${glowId})`} style={{ opacity: forwardFired ? 1 : 0, transition: "opacity 0.1s ease" }}>
@@ -278,7 +326,8 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                         transform={`translate(${forwardArrowEnd.x},${forwardArrowEnd.y}) rotate(${lineAngleDeg})`}
                         fill={forwardFired ? palette.blood : palette.paperDim}
                         style={{
-                          transition: `fill 0.15s ease ${forwardFired ? FIRE_FILL_DURATION : 0}s, filter 0.15s ease ${forwardFired ? FIRE_FILL_DURATION : 0}s`,
+                          ...arrowDrawStyle,
+                          transition: `${arrowDrawStyle.transition}, fill 0.15s ease ${forwardFired ? FIRE_FILL_DURATION : 0}s, filter 0.15s ease ${forwardFired ? FIRE_FILL_DURATION : 0}s`,
                           filter: forwardFired ? "drop-shadow(0 0 1.8px rgba(201,58,48,0.55))" : "none",
                         }}
                       />
@@ -290,18 +339,18 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                       data-line-fired={backwardFired ? "true" : "false"}
                       style={{ opacity: backwardVisible ? 1 : 0, transition: "opacity 0.4s ease" }}
                     >
-                      {/* Beige dashed track — always painted */}
+                      {/* Beige dashed track — draws in source→arrow→target */}
                       <line
                         x1={backwardLane.x2} y1={backwardLane.y2}
                         x2={backwardArrowEnd.x} y2={backwardArrowEnd.y}
                         stroke={palette.paperDim} strokeWidth={1.8}
-                        strokeDasharray="6 4"
+                        style={beigeDrawStyle(segLong, 0, durLong * 1000)}
                       />
                       <line
                         x1={backwardArrowEnd.x} y1={backwardArrowEnd.y}
                         x2={backwardLane.x1} y2={backwardLane.y1}
                         stroke={palette.paperDim} strokeWidth={1.8}
-                        strokeDasharray="6 4"
+                        style={beigeDrawStyle(segShort, durLong * 1000, durShort * 1000)}
                       />
                       {/* Red ink overlay — fills source→target on fire */}
                       <g filter={`url(#${glowId})`} style={{ opacity: backwardFired ? 1 : 0, transition: "opacity 0.1s ease" }}>
@@ -332,7 +381,8 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                         transform={`translate(${backwardArrowEnd.x},${backwardArrowEnd.y}) rotate(${lineAngleDeg + 180})`}
                         fill={backwardFired ? palette.blood : palette.paperDim}
                         style={{
-                          transition: `fill 0.15s ease ${backwardFired ? FIRE_FILL_DURATION : 0}s, filter 0.15s ease ${backwardFired ? FIRE_FILL_DURATION : 0}s`,
+                          ...arrowDrawStyle,
+                          transition: `${arrowDrawStyle.transition}, fill 0.15s ease ${backwardFired ? FIRE_FILL_DURATION : 0}s, filter 0.15s ease ${backwardFired ? FIRE_FILL_DURATION : 0}s`,
                           filter: backwardFired ? "drop-shadow(0 0 1.8px rgba(201,58,48,0.55))" : "none",
                         }}
                       />
