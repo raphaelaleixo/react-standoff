@@ -11,19 +11,18 @@ function p(over: Partial<Player> = {}): Player {
 }
 
 describe("CrewRow", () => {
-  it("renders flag pirate-name + nickname", () => {
-    render(<CrewRow player={p()} flagName="CALICO JACK" status="aiming" />);
-    expect(screen.getByText("CALICO JACK")).toBeInTheDocument();
+  it("renders the player nickname", () => {
+    render(<CrewRow player={p()} status="aiming" />);
     expect(screen.getByText(/Cap'n Maud/)).toBeInTheDocument();
   });
 
   it("renders the AIMING status pill", () => {
-    render(<CrewRow player={p()} flagName="X" status="aiming" />);
+    render(<CrewRow player={p()} status="aiming" />);
     expect(screen.getByText("AIMING")).toBeInTheDocument();
   });
 
   it("renders 3 wound pips, filled per wounds count", () => {
-    render(<CrewRow player={p({ wounds: 2 })} flagName="X" status="aiming" data-testid="r" />);
+    render(<CrewRow player={p({ wounds: 2 })} status="aiming" data-testid="r" />);
     const pips = screen.getByTestId("r").querySelectorAll("[data-pip]");
     expect(pips).toHaveLength(3);
     expect(pips[0].getAttribute("data-pip")).toBe("filled");
@@ -31,24 +30,25 @@ describe("CrewRow", () => {
     expect(pips[2].getAttribute("data-pip")).toBe("empty");
   });
 
-  it("renders the yellow streak chip when shame > 0", () => {
-    render(<CrewRow player={p({ shame: 2 })} flagName="X" status="aiming" />);
-    expect(screen.getByText(/YELLOW ×2/)).toBeInTheDocument();
+  it("renders one yellow pip per shame marker", () => {
+    render(<CrewRow player={p({ shame: 2 })} status="aiming" data-testid="r" />);
+    const shamePips = screen.getByTestId("r").querySelectorAll('[data-pip="shame"]');
+    expect(shamePips).toHaveLength(2);
   });
 
   it("renders empty pockets text when cash is empty", () => {
-    render(<CrewRow player={p()} flagName="X" status="aiming" />);
+    render(<CrewRow player={p()} status="aiming" />);
     expect(screen.getByText(/empty pockets/i)).toBeInTheDocument();
   });
 
   it("renders the OUT pill with dashed border to distinguish from choosing", () => {
-    const { rerender } = render(<CrewRow player={p()} flagName="X" status="out" />);
+    const { rerender } = render(<CrewRow player={p()} status="out" />);
     const outPill = screen.getByText("OUT");
     expect(outPill).toBeInTheDocument();
     expect(outPill.getAttribute("data-status")).toBe("out");
     const outClass = outPill.className;
 
-    rerender(<CrewRow player={p()} flagName="X" status="choosing" />);
+    rerender(<CrewRow player={p()} status="choosing" />);
     const choosingPill = screen.getByText("CHOOSING");
     expect(choosingPill.getAttribute("data-status")).toBe("choosing");
     // sx differs between out and choosing → emotion-generated className differs
@@ -56,7 +56,7 @@ describe("CrewRow", () => {
   });
 
   it("renders dead pill without compounding opacity (relies on outer row opacity only)", () => {
-    render(<CrewRow player={p({ status: "dead" })} flagName="X" status="dead" data-testid="r" />);
+    render(<CrewRow player={p({ status: "dead" })} status="dead" data-testid="r" />);
     const pill = screen.getByText("DEAD");
     expect(pill.getAttribute("style") ?? "").not.toMatch(/opacity:\s*0\.6/);
   });

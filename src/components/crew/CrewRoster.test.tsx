@@ -36,22 +36,23 @@ describe("CrewRoster", () => {
     expect(screen.getAllByText("CHOOSING")).toHaveLength(4);
   });
 
-  it("derives status=aiming for everyone in standoff", () => {
+  it("hides the status pill in standoff (everyone is uniformly aiming)", () => {
     const g = makeGame();
     g.round.phase = "standoff";
     g.round.commits = Object.fromEntries(
       g.players.map(p => [p.id, { bullet: "bang", target: g.players[0].id }])
     );
     render(<CrewRoster game={g} />);
-    expect(screen.getAllByText("AIMING")).toHaveLength(4);
+    expect(screen.queryByText("AIMING")).toBeNull();
   });
 
-  it("derives status=yielded for withdrawn players in withdraw phase", () => {
+  it("hides yields during the withdraw countdown so the decision stays private", () => {
     const g = makeGame();
     g.round.phase = "withdraw";
     g.round.commits = { a: { bullet: "bang", target: "b", withdrew: true } };
     render(<CrewRoster game={g} />);
-    expect(screen.getByText("YIELDED")).toBeInTheDocument();
+    expect(screen.queryByText("YIELDED")).toBeNull();
+    expect(screen.queryByText("AIMING")).toBeNull();
   });
 
   it("derives status=yielded vs aiming during reveal_withdraw phase", () => {
