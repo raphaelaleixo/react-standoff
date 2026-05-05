@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { TargetingMap } from "./TargetingMap";
 import type { Game } from "../../game/types";
 
