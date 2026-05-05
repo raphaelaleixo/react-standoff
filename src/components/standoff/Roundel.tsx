@@ -5,7 +5,9 @@ import { FlagFor } from "../flags";
 
 interface RoundelProps {
   flagId: string;
-  name: string;
+  /** Optional override for the tint color, separate from the SVG flag. Defaults to flagId. */
+  colorId?: string;
+  name?: string;
   ducked?: boolean;
   dim?: boolean;
   size?: number;
@@ -14,6 +16,7 @@ interface RoundelProps {
 
 export function Roundel({
   flagId,
+  colorId,
   name,
   ducked,
   dim,
@@ -23,7 +26,15 @@ export function Roundel({
   const state = ducked ? "ducked" : dim ? "dim" : "live";
   const transform = ducked ? "rotate(-6deg) scale(0.92)" : "none";
   return (
-    <Box data-testid={testid} data-state={state} sx={{ textAlign: "center" }}>
+    <Box
+      data-testid={testid}
+      data-state={state}
+      sx={{
+        position: "relative",
+        width: size,
+        height: size,
+      }}
+    >
       <Box
         sx={{
           width: size,
@@ -32,10 +43,9 @@ export function Roundel({
           background: palette.inkUp,
           border: `2.5px ${ducked ? "dashed" : "solid"} ${ducked ? palette.paperDim : palette.paper}`,
           boxShadow: `3px 3px 0 ${palette.inkDeep}, inset 0 0 8px rgba(0,0,0,0.4)`,
-          color: flagColor(flagId),
+          color: flagColor(colorId ?? flagId),
           opacity: ducked ? 0.45 : dim ? 0.55 : 1,
           filter: dim ? "saturate(0.6)" : undefined,
-          margin: "0 auto",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -43,21 +53,28 @@ export function Roundel({
           transition: "transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease",
         }}
       >
-        <FlagFor id={flagId} size={size * 0.6} />
+        <FlagFor id={flagId} size={size * 0.5} />
       </Box>
-      <Box
-        sx={{
-          fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "0.79rem",
-          letterSpacing: "0.16em",
-          marginTop: "0.25rem",
-          color: dim ? palette.paperDim : palette.paper,
-          opacity: dim ? 0.7 : 1,
-        }}
-      >
-        {name}
-      </Box>
+      {name && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: "100%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            marginTop: "0.5rem",
+            whiteSpace: "nowrap",
+            fontFamily: fonts.displayCaps,
+            fontFeatureSettings: '"smcp"',
+            fontSize: "0.79rem",
+            letterSpacing: "0.16em",
+            color: dim ? palette.paperDim : palette.paper,
+            opacity: dim ? 0.7 : 1,
+          }}
+        >
+          {name}
+        </Box>
+      )}
     </Box>
   );
 }

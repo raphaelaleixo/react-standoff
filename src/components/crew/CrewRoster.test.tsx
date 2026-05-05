@@ -54,6 +54,18 @@ describe("CrewRoster", () => {
     expect(screen.getByText("YIELDED")).toBeInTheDocument();
   });
 
+  it("derives status=yielded vs aiming during reveal_withdraw phase", () => {
+    const g = makeGame();
+    g.round.phase = "reveal_withdraw";
+    g.round.commits = {
+      a: { bullet: "bang", target: "b", withdrew: true },
+      b: { bullet: "bang", target: "c" },
+    };
+    render(<CrewRoster game={g} />);
+    expect(screen.getByText("YIELDED")).toBeInTheDocument();
+    expect(screen.getAllByText("AIMING").length).toBeGreaterThanOrEqual(1);
+  });
+
   it("derives status=struck for freshlyStruck players in reveal_bbb", () => {
     const g = makeGame();
     g.round.phase = "reveal_bbb";

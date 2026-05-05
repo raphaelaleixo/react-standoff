@@ -20,6 +20,8 @@ function deriveStatus(game: Game, p: Player, fresh: Set<string>): CrewStatus {
       return "aiming";
     case "withdraw":
       return c?.withdrew ? "yielded" : "aiming";
+    case "reveal_withdraw":
+      return c?.withdrew ? "yielded" : "aiming";
     case "reveal_bbb":
     case "reveal_others":
       if (fresh.has(p.id)) return "struck";

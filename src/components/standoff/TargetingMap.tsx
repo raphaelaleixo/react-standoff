@@ -7,7 +7,9 @@ import { seatPositions, pairGeometry } from "./geometry";
 
 const CANVAS = 480;
 const RADIUS = 180;
-const PHASES_WITH_LINES: RoundPhase[] = ["withdraw", "reveal_bbb", "reveal_others"];
+const LANE_GAP = 14;
+const ARROW_STOP_RATIO = 0.8; // Arrows stop at 80% of line length to avoid circles
+const PHASES_WITH_LINES: RoundPhase[] = ["withdraw", "reveal_withdraw", "reveal_bbb", "reveal_others"];
 
 interface TargetingMapProps {
   game: Game;
@@ -15,9 +17,42 @@ interface TargetingMapProps {
   dim?: boolean;
 }
 
+interface OffsetLine {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+// Calculate offset parallel line perpendicular to the original
+function offsetLine(x1: number, y1: number, x2: number, y2: number, offset: number): OffsetLine {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.hypot(dx, dy);
+  const perpX = -dy / length;
+  const perpY = dx / length;
+  return {
+    x1: x1 + perpX * offset,
+    y1: y1 + perpY * offset,
+    x2: x2 + perpX * offset,
+    y2: y2 + perpY * offset,
+  };
+}
+
+// Calculate a point at a ratio along a line
+function pointAtRatio(line: OffsetLine, ratio: number) {
+  const dx = line.x2 - line.x1;
+  const dy = line.y2 - line.y1;
+  return {
+    x: line.x1 + dx * ratio,
+    y: line.y1 + dy * ratio,
+  };
+}
+
 export function TargetingMap({ game, dim }: TargetingMapProps) {
   const uid = useId();
   const arrowId = `ah-${uid}`;
+  const arrowBeigeId = `ah-beige-${uid}`;
   const glowId = `glow-${uid}`;
   const players = game.players;
   const positions = seatPositions(players.length, RADIUS);
@@ -46,8 +81,11 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
         style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       >
         <defs>
-          <marker id={arrowId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <marker id={arrowId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
             <path d="M0,0 L10,5 L0,10 z" fill={palette.blood} />
+          </marker>
+          <marker id={arrowBeigeId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill={palette.paperDim} />
           </marker>
           <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -57,40 +95,87 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
             </feMerge>
           </filter>
         </defs>
-        {showLines && (
-          <g filter={`url(#${glowId})`}>
+        {showLines && (() => {
+          // In the withdraw phase yields are still mutable — show provisional aim
+          // in beige + dashed (no glow). After lock-in (reveal_*) shots are committed
+          // in blood with the menacing glow.
+          const provisional = game.round.phase === "withdraw";
+          const lineStroke = provisional ? palette.paperDim : palette.blood;
+          const lineDash = provisional ? "6 4" : undefined;
+          const markerRef = `url(#${provisional ? arrowBeigeId : arrowId})`;
+          return (
+          <g filter={provisional ? undefined : `url(#${glowId})`}>
             {pairs.map(({ i, j }) => {
               const pi = players[i];
               const pj = players[j];
               const ci = game.round.commits[pi.id];
               const cj = game.round.commits[pj.id];
-              const forward = !!ci && !ci.withdrew && ci.target === pj.id;
-              const backward = !!cj && !cj.withdrew && cj.target === pi.id;
+              // During withdraw and reveal_withdraw, show all committed lines (including yielded).
+              // During reveal_bbb / reveal_others, hide withdrawn players' lines (their shot was voided).
+              const isWithdrawPhase = game.round.phase === "withdraw" || game.round.phase === "reveal_withdraw";
+              const forward = !!ci && ci.target === pj.id && (isWithdrawPhase || !ci.withdrew);
+              const backward = !!cj && cj.target === pi.id && (isWithdrawPhase || !cj.withdrew);
               const x1 = center + positions[i].x;
               const y1 = center + positions[i].y;
               const x2 = center + positions[j].x;
               const y2 = center + positions[j].y;
+
+              // Dual lanes: one offset up, one offset down
+              const forwardLane = offsetLine(x1, y1, x2, y2, LANE_GAP / 2);
+              const backwardLane = offsetLine(x1, y1, x2, y2, -LANE_GAP / 2);
+
+              // Calculate arrow positions: always 20% from the target
+              // Forward: x1 → x2, target is x2, so arrow at 80% from x1
+              const forwardArrowEnd = pointAtRatio(forwardLane, ARROW_STOP_RATIO);
+              // Backward: x2 → x1, target is x1, so arrow at 20% from x1 (80% from x2)
+              const backwardArrowEnd = pointAtRatio(backwardLane, 1 - ARROW_STOP_RATIO);
+
               return (
                 <g key={`${i}-${j}`}>
                   {forward && (
-                    <line
-                      x1={x1} y1={y1} x2={x2} y2={y2}
-                      stroke={palette.blood} strokeWidth={2.4}
-                      markerEnd={`url(#${arrowId})`}
-                    />
+                    <>
+                      <line
+                        x1={forwardLane.x1} y1={forwardLane.y1}
+                        x2={forwardArrowEnd.x} y2={forwardArrowEnd.y}
+                        stroke={lineStroke} strokeWidth={2.4}
+                        strokeDasharray={lineDash}
+                        markerEnd={markerRef}
+                        style={{ transition: "stroke 0.2s ease" }}
+                      />
+                      <line
+                        x1={forwardArrowEnd.x} y1={forwardArrowEnd.y}
+                        x2={forwardLane.x2} y2={forwardLane.y2}
+                        stroke={lineStroke} strokeWidth={2.4}
+                        strokeDasharray={lineDash}
+                        style={{ transition: "stroke 0.2s ease" }}
+                      />
+                    </>
                   )}
                   {backward && (
-                    <line
-                      x1={x2} y1={y2} x2={x1} y2={y1}
-                      stroke={palette.blood} strokeWidth={2.4}
-                      markerEnd={`url(#${arrowId})`}
-                    />
+                    <>
+                      <line
+                        x1={backwardLane.x2} y1={backwardLane.y2}
+                        x2={backwardArrowEnd.x} y2={backwardArrowEnd.y}
+                        stroke={lineStroke} strokeWidth={2.4}
+                        strokeDasharray={lineDash}
+                        markerEnd={markerRef}
+                        style={{ transition: "stroke 0.2s ease" }}
+                      />
+                      <line
+                        x1={backwardArrowEnd.x} y1={backwardArrowEnd.y}
+                        x2={backwardLane.x1} y2={backwardLane.y1}
+                        stroke={lineStroke} strokeWidth={2.4}
+                        strokeDasharray={lineDash}
+                        style={{ transition: "stroke 0.2s ease" }}
+                      />
+                    </>
                   )}
                 </g>
               );
             })}
           </g>
-        )}
+          );
+        })()}
       </svg>
 
       {players.map((p, i) => (
@@ -104,8 +189,8 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
           }}
         >
           <Roundel
-            flagId={p.colorOrAvatar}
-            name={p.displayName.toUpperCase()}
+            flagId="jolly_roger"
+            colorId={p.colorOrAvatar}
             ducked={ducked(p.id)}
             dim={p.status === "dead"}
           />

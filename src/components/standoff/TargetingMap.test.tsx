@@ -23,8 +23,8 @@ function makeGame(overrides?: Partial<Game>): Game {
 describe("TargetingMap", () => {
   it("renders one Roundel per player", () => {
     const g = makeGame();
-    render(<TargetingMap game={g} />);
-    expect(screen.getAllByText(/^[A-F]$/)).toHaveLength(6);
+    const { container } = render(<TargetingMap game={g} />);
+    expect(container.querySelectorAll("[data-state]")).toHaveLength(6);
   });
 
   it("does not draw any targeting lines during commit phase", () => {
@@ -38,5 +38,20 @@ describe("TargetingMap", () => {
     g.round = { ...g.round, phase: "withdraw", commits: { a: { bullet: "bang", target: "b" } } };
     const { container } = render(<TargetingMap game={g} />);
     expect(container.querySelectorAll("svg line").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("draws lines during reveal_withdraw, including for yielded players", () => {
+    const g = makeGame();
+    g.round = {
+      ...g.round,
+      phase: "reveal_withdraw",
+      commits: {
+        a: { bullet: "bang", target: "b" },
+        c: { bullet: "bang", target: "d", withdrew: true },
+      },
+    };
+    const { container } = render(<TargetingMap game={g} />);
+    // Both the active and yielded targeting should render lines.
+    expect(container.querySelectorAll("svg line").length).toBeGreaterThanOrEqual(2);
   });
 });

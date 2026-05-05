@@ -28,6 +28,7 @@ export type RoundPhase =
   | 'commit'
   | 'standoff'
   | 'withdraw'
+  | 'reveal_withdraw'
   | 'reveal_bbb'
   | 'reveal_others'
   | 'split';

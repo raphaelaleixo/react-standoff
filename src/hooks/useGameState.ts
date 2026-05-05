@@ -9,6 +9,7 @@ import { useServerTime } from "./useServerTime";
 
 const STANDOFF_MS = 4000;
 const WITHDRAW_MS = 10000;
+const REVEAL_WITHDRAW_MS = 2500;
 const REVEAL_BBB_MS = 5000;
 const REVEAL_OTHERS_MS = 5000;
 const SPLIT_MS = 5000;
@@ -67,7 +68,7 @@ export function useGameState(roomId: string | undefined) {
     return () => clearTimeout(t);
   }, [roomId, game, serverNow]);
 
-  // withdraw → reveal_bbb (timed; computes & persists resolution at transition)
+  // withdraw → reveal_withdraw (timed; locks yields and computes & persists resolution at transition)
   useEffect(() => {
     if (!roomId || !game) return;
     if (game.round.phase !== "withdraw") return;
@@ -75,13 +76,26 @@ export function useGameState(roomId: string | undefined) {
     const fire = () => {
       const result = resolveRound(game.round.commits, game.players, game.round.loot);
       update(ref(database, `rooms/${roomId}/game`), {
-        "round/phase": "reveal_bbb",
+        "round/phase": "reveal_withdraw",
         "round/phaseStartedAt": serverTimestamp(),
         "round/resolution": result.resolution,
         players: result.players,
         discardedBullets: [...game.discardedBullets, ...result.discardedBullets],
       });
     };
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // reveal_withdraw → reveal_bbb (timed; pure visual handoff)
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "reveal_withdraw") return;
+    const remaining = REVEAL_WITHDRAW_MS - (serverNow() - game.round.phaseStartedAt);
+    const fire = () => update(ref(database, `rooms/${roomId}/game/round`), {
+      phase: "reveal_bbb",
+      phaseStartedAt: serverTimestamp(),
+    });
     const t = setTimeout(fire, Math.max(0, remaining));
     return () => clearTimeout(t);
   }, [roomId, game, serverNow]);

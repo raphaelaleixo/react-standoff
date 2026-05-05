@@ -160,7 +160,7 @@ function PhaseView({ game, me, submitCommit, submitDuck }: {
     );
   }
 
-  if (phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
+  if (phase === "reveal_withdraw" || phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
     return <Typography color="text.secondary">{t("player.watchScreen")}</Typography>;
   }
 

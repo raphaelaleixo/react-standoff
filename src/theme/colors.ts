@@ -29,11 +29,11 @@ export const palette = {
 // Per-flag signature color used for card borders, target-picker accents, and chips.
 // Lifted vs. previous values where dark contrast required it (blackbeard, edward_low).
 export const flagSignatureColors = {
-  calico_jack: "#e0473e",  // red, lifted
-  blackbeard: "#5a7290",   // navy → slate-blue, lifted for dark contrast
+  calico_jack: "#ea6e3c",  // terracotta — pushed warmer, into orange-red territory
+  blackbeard: "#4a7ec8",   // cobalt blue — cleaner, more saturated
   black_bart: "#d4a85a",   // gold
-  henry_avery: "#3a8a78",  // sea green, lifted
-  edward_low: "#c0423a",   // burgundy → red, lifted for dark contrast
+  henry_avery: "#4ea84e",  // leaf green — pushed away from teal
+  edward_low: "#bc5e72",   // dusty rose/wine — cool/purple-leaning red, lifted further
   stede_bonnet: "#9069a8", // purple, lifted
   generic: "#b8a888",      // paperDim (was ink — unusable on dark)
 } as const;
