@@ -13,7 +13,7 @@ import {
 import { ref, update } from "firebase/database";
 import { buildJoinUrl, RoomQRCode, startGame, useRoomState } from "react-gameroom";
 import type { RoomState } from "react-gameroom";
-import type { Game, Player } from "../game/types";
+import type { Player } from "../game/types";
 import { initGame } from "../game/setup";
 import { GameBoard } from "../components/GameBoard";
 import { FlagFor } from "../components/flags";
@@ -26,6 +26,7 @@ import { PageCanvas } from "../components/shell/PageCanvas";
 import { Masthead } from "../components/shell/Masthead";
 import { Foot } from "../components/shell/Foot";
 import { navyHoursLabel, toRoman } from "../lib/navyHours";
+import { countAlive, countDead, countYielded } from "../lib/playerCounts";
 
 const EMPTY_ROOM: RoomState<Player> = {
   roomId: "",
@@ -170,10 +171,6 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
     </Box>
   );
 }
-
-const countAlive = (g: Game) => g.players.filter(p => p.status === "alive").length;
-const countYielded = (g: Game) => Object.values(g.round.commits).filter(c => c?.withdrew).length;
-const countDead = (g: Game) => g.players.filter(p => p.status === "dead").length;
 
 function PlayerCard({ player, score }: { player: Player; score?: number }) {
   const cashTotal = player.cash.reduce((s, n) => s + n.value, 0);
