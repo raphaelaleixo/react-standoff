@@ -8,7 +8,8 @@ import { seatPositions, pairGeometry } from "./geometry";
 const CANVAS = 480;
 const RADIUS = 180;
 const LANE_GAP = 14;
-const ARROW_STOP_RATIO = 0.8; // Arrows stop at 80% of line length to avoid circles
+const ROUNDEL_RADIUS = 32; // Roundel default size is 64
+const ARROW_TARGET_PADDING = 6; // Pixels of breathing room between arrow tip and target circle edge
 const PHASES_WITH_LINES: RoundPhase[] = ["withdraw", "reveal_withdraw", "reveal_bbb", "reveal_others"];
 
 interface TargetingMapProps {
@@ -88,7 +89,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
             <path d="M0,0 L10,5 L0,10 z" fill={palette.paperDim} />
           </marker>
           <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feGaussianBlur stdDeviation="1.8" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -124,11 +125,15 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
               const forwardLane = offsetLine(x1, y1, x2, y2, LANE_GAP / 2);
               const backwardLane = offsetLine(x1, y1, x2, y2, -LANE_GAP / 2);
 
-              // Calculate arrow positions: always 20% from the target
-              // Forward: x1 → x2, target is x2, so arrow at 80% from x1
-              const forwardArrowEnd = pointAtRatio(forwardLane, ARROW_STOP_RATIO);
-              // Backward: x2 → x1, target is x1, so arrow at 20% from x1 (80% from x2)
-              const backwardArrowEnd = pointAtRatio(backwardLane, 1 - ARROW_STOP_RATIO);
+              // Arrow tips stop a fixed pixel distance from the target circle so
+              // every arrow looks equally close to its target, regardless of how
+              // far apart the two players sit on the hex.
+              const lineLen = Math.hypot(x2 - x1, y2 - y1);
+              const stopDist = ROUNDEL_RADIUS + ARROW_TARGET_PADDING;
+              const forwardRatio = (lineLen - stopDist) / lineLen;
+              const backwardRatio = stopDist / lineLen;
+              const forwardArrowEnd = pointAtRatio(forwardLane, forwardRatio);
+              const backwardArrowEnd = pointAtRatio(backwardLane, backwardRatio);
 
               return (
                 <g key={`${i}-${j}`}>
@@ -137,7 +142,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
                       <line
                         x1={forwardLane.x1} y1={forwardLane.y1}
                         x2={forwardArrowEnd.x} y2={forwardArrowEnd.y}
-                        stroke={lineStroke} strokeWidth={2.4}
+                        stroke={lineStroke} strokeWidth={1.8}
                         strokeDasharray={lineDash}
                         markerEnd={markerRef}
                         style={{ transition: "stroke 0.2s ease" }}
@@ -145,7 +150,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
                       <line
                         x1={forwardArrowEnd.x} y1={forwardArrowEnd.y}
                         x2={forwardLane.x2} y2={forwardLane.y2}
-                        stroke={lineStroke} strokeWidth={2.4}
+                        stroke={lineStroke} strokeWidth={1.8}
                         strokeDasharray={lineDash}
                         style={{ transition: "stroke 0.2s ease" }}
                       />
@@ -156,7 +161,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
                       <line
                         x1={backwardLane.x2} y1={backwardLane.y2}
                         x2={backwardArrowEnd.x} y2={backwardArrowEnd.y}
-                        stroke={lineStroke} strokeWidth={2.4}
+                        stroke={lineStroke} strokeWidth={1.8}
                         strokeDasharray={lineDash}
                         markerEnd={markerRef}
                         style={{ transition: "stroke 0.2s ease" }}
@@ -164,7 +169,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
                       <line
                         x1={backwardArrowEnd.x} y1={backwardArrowEnd.y}
                         x2={backwardLane.x1} y2={backwardLane.y1}
-                        stroke={lineStroke} strokeWidth={2.4}
+                        stroke={lineStroke} strokeWidth={1.8}
                         strokeDasharray={lineDash}
                         style={{ transition: "stroke 0.2s ease" }}
                       />
