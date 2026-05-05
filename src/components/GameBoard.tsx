@@ -1,4 +1,5 @@
-import { Box } from "@mui/material";
+import { useRef } from "react";
+import { Box, Fade } from "@mui/material";
 import type { Game } from "../game/types";
 import { palette } from "../theme/colors";
 import { HoardList } from "./hoard/HoardList";
@@ -8,6 +9,7 @@ import { RevealBanner } from "./standoff/RevealBanner";
 import { CrewRoster } from "./crew/CrewRoster";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 import { STANDOFF_DURATION_MS } from "../lib/phaseDurations";
+import { durations } from "../theme/animations";
 
 export type GameBoardBanner =
   | { kind: "broadside"; struckCount: number }
@@ -31,6 +33,11 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
     startedAt: game.round.phaseStartedAt,
     durationMs: STANDOFF_DURATION_MS,
   });
+  // Latch the last visible count so the StandoffStamp keeps reading the
+  // same digit while it fades out after the phase has already advanced.
+  const lastCountRef = useRef(0);
+  if (count !== null) lastCountRef.current = count;
+  const showStamp = inStandoff && count !== null;
 
   return (
     <Box
@@ -72,7 +79,13 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
         >
           <TargetingMap
             game={game}
-            overlay={inStandoff && count !== null ? <StandoffStamp count={count} /> : undefined}
+            overlay={
+              <Fade in={showStamp} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
+                <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                  <StandoffStamp count={lastCountRef.current} />
+                </Box>
+              </Fade>
+            }
           />
         </Box>
         <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
