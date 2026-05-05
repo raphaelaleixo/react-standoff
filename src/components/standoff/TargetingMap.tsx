@@ -206,7 +206,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
             if (phase === "reveal_others") return bullet === "bang" || bullet === "bang_bang_bang";
             return false;
           };
-          const FIRE_FILL_DURATION = 0.55; // seconds to fill the line source→target
+          const FIRE_FILL_DURATION = 0.35; // seconds to fill the line source→target
           // Draw-in via SVG mask: each direction renders an invisible
           // "reveal stroke" inside a <mask> whose stroke-dashoffset animates
           // from lineLen → 0. The visible dashed line stays "6 4" the whole
@@ -341,7 +341,10 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                         fill={forwardFired ? palette.blood : palette.paperDim}
                         style={{
                           ...arrowDrawStyle,
-                          transition: `${arrowDrawStyle.transition}, fill 0.15s ease ${forwardFired ? FIRE_FILL_DURATION : 0}s, filter 0.15s ease ${forwardFired ? FIRE_FILL_DURATION : 0}s`,
+                          // Delay the colour shift until ink actually reaches the arrow tip
+                          // (durLong) — not the full source→target fill — so the arrow
+                          // turns red just as the red overlay arrives at it.
+                          transition: `${arrowDrawStyle.transition}, fill 0.12s ease ${forwardFired ? durLong : 0}s, filter 0.12s ease ${forwardFired ? durLong : 0}s`,
                           filter: forwardFired ? "drop-shadow(0 0 1.8px rgba(201,58,48,0.55))" : "none",
                         }}
                       />
@@ -410,7 +413,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                         fill={backwardFired ? palette.blood : palette.paperDim}
                         style={{
                           ...arrowDrawStyle,
-                          transition: `${arrowDrawStyle.transition}, fill 0.15s ease ${backwardFired ? FIRE_FILL_DURATION : 0}s, filter 0.15s ease ${backwardFired ? FIRE_FILL_DURATION : 0}s`,
+                          transition: `${arrowDrawStyle.transition}, fill 0.12s ease ${backwardFired ? durLong : 0}s, filter 0.12s ease ${backwardFired ? durLong : 0}s`,
                           filter: backwardFired ? "drop-shadow(0 0 1.8px rgba(201,58,48,0.55))" : "none",
                         }}
                       />
