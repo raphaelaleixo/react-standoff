@@ -4,17 +4,24 @@ import { palette } from "../theme/colors";
 import { HoardList } from "./hoard/HoardList";
 import { TargetingMap } from "./standoff/TargetingMap";
 import { StandoffStamp } from "./standoff/StandoffStamp";
+import { RevealBanner } from "./standoff/RevealBanner";
 import { CrewRoster } from "./crew/CrewRoster";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 
 const STANDOFF_DURATION_MS = 4000;
 
+export type GameBoardBanner =
+  | { kind: "broadside"; struckCount: number }
+  | { kind: "kill"; name: string }
+  | null;
+
 interface GameBoardProps {
   game: Game;
   freshlyStruck?: Set<string>;
+  banner?: GameBoardBanner;
 }
 
-export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
+export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
   // Map the round's banknote loot into the HoardList shape. Carry-over data
   // is not currently tracked on Banknote; defer to a follow-up if/when it lands.
   const loot = game.round.loot.map(n => ({ value: n.value }));
@@ -30,32 +37,47 @@ export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
     <Box
       sx={{
         flex: 1,
-        display: "grid",
-        gridTemplateColumns: "25% 50% 25%",
-        borderTop: `4px double ${palette.ruleStrong}`,
-        borderBottom: `4px double ${palette.ruleStrong}`,
+        display: "flex",
+        flexDirection: "column",
         minHeight: 0,
+        position: "relative",
       }}
     >
-      <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
-        <HoardList loot={loot} />
-      </Box>
+      {banner && (
+        banner.kind === "broadside"
+          ? <RevealBanner kind="broadside" struckCount={banner.struckCount} />
+          : <RevealBanner kind="kill" name={banner.name} />
+      )}
       <Box
         sx={{
-          padding: "0.6rem 0.85rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          flex: 1,
+          display: "grid",
+          gridTemplateColumns: "25% 50% 25%",
+          borderTop: `4px double ${palette.ruleStrong}`,
+          borderBottom: `4px double ${palette.ruleStrong}`,
           minHeight: 0,
-          position: "relative",
         }}
       >
-        <TargetingMap game={game} />
-        {inStandoff && count !== null && <StandoffStamp count={count} />}
-      </Box>
-      <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
-        <CrewRoster game={game} freshlyStruck={freshlyStruck} />
+        <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <HoardList loot={loot} />
+        </Box>
+        <Box
+          sx={{
+            padding: "0.6rem 0.85rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 0,
+            position: "relative",
+          }}
+        >
+          <TargetingMap game={game} />
+          {inStandoff && count !== null && <StandoffStamp count={count} />}
+        </Box>
+        <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <CrewRoster game={game} freshlyStruck={freshlyStruck} />
+        </Box>
       </Box>
     </Box>
   );
