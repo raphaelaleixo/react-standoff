@@ -82,6 +82,17 @@
     "navyHours": "Navy ~{{hours}} hours out",
     "sailsOnHorizon": "Sails on the horizon."
   },
+  "shell": {
+    "round": "ROUND",
+    "ofTotal": "{{n}} of VIII",
+    "room": "ROOM",
+    "alive": "ALIVE",
+    "yielded": "YIELDED",
+    "dead": "DEAD",
+    "next": "NEXT · WHO SHALL FALL?",
+    "navyHoursLabel": "— navy ~{{hours}} hours out —",
+    "sailsLabel": "— sails on the horizon —"
+  },
   "reveal": {
     "broadside": "BROADSIDE!",
     "shot": "SHOT!",

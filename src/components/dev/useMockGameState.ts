@@ -30,7 +30,7 @@ export function useMockGameState(initial: Game): UseMockGameStateResult {
 
   const actions = useMemo<MockGameActions>(() => ({
     setPhase: (phase) =>
-      setGame(g => ({ ...g, round: { ...g.round, phase } })),
+      setGame(g => ({ ...g, round: { ...g.round, phase, phaseStartedAt: Date.now() } })),
 
     setRoundNumber: (n) =>
       setGame(g => ({ ...g, round: { ...g.round, number: clamp(Math.trunc(n), 1, 8) } })),

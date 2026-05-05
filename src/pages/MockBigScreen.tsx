@@ -1,15 +1,18 @@
 // DEV-only mock for the big-screen view. Renders the new GameBoard with
 // fixture data so you can iterate on layout without a live room.
 import { Box } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Masthead } from "../components/shell/Masthead";
 import { Foot } from "../components/shell/Foot";
 import { GameBoard } from "../components/GameBoard";
-import { navyHoursLabel } from "../lib/navyHours";
+import { navyHoursLabel, toRoman } from "../lib/navyHours";
+import { countAlive, countDead, countYielded } from "../lib/playerCounts";
 import type { Game, Player } from "../game/types";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel } from "../components/dev/DevControlsPanel";
+import { useRevealBanner } from "../hooks/useRevealBanner";
 
 const PLAYERS: Player[] = [
   { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",  bullets: ["bang","clic","clic","clic","clic","bang","bang_bang_bang"], cash: [{ id: "bn-a1", value: 10000 }, { id: "bn-a2", value: 5000 }], wounds: 1, shame: 0, status: "alive", effects: [] },
@@ -26,7 +29,7 @@ const FIXTURE_GAME: Game = {
   round: {
     number: 3,
     phase: "withdraw",
-    phaseStartedAt: 0,
+    phaseStartedAt: Date.now(),
     loot: [
       { id: "loot-1", value: 20000 },
       { id: "loot-2", value: 10000 },
@@ -49,25 +52,23 @@ const FIXTURE_GAME: Game = {
 };
 
 export default function MockBigScreen() {
+  const { t } = useTranslation();
   const { game, actions } = useMockGameState(FIXTURE_GAME);
   const { open, setOpen } = useDevPanelToggle(true);
-
-  const aliveCount = game.players.filter(p => p.status === "alive").length;
-  const deadCount = game.players.filter(p => p.status === "dead").length;
-  const yieldedCount = Object.values(game.round.commits).filter(c => c.withdrew).length;
+  const banner = useRevealBanner(game);
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={<>ROUND <em>{game.round.number} of VIII</em></>}
-          right={<>ROOM <em>MOCK</em></>}
+          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(game.round.number) })}</em></>}
+          right={<>{t("shell.room")} <em>MOCK</em></>}
         />
-        <GameBoard game={game} />
+        <GameBoard game={game} banner={banner} />
         <Foot
-          left={`${aliveCount} ALIVE · ${yieldedCount} YIELDED · ${deadCount} DEAD`}
-          cry={navyHoursLabel(game.round.number)}
-          right="NEXT · WHO SHALL FALL?"
+          left={`${countAlive(game)} ${t("shell.alive")} · ${countYielded(game)} ${t("shell.yielded")} · ${countDead(game)} ${t("shell.dead")}`}
+          cry={navyHoursLabel(game.round.number, t)}
+          right={t("shell.next")}
         />
       </PageCanvas>
       <DevControlsPanel

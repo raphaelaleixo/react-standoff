@@ -158,14 +158,14 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
     <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={<>ROUND <em>{toRoman(round.number)} of VIII</em></>}
-          right={<>ROOM <em>{roomId}</em></>}
+          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(round.number) })}</em></>}
+          right={<>{t("shell.room")} <em>{roomId}</em></>}
         />
         <GameBoard game={game} banner={banner} />
         <Foot
-          left={`${countAlive(game)} ALIVE · ${countYielded(game)} YIELDED · ${countDead(game)} DEAD`}
-          cry={navyHoursLabel(round.number)}
-          right="NEXT · WHO SHALL FALL?"
+          left={`${countAlive(game)} ${t("shell.alive")} · ${countYielded(game)} ${t("shell.yielded")} · ${countDead(game)} ${t("shell.dead")}`}
+          cry={navyHoursLabel(round.number, t)}
+          right={t("shell.next")}
         />
       </PageCanvas>
     </Box>
