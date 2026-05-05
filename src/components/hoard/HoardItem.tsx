@@ -46,7 +46,7 @@ export function HoardItem({ value, carry, carryFromRound }: HoardItemProps) {
     >
       <DenominationIcon value={value} aria-label={NAMES[value].toLowerCase()} />
       <Box>
-        <Box sx={{ fontFamily: fonts.displayCaps, fontSize: "0.6rem", letterSpacing: "0.16em" }}>
+        <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.6rem", letterSpacing: "0.16em" }}>
           {NAMES[value]}
         </Box>
         {subline && (
@@ -55,7 +55,7 @@ export function HoardItem({ value, carry, carryFromRound }: HoardItemProps) {
           </Box>
         )}
       </Box>
-      <Box sx={{ fontFamily: fonts.displayCaps, fontSize: "0.7rem", letterSpacing: "0.04em" }}>
+      <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.7rem", letterSpacing: "0.04em" }}>
         ${value.toLocaleString()}
       </Box>
     </Box>

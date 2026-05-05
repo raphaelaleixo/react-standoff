@@ -28,6 +28,7 @@ export function Masthead({ left, center = "The Standoff", centerSub = DEFAULT_SU
       <Box
         sx={{
           fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
           fontSize: "0.78rem",
           letterSpacing: "0.32em",
           color: palette.paperDim,
@@ -53,6 +54,7 @@ export function Masthead({ left, center = "The Standoff", centerSub = DEFAULT_SU
           <Box
             sx={{
               fontFamily: fonts.bodySc,
+              fontFeatureSettings: '"smcp"',
               fontSize: "0.6rem",
               letterSpacing: "0.36em",
               color: palette.paperDim,
@@ -67,6 +69,7 @@ export function Masthead({ left, center = "The Standoff", centerSub = DEFAULT_SU
         sx={{
           textAlign: "right",
           fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
           fontSize: "0.78rem",
           letterSpacing: "0.32em",
           color: palette.paperDim,

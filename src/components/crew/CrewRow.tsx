@@ -39,7 +39,6 @@ export function CrewRow({ player, flagName, status, freshWoundIndex, "data-testi
         gridTemplateColumns: "28px 1fr auto",
         gap: "0.4rem",
         padding: "0.32rem 0.15rem",
-        borderBottom: `1px solid ${palette.rule}`,
         alignItems: "center",
         background: struck ? "rgba(201, 58, 48, 0.14)" : "transparent",
         opacity: dead ? 0.4 : 1,
@@ -60,7 +59,7 @@ export function CrewRow({ player, flagName, status, freshWoundIndex, "data-testi
         <FlagFor id={player.colorOrAvatar} size={20} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
-        <Box sx={{ fontFamily: fonts.displayCaps, fontSize: "0.6rem", letterSpacing: "0.14em", textDecoration: dead ? "line-through" : "none" }}>
+        <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.6rem", letterSpacing: "0.14em", textDecoration: dead ? "line-through" : "none" }}>
           {flagName}
           <Box component="span" sx={{ fontFamily: fonts.body, fontStyle: "italic", letterSpacing: "0.02em", color: palette.paperDim, paddingLeft: "0.4em", fontSize: "0.58rem" }}>
             {player.displayName}
@@ -76,13 +75,13 @@ export function CrewRow({ player, flagName, status, freshWoundIndex, "data-testi
               {player.cash.map((n, i) => (
                 <DenominationIcon key={i} value={n.value} size={13} />
               ))}
-              <Box sx={{ fontFamily: fonts.displayCaps, fontSize: "0.62rem", color: palette.paper, marginLeft: "0.3rem" }}>
+              <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.62rem", color: palette.paper, marginLeft: "0.3rem" }}>
                 ${(cash / 1000).toFixed(0)}k
               </Box>
             </>
           )}
           {player.shame > 0 && (
-            <Box sx={{ fontFamily: fonts.displayCaps, fontSize: "0.5rem", letterSpacing: "0.1em", background: palette.yellow, color: palette.ink, padding: "0 0.3rem", marginLeft: "0.3rem" }}>
+            <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.5rem", letterSpacing: "0.1em", background: palette.yellow, color: palette.ink, padding: "0 0.3rem", marginLeft: "0.3rem" }}>
               YELLOW ×{player.shame}
             </Box>
           )}
@@ -131,6 +130,7 @@ function StatusPill({ status, label }: { status: CrewStatus; label: string }) {
       data-status={status}
       sx={{
         fontFamily: fonts.displayCaps,
+        fontFeatureSettings: '"smcp"',
         fontSize: "0.5rem",
         letterSpacing: "0.2em",
         padding: "0.12rem 0.35rem",

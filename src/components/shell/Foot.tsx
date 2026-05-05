@@ -19,6 +19,7 @@ export function Foot({ left, cry, right }: FootProps) {
         alignItems: "center",
         gap: "1rem",
         fontFamily: fonts.displayCaps,
+        fontFeatureSettings: '"smcp"',
         fontSize: "0.65rem",
         letterSpacing: "0.18em",
         color: palette.paper,

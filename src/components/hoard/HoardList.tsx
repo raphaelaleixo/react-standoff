@@ -25,6 +25,7 @@ export function HoardList({ loot }: HoardListProps) {
         sx={{
           textAlign: "center",
           fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
           fontSize: "0.62rem",
           letterSpacing: "0.4em",
           color: palette.paperDim,
@@ -42,6 +43,7 @@ export function HoardList({ loot }: HoardListProps) {
         sx={{
           textAlign: "center",
           fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
           fontSize: "1.5rem",
           letterSpacing: "0.04em",
           lineHeight: 1,

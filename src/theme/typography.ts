@@ -4,11 +4,16 @@
 //   - body:           italic captions, nicknames, flavor lines, hints
 //   - bodySc:         small caps for masthead sub-rule
 //
+// EB Garamond is a single family on Google Fonts — small caps come from the
+// OpenType `smcp` feature. Pair `displayCaps` and `bodySc` with
+// `fontFeatureSettings: '"smcp"'` at the call site (or via the theme variant)
+// to get true small caps.
+//
 // Loaded via Google Fonts <link> in index.html.
 
 export const fonts = {
-  blackletter: '"UnifrakturCook", "IM Fell DW Pica SC", Georgia, serif',
-  displayCaps: '"IM Fell DW Pica SC", Georgia, serif',
-  body: '"IM Fell English", Georgia, serif',
-  bodySc: '"IM Fell English SC", Georgia, serif',
+  blackletter: '"Germania One", Georgia, serif',
+  displayCaps: '"EB Garamond", Georgia, serif',
+  body: '"EB Garamond", Georgia, serif',
+  bodySc: '"EB Garamond", Georgia, serif',
 } as const;

@@ -29,6 +29,7 @@ export function Button({
     display: fullWidth ? "block" : "inline-block",
     width: fullWidth ? "100%" : "auto",
     fontFamily: fonts.displayCaps,
+    fontFeatureSettings: '"smcp"',
     letterSpacing: "0.32em",
     fontSize: "1rem",
     textAlign: "center" as const,

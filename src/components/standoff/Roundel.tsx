@@ -48,6 +48,7 @@ export function Roundel({
       <Box
         sx={{
           fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
           fontSize: "0.55rem",
           letterSpacing: "0.16em",
           marginTop: "0.25rem",

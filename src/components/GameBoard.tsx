@@ -26,13 +26,13 @@ export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
         minHeight: 0,
       }}
     >
-      <Box sx={{ padding: "0.6rem 0.85rem", borderRight: `1px solid ${palette.ruleStrong}`, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
         <HoardList loot={loot} />
       </Box>
       <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
         <TargetingMap game={game} />
       </Box>
-      <Box sx={{ padding: "0.6rem 0.85rem", borderLeft: `1px solid ${palette.ruleStrong}`, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
         <CrewRoster game={game} freshlyStruck={freshlyStruck} />
       </Box>
     </Box>
