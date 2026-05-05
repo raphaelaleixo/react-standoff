@@ -55,7 +55,7 @@ describe("CrewRoster", () => {
     expect(screen.queryByText("AIMING")).toBeNull();
   });
 
-  it("derives status=yielded vs aiming during reveal_withdraw phase", () => {
+  it("shows YIELDED for withdrawn players in reveal_withdraw and no pill for the rest", () => {
     const g = makeGame();
     g.round.phase = "reveal_withdraw";
     g.round.commits = {
@@ -64,7 +64,7 @@ describe("CrewRoster", () => {
     };
     render(<CrewRoster game={g} />);
     expect(screen.getByText("YIELDED")).toBeInTheDocument();
-    expect(screen.getAllByText("AIMING").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("AIMING")).toBeNull();
   });
 
   it("derives status=struck for freshlyStruck players in reveal_bbb", () => {
@@ -83,15 +83,18 @@ describe("CrewRoster", () => {
     expect(screen.getByText("DEAD")).toBeInTheDocument();
   });
 
-  it("derives status=out for survivors and yielded for withdrawers in split phase", () => {
+  it("in split phase: yielded shows YIELDED, struck shows STRUCK, standing shows no pill", () => {
     const g = makeGame();
     g.round.phase = "split";
     g.round.commits = {
-      a: { bullet: "bang", target: "b", withdrew: true },
-      b: { bullet: "bang", target: "c" },
+      a: { bullet: "bang", target: "b", withdrew: true }, // yielded
+      b: { bullet: "bang", target: "c" },                 // bang shooter, hits c → c struck
+      c: { bullet: "clic", target: "d" },                 // c is struck (target of b)
+      d: { bullet: "clic", target: "a" },                 // standing, no pill
     };
     render(<CrewRoster game={g} />);
     expect(screen.getByText("YIELDED")).toBeInTheDocument();
-    expect(screen.getAllByText("OUT").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("STRUCK")).toBeInTheDocument();
+    expect(screen.queryByText("OUT")).toBeNull();
   });
 });

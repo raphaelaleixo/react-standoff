@@ -12,17 +12,17 @@ function p(over: Partial<Player> = {}): Player {
 
 describe("CrewRow", () => {
   it("renders the player nickname", () => {
-    render(<CrewRow player={p()} status="aiming" />);
+    render(<CrewRow player={p()} status="ready" />);
     expect(screen.getByText(/Cap'n Maud/)).toBeInTheDocument();
   });
 
-  it("renders the AIMING status pill", () => {
-    render(<CrewRow player={p()} status="aiming" />);
-    expect(screen.getByText("AIMING")).toBeInTheDocument();
+  it("renders the READY status pill", () => {
+    render(<CrewRow player={p()} status="ready" />);
+    expect(screen.getByText("READY")).toBeInTheDocument();
   });
 
   it("renders 3 wound pips, filled per wounds count", () => {
-    render(<CrewRow player={p({ wounds: 2 })} status="aiming" data-testid="r" />);
+    render(<CrewRow player={p({ wounds: 2 })} status="ready" data-testid="r" />);
     const pips = screen.getByTestId("r").querySelectorAll("[data-pip]");
     expect(pips).toHaveLength(3);
     expect(pips[0].getAttribute("data-pip")).toBe("filled");
@@ -31,28 +31,27 @@ describe("CrewRow", () => {
   });
 
   it("renders one yellow pip per shame marker", () => {
-    render(<CrewRow player={p({ shame: 2 })} status="aiming" data-testid="r" />);
+    render(<CrewRow player={p({ shame: 2 })} status="ready" data-testid="r" />);
     const shamePips = screen.getByTestId("r").querySelectorAll('[data-pip="shame"]');
     expect(shamePips).toHaveLength(2);
   });
 
-  it("renders empty pockets text when cash is empty", () => {
-    render(<CrewRow player={p()} status="aiming" />);
-    expect(screen.getByText(/empty pockets/i)).toBeInTheDocument();
+  it("renders $0k when the player has no cash (instead of flavor text)", () => {
+    render(<CrewRow player={p()} status="ready" />);
+    expect(screen.getByText("$0k")).toBeInTheDocument();
   });
 
-  it("renders the OUT pill with dashed border to distinguish from choosing", () => {
-    const { rerender } = render(<CrewRow player={p()} status="out" />);
-    const outPill = screen.getByText("OUT");
-    expect(outPill).toBeInTheDocument();
-    expect(outPill.getAttribute("data-status")).toBe("out");
-    const outClass = outPill.className;
+  it("renders distinct text styles per status (e.g. yielded vs choosing)", () => {
+    const { rerender } = render(<CrewRow player={p()} status="yielded" />);
+    const yieldedPill = screen.getByText("YIELDED");
+    expect(yieldedPill).toBeInTheDocument();
+    expect(yieldedPill.getAttribute("data-status")).toBe("yielded");
+    const yieldedClass = yieldedPill.className;
 
     rerender(<CrewRow player={p()} status="choosing" />);
     const choosingPill = screen.getByText("CHOOSING");
     expect(choosingPill.getAttribute("data-status")).toBe("choosing");
-    // sx differs between out and choosing → emotion-generated className differs
-    expect(choosingPill.className).not.toBe(outClass);
+    expect(choosingPill.className).not.toBe(yieldedClass);
   });
 
   it("renders dead pill without compounding opacity (relies on outer row opacity only)", () => {

@@ -5,17 +5,15 @@ import { FlagFor } from "../flags";
 import type { Player } from "../../game/types";
 
 export type CrewStatus =
-  | "choosing" | "ready" | "aiming" | "yielded"
-  | "struck" | "dead" | "out";
+  | "choosing" | "ready" | "yielded"
+  | "struck" | "dead";
 
 const STATUS_LABEL: Record<CrewStatus, string> = {
   choosing: "CHOOSING",
   ready: "READY",
-  aiming: "AIMING",
   yielded: "YIELDED",
   struck: "STRUCK",
   dead: "DEAD",
-  out: "OUT",
 };
 
 interface CrewRowProps {
@@ -29,6 +27,7 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
   const cash = player.cash.reduce((s, n) => s + n.value, 0);
   const dead = player.status === "dead" || status === "dead";
   const struck = status === "struck";
+  const yielded = status === "yielded";
   return (
     <Box
       data-testid={testid}
@@ -38,7 +37,11 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
         gap: "0.85rem",
         padding: "0.45rem 0.2rem",
         alignItems: "center",
-        background: struck ? "rgba(201, 58, 48, 0.14)" : "transparent",
+        background: struck
+          ? "rgba(201, 58, 48, 0.14)"
+          : yielded
+            ? "rgba(230, 196, 64, 0.10)"
+            : "transparent",
         opacity: dead ? 0.4 : 1,
       }}
     >
@@ -61,15 +64,9 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
           {player.displayName}
         </Box>
         <Box sx={{ display: "flex", gap: "0.22rem", alignItems: "center", marginTop: "0.15rem", flexWrap: "wrap" }}>
-          {cash === 0 ? (
-            <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.9rem", color: palette.paperFaint }}>
-              — empty pockets —
-            </Box>
-          ) : (
-            <Box sx={{ fontFamily: fonts.blackletter, fontWeight: 700, fontSize: "1.15rem", color: palette.paper, lineHeight: 1 }}>
-              ${(cash / 1000).toFixed(0)}k
-            </Box>
-          )}
+          <Box sx={{ fontFamily: fonts.blackletter, fontWeight: 700, fontSize: "1.15rem", color: cash === 0 ? palette.paperDim : palette.paper, lineHeight: 1 }}>
+            ${(cash / 1000).toFixed(0)}k
+          </Box>
           {player.shame > 0 && (
             <Box sx={{ display: "flex", gap: "2px", alignItems: "center", marginLeft: "0.5rem", marginTop: "3px" }}>
               {Array.from({ length: player.shame }).map((_, i) => (
@@ -90,7 +87,7 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
         </Box>
       </Box>
       <Box sx={{ display: "flex", flexDirection: "column", gap: "0.18rem", alignItems: "flex-end" }}>
-        {status && <StatusPill status={status} label={STATUS_LABEL[status]} />}
+        <StatusPill status={status} label={status ? STATUS_LABEL[status] : ""} />
         <Box sx={{ display: "flex", gap: "3px" }}>
           {[0, 1, 2].map(i => {
             const filled = i < player.wounds;
@@ -138,29 +135,28 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
   );
 }
 
-function StatusPill({ status, label }: { status: CrewStatus; label: string }) {
-  const isAim = status === "aiming";
-  const isReady = status === "ready";
-  const isYielded = status === "yielded";
-  const isStruck = status === "struck";
-  const isOut = status === "out";
+const STATUS_COLOR: Record<CrewStatus, string> = {
+  choosing: palette.paper,    // active — waiting on this player
+  ready: palette.gold,
+  yielded: palette.paperDim,  // passive — out of this round
+  struck: palette.blood,
+  dead: palette.paperDim,
+};
+
+function StatusPill({ status, label }: { status?: CrewStatus; label: string }) {
   return (
     <Box
-      data-status={status}
+      data-status={status ?? "none"}
       sx={{
         fontFamily: fonts.displayCaps,
         fontFeatureSettings: '"smcp"',
         fontSize: "0.85rem",
         letterSpacing: "0.2em",
-        padding: "0.18rem 0.45rem",
         whiteSpace: "nowrap",
-        border: `1.5px ${isYielded || isOut ? "dashed" : "solid"} ${isYielded || isOut ? palette.paperDim : palette.paper}`,
-        background: isAim ? palette.paper : isReady ? palette.gold : isStruck ? palette.blood : "transparent",
-        color: isAim || isReady ? palette.ink : isStruck ? palette.paper : isYielded || isOut ? palette.paperDim : palette.paper,
-        opacity: isOut ? 0.55 : 1,
+        color: status ? STATUS_COLOR[status] : "transparent",
       }}
     >
-      {label}
+      {label || " "}
     </Box>
   );
 }
