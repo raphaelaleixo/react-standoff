@@ -34,17 +34,23 @@ export function StandoffStamp({ count }: StandoffStampProps) {
       <Box
         sx={{
           position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          fontFamily: fonts.blackletter,
-          fontSize: "18rem",
-          lineHeight: 0.85,
-          color: palette.paper,
-          textShadow: "0 0 24px rgba(255, 195, 120, 0.25)",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        {count}
+        <Box
+          sx={{
+            fontFamily: fonts.blackletter,
+            fontSize: "18rem",
+            lineHeight: 1,
+            color: palette.paper,
+            textShadow: "0 0 24px rgba(255, 195, 120, 0.25)",
+          }}
+        >
+          {count}
+        </Box>
       </Box>
       <Box
         sx={{
