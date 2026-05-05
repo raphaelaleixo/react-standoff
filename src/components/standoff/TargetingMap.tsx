@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { palette } from "../../theme/colors";
 import type { Game, RoundPhase } from "../../game/types";
@@ -69,7 +69,10 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   // within the same round keep the lines stable.
   const drewForRoundRef = useRef<number | null>(null);
   const [drawState, setDrawState] = useState<"pre" | "active" | "done">("done");
-  useEffect(() => {
+  // useLayoutEffect — not useEffect — so the "pre" state lands before the
+  // browser ever paints the new round. Otherwise the arrows flash visible
+  // for one frame between phase change and the draw-in starting.
+  useLayoutEffect(() => {
     if (!showLines) return;
     if (drewForRoundRef.current === game.round.number) return;
     setDrawState("pre");
