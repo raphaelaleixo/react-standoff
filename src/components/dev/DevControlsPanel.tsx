@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Box,
   Button,
@@ -27,6 +27,18 @@ const PHASES: RoundPhase[] = [
   "split",
 ];
 
+// How long each phase should linger when "Play round" walks the mock through
+// the round. Tuned for at-the-table watchability, not real-game speed.
+const PHASE_HOLD_MS: Record<RoundPhase, number> = {
+  commit: 900,
+  standoff: 2500,
+  withdraw: 2500,
+  reveal_withdraw: 1500,
+  reveal_bbb: 2500,
+  reveal_others: 2500,
+  split: 0, // terminal — no hold; round ends here
+};
+
 const BULLETS: Array<BulletCard | "none"> = ["none", "clic", "bang", "bang_bang_bang"];
 const WOUNDS: Array<0 | 1 | 2 | 3> = [0, 1, 2, 3];
 
@@ -38,6 +50,43 @@ interface DevControlsPanelProps {
 }
 
 export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPanelProps) {
+  const [playing, setPlaying] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const stopPlay = useCallback(() => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setPlaying(false);
+  }, []);
+
+  const playRound = useCallback(() => {
+    setPlaying(true);
+    const step = (i: number) => {
+      const phase = PHASES[i];
+      actions.setPhase(phase);
+      const next = PHASES[i + 1];
+      if (!next) {
+        timeoutRef.current = null;
+        setPlaying(false);
+        return;
+      }
+      timeoutRef.current = setTimeout(() => step(i + 1), PHASE_HOLD_MS[phase]);
+    };
+    step(0);
+  }, [actions]);
+
+  // Cancel any in-flight playback on unmount so we don't keep nudging phase.
+  useEffect(() => () => {
+    if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+  }, []);
+
+  const handleReset = () => {
+    stopPlay();
+    actions.reset();
+  };
+
   return (
     <Drawer
       anchor="right"
@@ -51,7 +100,7 @@ export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPa
       >
         <Typography variant="h6">Dev Controls</Typography>
         <Stack direction="row" spacing={1}>
-          <Button size="small" variant="outlined" onClick={actions.reset}>
+          <Button size="small" variant="outlined" onClick={handleReset}>
             Reset
           </Button>
           <IconButton size="small" onClick={onClose} aria-label="Close dev controls">
@@ -87,6 +136,16 @@ export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPa
             <Typography sx={{ minWidth: 24, textAlign: "center" }}>{game.round.number}</Typography>
             <Button size="small" variant="outlined" onClick={() => actions.setRoundNumber(game.round.number + 1)}>+</Button>
           </Stack>
+
+          <Button
+            size="small"
+            variant={playing ? "outlined" : "contained"}
+            onClick={playing ? stopPlay : playRound}
+            sx={{ mt: 1.5 }}
+            fullWidth
+          >
+            {playing ? "Stop" : "▶ Play round"}
+          </Button>
         </Section>
 
         <Section title="Players">
