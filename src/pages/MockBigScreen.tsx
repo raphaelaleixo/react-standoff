@@ -1,5 +1,6 @@
 // DEV-only mock for the big-screen view. Renders the new GameBoard with
 // fixture data so you can iterate on layout without a live room.
+import { useMemo } from "react";
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { PageCanvas } from "../components/shell/PageCanvas";
@@ -8,7 +9,7 @@ import { Foot } from "../components/shell/Foot";
 import { GameBoard } from "../components/GameBoard";
 import { navyHoursLabel, toRoman } from "../lib/navyHours";
 import { countAlive, countDead, countYielded } from "../lib/playerCounts";
-import type { Game, Player } from "../game/types";
+import type { Game, Player, RoundResolution } from "../game/types";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel } from "../components/dev/DevControlsPanel";
@@ -22,6 +23,34 @@ const PLAYERS: Player[] = [
   { id: "e", displayName: "Old Salt",   colorOrAvatar: "black_bart",   bullets: [], cash: [{ id: "bn-e1", value: 10000 }], wounds: 0, shame: 0, status: "alive", effects: [] },
   { id: "f", displayName: "Black Sam",  colorOrAvatar: "henry_avery",  bullets: [], cash: [], wounds: 0, shame: 0, status: "alive", effects: [] },
 ];
+
+// Static stand-ins for what the real round resolver would write into
+// game.round.resolution. Used by MockBigScreen to demo the reveal banners
+// without running the actual resolution pipeline. The shooter / target /
+// outcome fields here mirror the fixture commits above so the targeting
+// arrows and crew pills stay coherent across phases.
+const RESOLUTION_BROADSIDE: RoundResolution = {
+  shots: [
+    { shooter: "b", target: "a", card: "bang_bang_bang", outcome: "hit" },
+    { shooter: "a", target: "c", card: "bang", outcome: "hit" },
+    { shooter: "c", target: "e", card: "bang", outcome: "hit" },
+    { shooter: "d", target: "b", card: "bang", outcome: "hit" },
+    { shooter: "e", target: "f", card: "clic", outcome: "no_effect_clic" },
+  ],
+  ducks: [],
+  standing: ["a", "b", "c", "e", "f"],
+  woundedThisRound: { a: 1, b: 1, c: 1, e: 1 },
+  eliminated: [],
+  awards: {},
+  carryover: [],
+};
+
+const RESOLUTION_KILL: RoundResolution = {
+  ...RESOLUTION_BROADSIDE,
+  woundedThisRound: { ...RESOLUTION_BROADSIDE.woundedThisRound, d: 1 },
+  // d had 2 wounds going in; another shot tips them over and they walk the plank.
+  eliminated: ["d"],
+};
 
 const FIXTURE_GAME: Game = {
   seed: "mock",
@@ -55,19 +84,32 @@ export default function MockBigScreen() {
   const { t } = useTranslation();
   const { game, actions } = useMockGameState(FIXTURE_GAME);
   const { open, setOpen } = useDevPanelToggle(true);
-  const banner = useRevealBanner(game);
+
+  // Overlay a phase-appropriate resolution onto the mock game so the reveal
+  // banners have data to render. The dev hook only tracks phase + commits;
+  // the real resolver isn't wired in here, so we hand-pick a resolution per
+  // phase. Other phases see no resolution and the banner stays hidden.
+  const displayGame = useMemo<Game>(() => {
+    const resolution =
+      game.round.phase === "reveal_bbb" ? RESOLUTION_BROADSIDE :
+      game.round.phase === "reveal_others" ? RESOLUTION_KILL :
+      undefined;
+    return { ...game, round: { ...game.round, resolution } };
+  }, [game]);
+
+  const banner = useRevealBanner(displayGame);
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(game.round.number) })}</em></>}
+          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(displayGame.round.number) })}</em></>}
           right={<>{t("shell.room")} <em>MOCK</em></>}
         />
-        <GameBoard game={game} banner={banner} />
+        <GameBoard game={displayGame} banner={banner} />
         <Foot
-          left={`${countAlive(game)} ${t("shell.alive")} · ${countYielded(game)} ${t("shell.yielded")} · ${countDead(game)} ${t("shell.dead")}`}
-          cry={navyHoursLabel(game.round.number, t)}
+          left={`${countAlive(displayGame)} ${t("shell.alive")} · ${countYielded(displayGame)} ${t("shell.yielded")} · ${countDead(displayGame)} ${t("shell.dead")}`}
+          cry={navyHoursLabel(displayGame.round.number, t)}
           right={t("shell.next")}
         />
       </PageCanvas>
