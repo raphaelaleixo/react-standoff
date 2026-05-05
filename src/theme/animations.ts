@@ -7,10 +7,10 @@ import { keyframes } from "@emotion/react";
 export const durations = {
   fast: 150,
   base: 300,
-  // 550ms matches the existing FIRE_FILL_DURATION inside TargetingMap so the
-  // line "draw-in" effect uses the same cadence as the fire-fill that
-  // follows it.
-  draw: 550,
+  // 350ms keeps the line draw-in snappy without losing the source→target
+  // sweep. Fire-fill (TargetingMap, FIRE_FILL_DURATION = 0.55s) is
+  // intentionally separate — it kicks in later for a different beat.
+  draw: 350,
   slow: 700,
 };
 

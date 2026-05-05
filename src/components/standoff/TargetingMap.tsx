@@ -207,24 +207,16 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
             return false;
           };
           const FIRE_FILL_DURATION = 0.55; // seconds to fill the line source→target
-          // Draw-in style for the beige tracks: pre = invisible (offset = full
-          // segment length), active = transitioning to offset 0, done = the
-          // normal dashed "6 4" pattern. Caller passes per-segment timing so
-          // the long source→arrow piece animates first, then the short
-          // arrow→target piece starts with a delay.
-          const beigeDrawStyle = (segLen: number, delayMs: number, durMs: number): React.CSSProperties => {
-            if (drawState === "done") return { strokeDasharray: "6 4" };
-            if (drawState === "active") {
-              return {
-                strokeDasharray: `${segLen} ${segLen}`,
-                strokeDashoffset: 0,
-                transition: `stroke-dashoffset ${durMs}ms ease-out ${delayMs}ms`,
-              };
-            }
-            return {
-              strokeDasharray: `${segLen} ${segLen}`,
-              strokeDashoffset: segLen,
-            };
+          // Draw-in via SVG mask: each direction renders an invisible
+          // "reveal stroke" inside a <mask> whose stroke-dashoffset animates
+          // from lineLen → 0. The visible dashed line stays "6 4" the whole
+          // time and is only painted where the mask is white, so the dashes
+          // appear progressively from source to target without ever flashing
+          // as a solid line.
+          const maskRevealStyle: React.CSSProperties = {
+            transition: drawState === "active"
+              ? `stroke-dashoffset ${durations.draw}ms ease-out`
+              : undefined,
           };
           // Arrow polygons stay hidden until the beige lines finish drawing,
           // then fade in. Once visible they carry on with their existing
@@ -292,19 +284,33 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                       data-line-fired={forwardFired ? "true" : "false"}
                       style={{ opacity: forwardVisible ? 1 : 0, transition: "opacity 0.4s ease" }}
                     >
-                      {/* Beige dashed track — draws in source→arrow→target */}
-                      <line
-                        x1={forwardLane.x1} y1={forwardLane.y1}
-                        x2={forwardArrowEnd.x} y2={forwardArrowEnd.y}
-                        stroke={palette.paperDim} strokeWidth={1.8}
-                        style={beigeDrawStyle(segLong, 0, durLong * 1000)}
-                      />
-                      <line
-                        x1={forwardArrowEnd.x} y1={forwardArrowEnd.y}
-                        x2={forwardLane.x2} y2={forwardLane.y2}
-                        stroke={palette.paperDim} strokeWidth={1.8}
-                        style={beigeDrawStyle(segShort, durLong * 1000, durShort * 1000)}
-                      />
+                      {/* Beige dashed track — wiped in via the mask below */}
+                      <defs>
+                        <mask id={`beige-fwd-${uid}-${i}-${j}`} maskUnits="userSpaceOnUse">
+                          <line
+                            x1={forwardLane.x1} y1={forwardLane.y1}
+                            x2={forwardLane.x2} y2={forwardLane.y2}
+                            stroke="white" strokeWidth={6}
+                            strokeDasharray={`${lineLen} ${lineLen}`}
+                            strokeDashoffset={drawState === "pre" ? lineLen : 0}
+                            style={maskRevealStyle}
+                          />
+                        </mask>
+                      </defs>
+                      <g mask={`url(#beige-fwd-${uid}-${i}-${j})`}>
+                        <line
+                          x1={forwardLane.x1} y1={forwardLane.y1}
+                          x2={forwardArrowEnd.x} y2={forwardArrowEnd.y}
+                          stroke={palette.paperDim} strokeWidth={1.8}
+                          strokeDasharray="6 4"
+                        />
+                        <line
+                          x1={forwardArrowEnd.x} y1={forwardArrowEnd.y}
+                          x2={forwardLane.x2} y2={forwardLane.y2}
+                          stroke={palette.paperDim} strokeWidth={1.8}
+                          strokeDasharray="6 4"
+                        />
+                      </g>
                       {/* Red ink overlay — fills source→target on fire */}
                       <g filter={`url(#${glowId})`} style={{ opacity: forwardFired ? 1 : 0, transition: "opacity 0.1s ease" }}>
                         <line
@@ -347,19 +353,33 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                       data-line-fired={backwardFired ? "true" : "false"}
                       style={{ opacity: backwardVisible ? 1 : 0, transition: "opacity 0.4s ease" }}
                     >
-                      {/* Beige dashed track — draws in source→arrow→target */}
-                      <line
-                        x1={backwardLane.x2} y1={backwardLane.y2}
-                        x2={backwardArrowEnd.x} y2={backwardArrowEnd.y}
-                        stroke={palette.paperDim} strokeWidth={1.8}
-                        style={beigeDrawStyle(segLong, 0, durLong * 1000)}
-                      />
-                      <line
-                        x1={backwardArrowEnd.x} y1={backwardArrowEnd.y}
-                        x2={backwardLane.x1} y2={backwardLane.y1}
-                        stroke={palette.paperDim} strokeWidth={1.8}
-                        style={beigeDrawStyle(segShort, durLong * 1000, durShort * 1000)}
-                      />
+                      {/* Beige dashed track — wiped in via the mask below */}
+                      <defs>
+                        <mask id={`beige-bwd-${uid}-${i}-${j}`} maskUnits="userSpaceOnUse">
+                          <line
+                            x1={backwardLane.x2} y1={backwardLane.y2}
+                            x2={backwardLane.x1} y2={backwardLane.y1}
+                            stroke="white" strokeWidth={6}
+                            strokeDasharray={`${lineLen} ${lineLen}`}
+                            strokeDashoffset={drawState === "pre" ? lineLen : 0}
+                            style={maskRevealStyle}
+                          />
+                        </mask>
+                      </defs>
+                      <g mask={`url(#beige-bwd-${uid}-${i}-${j})`}>
+                        <line
+                          x1={backwardLane.x2} y1={backwardLane.y2}
+                          x2={backwardArrowEnd.x} y2={backwardArrowEnd.y}
+                          stroke={palette.paperDim} strokeWidth={1.8}
+                          strokeDasharray="6 4"
+                        />
+                        <line
+                          x1={backwardArrowEnd.x} y1={backwardArrowEnd.y}
+                          x2={backwardLane.x1} y2={backwardLane.y1}
+                          stroke={palette.paperDim} strokeWidth={1.8}
+                          strokeDasharray="6 4"
+                        />
+                      </g>
                       {/* Red ink overlay — fills source→target on fire */}
                       <g filter={`url(#${glowId})`} style={{ opacity: backwardFired ? 1 : 0, transition: "opacity 0.1s ease" }}>
                         <line
