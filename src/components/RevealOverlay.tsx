@@ -53,7 +53,7 @@ export function RevealOverlay({ game, slotName }: {
             key={i}
             sx={{
               color: shotColor(s),
-              fontSize: { xs: "1.4rem", md: "2rem" },
+              fontSize: { xs: "1.51rem", md: "2.02rem" },
               textAlign: "center",
               fontWeight: 600,
               fontFamily: "Pirata One, serif",

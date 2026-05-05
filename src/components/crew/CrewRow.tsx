@@ -59,15 +59,15 @@ export function CrewRow({ player, flagName, status, freshWoundIndex, "data-testi
         <FlagFor id={player.colorOrAvatar} size={20} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
-        <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.6rem", letterSpacing: "0.14em", textDecoration: dead ? "line-through" : "none" }}>
+        <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.84rem", letterSpacing: "0.14em", textDecoration: dead ? "line-through" : "none" }}>
           {flagName}
-          <Box component="span" sx={{ fontFamily: fonts.body, fontStyle: "italic", letterSpacing: "0.02em", color: palette.paperDim, paddingLeft: "0.4em", fontSize: "0.58rem" }}>
+          <Box component="span" sx={{ fontFamily: fonts.body, fontStyle: "italic", letterSpacing: "0.02em", color: palette.paperDim, paddingLeft: "0.4em", fontSize: "0.82rem" }}>
             {player.displayName}
           </Box>
         </Box>
         <Box sx={{ display: "flex", gap: "0.18rem", alignItems: "center", marginTop: "0.18rem", flexWrap: "wrap" }}>
           {cash === 0 ? (
-            <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.55rem", color: palette.paperFaint }}>
+            <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.79rem", color: palette.paperFaint }}>
               — empty pockets —
             </Box>
           ) : (
@@ -75,13 +75,13 @@ export function CrewRow({ player, flagName, status, freshWoundIndex, "data-testi
               {player.cash.map((n, i) => (
                 <DenominationIcon key={i} value={n.value} size={13} />
               ))}
-              <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.62rem", color: palette.paper, marginLeft: "0.3rem" }}>
+              <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.86rem", color: palette.paper, marginLeft: "0.3rem" }}>
                 ${(cash / 1000).toFixed(0)}k
               </Box>
             </>
           )}
           {player.shame > 0 && (
-            <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.5rem", letterSpacing: "0.1em", background: palette.yellow, color: palette.ink, padding: "0 0.3rem", marginLeft: "0.3rem" }}>
+            <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.75rem", letterSpacing: "0.1em", background: palette.yellow, color: palette.ink, padding: "0 0.3rem", marginLeft: "0.3rem" }}>
               YELLOW ×{player.shame}
             </Box>
           )}
@@ -131,7 +131,7 @@ function StatusPill({ status, label }: { status: CrewStatus; label: string }) {
       sx={{
         fontFamily: fonts.displayCaps,
         fontFeatureSettings: '"smcp"',
-        fontSize: "0.5rem",
+        fontSize: "0.75rem",
         letterSpacing: "0.2em",
         padding: "0.12rem 0.35rem",
         whiteSpace: "nowrap",

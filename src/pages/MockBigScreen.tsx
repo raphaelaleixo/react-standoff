@@ -61,7 +61,7 @@ export default function MockBigScreen() {
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
           left={<>ROUND <em>{game.round.number} of VIII</em></>}
-          right={<>PHASE <em>{game.round.phase}</em></>}
+          right={<>ROOM <em>MOCK</em></>}
         />
         <GameBoard game={game} />
         <Foot

@@ -9,11 +9,6 @@ describe("Masthead", () => {
     expect(screen.getByText("PHASE standoff")).toBeInTheDocument();
   });
 
-  it("renders the sub-rule when provided", () => {
-    render(<Masthead center="The Standoff" centerSub="A NEW & TRUE BALLAD OF MUTINY" />);
-    expect(screen.getByText(/A NEW & TRUE BALLAD/)).toBeInTheDocument();
-  });
-
   it("falls back to default centre when center omitted", () => {
     render(<Masthead left="x" right="y" />);
     expect(screen.getByText("The Standoff")).toBeInTheDocument();

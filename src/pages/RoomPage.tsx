@@ -57,7 +57,7 @@ export default function RoomPage() {
   }
 
   if (roomState.status === "started") {
-    return <GameView game={game} />;
+    return <GameView game={game} roomId={id ?? ""} />;
   }
 
   const claimed = roomState.players.filter(p => p.status !== "empty");
@@ -127,7 +127,7 @@ export default function RoomPage() {
   );
 }
 
-function GameView({ game }: { game: ReturnType<typeof useGameState>["game"] }) {
+function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["game"]; roomId: string }) {
   const { t } = useTranslation();
   if (!game) {
     return (
@@ -156,7 +156,7 @@ function GameView({ game }: { game: ReturnType<typeof useGameState>["game"] }) {
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
           left={<>ROUND <em>{toRoman(round.number)} of VIII</em></>}
-          right={<>PHASE <em>{round.phase}</em></>}
+          right={<>ROOM <em>{roomId}</em></>}
         />
         <GameBoard game={game} />
         <Foot

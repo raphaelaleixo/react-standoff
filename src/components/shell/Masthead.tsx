@@ -5,13 +5,10 @@ import { fonts } from "../../theme/typography";
 interface MastheadProps {
   left?: React.ReactNode;
   center?: React.ReactNode;
-  centerSub?: React.ReactNode;
   right?: React.ReactNode;
 }
 
-const DEFAULT_SUB = "A NEW & TRUE BALLAD OF MUTINY · MMXXVI";
-
-export function Masthead({ left, center = "The Standoff", centerSub = DEFAULT_SUB, right }: MastheadProps) {
+export function Masthead({ left, center = "The Standoff", right }: MastheadProps) {
   return (
     <Box
       component="header"
@@ -29,7 +26,7 @@ export function Masthead({ left, center = "The Standoff", centerSub = DEFAULT_SU
         sx={{
           fontFamily: fonts.displayCaps,
           fontFeatureSettings: '"smcp"',
-          fontSize: "0.78rem",
+          fontSize: "0.99rem",
           letterSpacing: "0.32em",
           color: palette.paperDim,
           paddingBottom: "0.45rem",
@@ -37,40 +34,25 @@ export function Masthead({ left, center = "The Standoff", centerSub = DEFAULT_SU
       >
         {left}
       </Box>
-      <Box sx={{ textAlign: "center" }}>
-        <Box
-          sx={{
-            fontFamily: fonts.blackletter,
-            fontSize: "2.1rem",
-            lineHeight: 0.9,
-            letterSpacing: "0.02em",
-            color: palette.paper,
-            textShadow: "0 0 12px rgba(255, 195, 120, 0.15)",
-          }}
-        >
-          {center}
-        </Box>
-        {centerSub && (
-          <Box
-            sx={{
-              fontFamily: fonts.bodySc,
-              fontFeatureSettings: '"smcp"',
-              fontSize: "0.6rem",
-              letterSpacing: "0.36em",
-              color: palette.paperDim,
-              marginTop: "0.18rem",
-            }}
-          >
-            {centerSub}
-          </Box>
-        )}
+      <Box
+        sx={{
+          textAlign: "center",
+          fontFamily: fonts.blackletter,
+          fontSize: "2.1rem",
+          lineHeight: 0.9,
+          letterSpacing: "0.02em",
+          color: palette.paper,
+          textShadow: "0 0 12px rgba(255, 195, 120, 0.15)",
+        }}
+      >
+        {center}
       </Box>
       <Box
         sx={{
           textAlign: "right",
           fontFamily: fonts.displayCaps,
           fontFeatureSettings: '"smcp"',
-          fontSize: "0.78rem",
+          fontSize: "0.99rem",
           letterSpacing: "0.32em",
           color: palette.paperDim,
           paddingBottom: "0.45rem",

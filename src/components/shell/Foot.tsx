@@ -20,7 +20,7 @@ export function Foot({ left, cry, right }: FootProps) {
         gap: "1rem",
         fontFamily: fonts.displayCaps,
         fontFeatureSettings: '"smcp"',
-        fontSize: "0.65rem",
+        fontSize: "0.88rem",
         letterSpacing: "0.18em",
         color: palette.paper,
         flexShrink: 0,
@@ -32,7 +32,7 @@ export function Foot({ left, cry, right }: FootProps) {
         sx={{
           fontFamily: fonts.body,
           fontStyle: "italic",
-          fontSize: "0.95rem",
+          fontSize: "1.13rem",
           letterSpacing: "0.05em",
           color: palette.paperDim,
         }}

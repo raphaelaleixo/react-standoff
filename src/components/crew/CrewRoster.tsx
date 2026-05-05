@@ -42,7 +42,7 @@ export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
           textAlign: "center",
           fontFamily: fonts.displayCaps,
           fontFeatureSettings: '"smcp"',
-          fontSize: "0.62rem",
+          fontSize: "0.86rem",
           letterSpacing: "0.4em",
           color: palette.paperDim,
           paddingBottom: "0.25rem",
@@ -51,7 +51,7 @@ export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
         }}
       >
         THE CREW
-        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.7rem", color: palette.paper, marginTop: "0.1rem" }}>
+        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.92rem", color: palette.paper, marginTop: "0.1rem" }}>
           six souls, one prize
         </Box>
       </Box>

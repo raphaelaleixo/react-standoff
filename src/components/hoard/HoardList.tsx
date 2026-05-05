@@ -26,7 +26,7 @@ export function HoardList({ loot }: HoardListProps) {
           textAlign: "center",
           fontFamily: fonts.displayCaps,
           fontFeatureSettings: '"smcp"',
-          fontSize: "0.62rem",
+          fontSize: "0.86rem",
           letterSpacing: "0.4em",
           color: palette.paperDim,
           padding: "0 0 0.25rem",
@@ -35,7 +35,7 @@ export function HoardList({ loot }: HoardListProps) {
         }}
       >
         ON THE TABLE
-        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.7rem", letterSpacing: "0.05em", color: palette.paper, marginTop: "0.1rem" }}>
+        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.92rem", letterSpacing: "0.05em", color: palette.paper, marginTop: "0.1rem" }}>
           the captain's hoard
         </Box>
       </Box>
@@ -44,14 +44,14 @@ export function HoardList({ loot }: HoardListProps) {
           textAlign: "center",
           fontFamily: fonts.displayCaps,
           fontFeatureSettings: '"smcp"',
-          fontSize: "1.5rem",
+          fontSize: "1.59rem",
           letterSpacing: "0.04em",
           lineHeight: 1,
           color: palette.gold,
         }}
       >
         ${total.toLocaleString()}
-        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.6rem", letterSpacing: "0.18em", color: palette.paperDim, marginTop: "0.12rem" }}>
+        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.84rem", letterSpacing: "0.18em", color: palette.paperDim, marginTop: "0.12rem" }}>
           {subline}
         </Box>
       </Box>

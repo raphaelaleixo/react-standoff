@@ -38,7 +38,7 @@ const theme = createTheme({
       fontFamily: fonts.displayCaps,
       fontFeatureSettings: '"smcp"',
       letterSpacing: "0.36em",
-      fontSize: "0.75rem",
+      fontSize: "0.96rem",
     },
   },
 });

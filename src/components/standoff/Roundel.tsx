@@ -49,7 +49,7 @@ export function Roundel({
         sx={{
           fontFamily: fonts.displayCaps,
           fontFeatureSettings: '"smcp"',
-          fontSize: "0.55rem",
+          fontSize: "0.79rem",
           letterSpacing: "0.16em",
           marginTop: "0.25rem",
           color: dim ? palette.paperDim : palette.paper,
