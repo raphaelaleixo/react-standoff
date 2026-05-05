@@ -7,8 +7,7 @@ import { StandoffStamp } from "./standoff/StandoffStamp";
 import { RevealBanner } from "./standoff/RevealBanner";
 import { CrewRoster } from "./crew/CrewRoster";
 import { useStandoffCount } from "../hooks/useStandoffCount";
-
-const STANDOFF_DURATION_MS = 3000;
+import { STANDOFF_DURATION_MS } from "../lib/phaseDurations";
 
 export type GameBoardBanner =
   | { kind: "broadside"; struckCount: number }

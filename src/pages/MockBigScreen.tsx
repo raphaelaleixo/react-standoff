@@ -15,8 +15,7 @@ import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel } from "../components/dev/DevControlsPanel";
 import { useRevealBanner } from "../hooks/useRevealBanner";
 import { useStandoffCount } from "../hooks/useStandoffCount";
-
-const STANDOFF_DURATION_MS = 3000;
+import { STANDOFF_DURATION_MS } from "../lib/phaseDurations";
 
 const PLAYERS: Player[] = [
   { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",  bullets: ["bang","clic","clic","clic","clic","bang","bang_bang_bang"], cash: [{ id: "bn-a1", value: 10000 }, { id: "bn-a2", value: 5000 }], wounds: 1, shame: 0, status: "alive", effects: [] },
