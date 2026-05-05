@@ -10,6 +10,8 @@ interface RoundelProps {
   name?: string;
   ducked?: boolean;
   dim?: boolean;
+  /** Just took a wound this phase — solid blood-red border, ducked-style dim/rotate. */
+  struck?: boolean;
   size?: number;
   "data-testid"?: string;
 }
@@ -20,11 +22,16 @@ export function Roundel({
   name,
   ducked,
   dim,
+  struck,
   size = 64,
   "data-testid": testid,
 }: RoundelProps) {
-  const state = ducked ? "ducked" : dim ? "dim" : "live";
-  const transform = ducked ? "rotate(-6deg) scale(0.92)" : "none";
+  const state = struck ? "struck" : ducked ? "ducked" : dim ? "dim" : "live";
+  const laidDown = ducked || struck;
+  const transform = laidDown ? "rotate(-6deg) scale(0.92)" : "none";
+  const borderStyle = ducked ? "dashed" : "solid";
+  const borderColor = struck ? palette.blood : ducked ? palette.paperDim : palette.paper;
+  const borderWidth = struck ? 3 : 2.5;
   return (
     <Box
       data-testid={testid}
@@ -35,22 +42,34 @@ export function Roundel({
         height: size,
       }}
     >
+      {/* Always-opaque backplate so targeting lines never bleed through a dimmed roundel. */}
       <Box
         sx={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: "50%",
+          background: palette.inkUp,
+        }}
+      />
+      <Box
+        sx={{
+          position: "relative",
           width: size,
           height: size,
           borderRadius: "50%",
           background: palette.inkUp,
-          border: `2.5px ${ducked ? "dashed" : "solid"} ${ducked ? palette.paperDim : palette.paper}`,
-          boxShadow: `3px 3px 0 ${palette.inkDeep}, inset 0 0 8px rgba(0,0,0,0.4)`,
+          border: `${borderWidth}px ${borderStyle} ${borderColor}`,
+          boxShadow: struck
+            ? `0 0 0 2px rgba(201,58,48,0.35), 3px 3px 0 ${palette.inkDeep}, inset 0 0 8px rgba(0,0,0,0.4)`
+            : `3px 3px 0 ${palette.inkDeep}, inset 0 0 8px rgba(0,0,0,0.4)`,
           color: flagColor(colorId ?? flagId),
-          opacity: ducked ? 0.45 : dim ? 0.55 : 1,
+          opacity: laidDown ? 0.45 : dim ? 0.55 : 1,
           filter: dim ? "saturate(0.6)" : undefined,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           transform,
-          transition: "transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease",
+          transition: "transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease, border-color 0.3s ease, box-shadow 0.3s ease",
         }}
       >
         <FlagFor id={flagId} size={size * 0.5} />

@@ -40,18 +40,84 @@ describe("TargetingMap", () => {
     expect(container.querySelectorAll("svg line").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("draws lines during reveal_withdraw, including for yielded players", () => {
+  it("only fires the bang_bang_bang lines red during reveal_bbb; others stay provisional", () => {
+    const g = makeGame();
+    g.round = {
+      ...g.round,
+      phase: "reveal_bbb",
+      commits: {
+        a: { bullet: "bang_bang_bang", target: "b" },
+        c: { bullet: "bang", target: "d" },
+        e: { bullet: "clic", target: "f" },
+      },
+    };
+    const { container } = render(<TargetingMap game={g} />);
+    expect(container.querySelectorAll('[data-line-fired="true"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-line-fired="false"]')).toHaveLength(2);
+  });
+
+  it("marks BBB victims with the struck state during reveal_bbb", () => {
+    const g = makeGame();
+    g.round = {
+      ...g.round,
+      phase: "reveal_bbb",
+      commits: {
+        a: { bullet: "bang_bang_bang", target: "b" },  // b is BBB victim
+        c: { bullet: "bang", target: "d" },            // d is hit by bang, not BBB
+      },
+    };
+    const { container } = render(<TargetingMap game={g} />);
+    expect(container.querySelectorAll('[data-state="struck"]')).toHaveLength(1);
+  });
+
+  it("hides non-BBB lines from/to BBB victims (their bullet is discarded by surprise)", () => {
+    const g = makeGame();
+    g.round = {
+      ...g.round,
+      phase: "reveal_bbb",
+      commits: {
+        a: { bullet: "bang_bang_bang", target: "b" },  // BBB → b is victim
+        b: { bullet: "bang", target: "c" },            // b's bang voided (b is victim)
+        d: { bullet: "bang", target: "b" },            // bang at b voided (b is victim)
+      },
+    };
+    const { container } = render(<TargetingMap game={g} />);
+    // Only a→b survives.
+    expect(container.querySelectorAll('[data-line-visible="true"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-line-visible="false"]')).toHaveLength(2);
+  });
+
+  it("hides lines from/to yielded players during reveal_bbb", () => {
+    const g = makeGame();
+    g.round = {
+      ...g.round,
+      phase: "reveal_bbb",
+      commits: {
+        a: { bullet: "bang_bang_bang", target: "b" },        // active BBB
+        c: { bullet: "bang_bang_bang", target: "d", withdrew: true },  // shooter ducked → hidden
+        e: { bullet: "bang_bang_bang", target: "c" },        // target ducked → hidden
+      },
+    };
+    const { container } = render(<TargetingMap game={g} />);
+    expect(container.querySelectorAll('[data-line-visible="true"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-line-visible="false"]')).toHaveLength(2);
+  });
+
+  it("hides lines from/to yielded players during reveal_withdraw (kept in DOM for fade)", () => {
     const g = makeGame();
     g.round = {
       ...g.round,
       phase: "reveal_withdraw",
       commits: {
-        a: { bullet: "bang", target: "b" },
-        c: { bullet: "bang", target: "d", withdrew: true },
+        a: { bullet: "bang", target: "b" },                  // active
+        c: { bullet: "bang", target: "d", withdrew: true },  // shooter ducked → hidden
+        e: { bullet: "bang", target: "c" },                  // target ducked → hidden
       },
     };
     const { container } = render(<TargetingMap game={g} />);
-    // Both the active and yielded targeting should render lines.
-    expect(container.querySelectorAll("svg line").length).toBeGreaterThanOrEqual(2);
+    // Voided lines stay mounted with opacity 0 so the withdraw transition can
+    // fade them out instead of snapping them away.
+    expect(container.querySelectorAll('[data-line-visible="true"]')).toHaveLength(1);  // a→b
+    expect(container.querySelectorAll('[data-line-visible="false"]')).toHaveLength(2); // c→d, e→c
   });
 });

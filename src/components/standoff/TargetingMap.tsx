@@ -61,7 +61,20 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
   const showLines = PHASES_WITH_LINES.includes(game.round.phase);
   const ducked = (id: string) =>
     !!game.round.commits[id]?.withdrew &&
-    (game.round.phase === "reveal_bbb" || game.round.phase === "reveal_others" || game.round.phase === "split");
+    (game.round.phase === "reveal_withdraw" || game.round.phase === "reveal_bbb" || game.round.phase === "reveal_others" || game.round.phase === "split");
+
+  // BBB victims: anyone targeted by a non-yielded BBB shooter where the target
+  // themselves didn't yield (ducking voids the incoming BBB per the gangster
+  // rule). They take a wound in reveal_bbb and are out of the round — their
+  // bullet is discarded face-down.
+  const bbbVictims = new Set<string>();
+  for (const p of players) {
+    const c = game.round.commits[p.id];
+    if (c?.bullet === "bang_bang_bang" && !c.withdrew && c.target) {
+      const tc = game.round.commits[c.target];
+      if (!tc?.withdrew) bbbVictims.add(c.target);
+    }
+  }
   const center = CANVAS / 2;
 
   return (
@@ -97,25 +110,60 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
           </filter>
         </defs>
         {showLines && (() => {
-          // In the withdraw phase yields are still mutable — show provisional aim
-          // in beige + dashed (no glow). After lock-in (reveal_*) shots are committed
-          // in blood with the menacing glow.
-          const provisional = game.round.phase === "withdraw";
-          const lineStroke = provisional ? palette.paperDim : palette.blood;
-          const lineDash = provisional ? "6 4" : undefined;
-          const markerRef = `url(#${provisional ? arrowBeigeId : arrowId})`;
+          const phase = game.round.phase;
+          // Withdraw shows every committed line (yields are still private).
+          // Once yields are public (reveal_withdraw and on), any line touching
+          // a ducked player is voided — both the duckee's shot and any shot
+          // aimed at them, per the gangster rule.
+          //
+          // From reveal_bbb on, BBB victims are also out of the round: their
+          // own bullet was discarded by the surprise hit, and any non-BBB shot
+          // aimed at them is wasted on a wounded target. BBB shots themselves
+          // still fire (mutual BBB lands on both shooters).
+          const lineVisible = (
+            shooter: typeof game.round.commits[string],
+            target: typeof game.round.commits[string],
+            shooterId: string,
+            targetId: string,
+          ) => {
+            if (phase === "withdraw") return true;
+            if (shooter?.withdrew || target?.withdrew) return false;
+            if (phase === "reveal_bbb" || phase === "reveal_others") {
+              const isBbbLine = shooter?.bullet === "bang_bang_bang";
+              if (!isBbbLine && (bbbVictims.has(shooterId) || bbbVictims.has(targetId))) {
+                return false;
+              }
+            }
+            return true;
+          };
+          // A line "fires" — gets ink-filled with blood-red + glow — the instant
+          // its bullet is dramatically revealed. Reveal_bbb fires only
+          // bang_bang_bang shots; reveal_others fires the rest. Earlier phases
+          // stay in the provisional beige style.
+          const lineFired = (bullet?: string) => {
+            if (phase === "reveal_bbb") return bullet === "bang_bang_bang";
+            if (phase === "reveal_others") return true;
+            return false;
+          };
+          const FIRE_FILL_DURATION = 0.55; // seconds to fill the line source→target
           return (
-          <g filter={provisional ? undefined : `url(#${glowId})`}>
+          <g>
             {pairs.map(({ i, j }) => {
               const pi = players[i];
               const pj = players[j];
               const ci = game.round.commits[pi.id];
               const cj = game.round.commits[pj.id];
-              // During withdraw and reveal_withdraw, show all committed lines (including yielded).
-              // During reveal_bbb / reveal_others, hide withdrawn players' lines (their shot was voided).
-              const isWithdrawPhase = game.round.phase === "withdraw" || game.round.phase === "reveal_withdraw";
-              const forward = !!ci && ci.target === pj.id && (isWithdrawPhase || !ci.withdrew);
-              const backward = !!cj && cj.target === pi.id && (isWithdrawPhase || !cj.withdrew);
+              // "Committed" = the line exists in the round state (a shooter
+              // locked this target). "Visible" = it should be on screen right
+              // now. We render committed lines unconditionally and toggle
+              // visibility via opacity so phase transitions can fade voided
+              // lines out instead of snapping them.
+              const forwardCommitted = !!ci && ci.target === pj.id;
+              const backwardCommitted = !!cj && cj.target === pi.id;
+              const forwardVisible = forwardCommitted && lineVisible(ci, cj, pi.id, pj.id);
+              const backwardVisible = backwardCommitted && lineVisible(cj, ci, pj.id, pi.id);
+              const forwardFired = lineFired(ci?.bullet);
+              const backwardFired = lineFired(cj?.bullet);
               const x1 = center + positions[i].x;
               const y1 = center + positions[i].y;
               const x2 = center + positions[j].x;
@@ -135,45 +183,121 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
               const forwardArrowEnd = pointAtRatio(forwardLane, forwardRatio);
               const backwardArrowEnd = pointAtRatio(backwardLane, backwardRatio);
 
+              // For the fire-fill animation we ink-on a red overlay on top of
+              // the beige track. Split into two sub-segments so the long
+              // source→arrow piece animates first, then the short arrow→target
+              // continuation. Per-piece durations keep the fill speed uniform
+              // across pairs of different physical lengths.
+              const segLong = lineLen - stopDist;   // source → arrow tip
+              const segShort = stopDist;            // arrow tip → target center
+              const durLong = (segLong / lineLen) * FIRE_FILL_DURATION;
+              const durShort = (segShort / lineLen) * FIRE_FILL_DURATION;
+
+              // Angle of the i→j vector in degrees (same axis as both lanes —
+              // a perpendicular offset doesn't rotate the line).
+              const lineAngleDeg = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+
               return (
                 <g key={`${i}-${j}`}>
-                  {forward && (
-                    <>
+                  {forwardCommitted && (
+                    <g
+                      data-line-visible={forwardVisible ? "true" : "false"}
+                      data-line-fired={forwardFired ? "true" : "false"}
+                      style={{ opacity: forwardVisible ? 1 : 0, transition: "opacity 0.4s ease" }}
+                    >
+                      {/* Beige dashed track — always painted */}
                       <line
                         x1={forwardLane.x1} y1={forwardLane.y1}
                         x2={forwardArrowEnd.x} y2={forwardArrowEnd.y}
-                        stroke={lineStroke} strokeWidth={1.8}
-                        strokeDasharray={lineDash}
-                        markerEnd={markerRef}
-                        style={{ transition: "stroke 0.2s ease" }}
+                        stroke={palette.paperDim} strokeWidth={1.8}
+                        strokeDasharray="6 4"
                       />
                       <line
                         x1={forwardArrowEnd.x} y1={forwardArrowEnd.y}
                         x2={forwardLane.x2} y2={forwardLane.y2}
-                        stroke={lineStroke} strokeWidth={1.8}
-                        strokeDasharray={lineDash}
-                        style={{ transition: "stroke 0.2s ease" }}
+                        stroke={palette.paperDim} strokeWidth={1.8}
+                        strokeDasharray="6 4"
                       />
-                    </>
+                      {/* Red ink overlay — fills source→target on fire */}
+                      <g filter={`url(#${glowId})`} style={{ opacity: forwardFired ? 1 : 0, transition: "opacity 0.1s ease" }}>
+                        <line
+                          x1={forwardLane.x1} y1={forwardLane.y1}
+                          x2={forwardArrowEnd.x} y2={forwardArrowEnd.y}
+                          stroke={palette.blood} strokeWidth={1.8}
+                          strokeDasharray={`${segLong} ${segLong}`}
+                          strokeDashoffset={forwardFired ? 0 : segLong}
+                          style={{ transition: `stroke-dashoffset ${durLong}s ease-out` }}
+                        />
+                        <line
+                          x1={forwardArrowEnd.x} y1={forwardArrowEnd.y}
+                          x2={forwardLane.x2} y2={forwardLane.y2}
+                          stroke={palette.blood} strokeWidth={1.8}
+                          strokeDasharray={`${segShort} ${segShort}`}
+                          strokeDashoffset={forwardFired ? 0 : segShort}
+                          style={{ transition: `stroke-dashoffset ${durShort}s ease-out ${durLong}s` }}
+                        />
+                      </g>
+                      {/* Arrow — beige until the line fills, then turns red */}
+                      <polygon
+                        points="-10,-5 0,0 -10,5"
+                        transform={`translate(${forwardArrowEnd.x},${forwardArrowEnd.y}) rotate(${lineAngleDeg})`}
+                        fill={forwardFired ? palette.blood : palette.paperDim}
+                        style={{
+                          transition: `fill 0.15s ease ${forwardFired ? FIRE_FILL_DURATION : 0}s, filter 0.15s ease ${forwardFired ? FIRE_FILL_DURATION : 0}s`,
+                          filter: forwardFired ? "drop-shadow(0 0 1.8px rgba(201,58,48,0.55))" : "none",
+                        }}
+                      />
+                    </g>
                   )}
-                  {backward && (
-                    <>
+                  {backwardCommitted && (
+                    <g
+                      data-line-visible={backwardVisible ? "true" : "false"}
+                      data-line-fired={backwardFired ? "true" : "false"}
+                      style={{ opacity: backwardVisible ? 1 : 0, transition: "opacity 0.4s ease" }}
+                    >
+                      {/* Beige dashed track — always painted */}
                       <line
                         x1={backwardLane.x2} y1={backwardLane.y2}
                         x2={backwardArrowEnd.x} y2={backwardArrowEnd.y}
-                        stroke={lineStroke} strokeWidth={1.8}
-                        strokeDasharray={lineDash}
-                        markerEnd={markerRef}
-                        style={{ transition: "stroke 0.2s ease" }}
+                        stroke={palette.paperDim} strokeWidth={1.8}
+                        strokeDasharray="6 4"
                       />
                       <line
                         x1={backwardArrowEnd.x} y1={backwardArrowEnd.y}
                         x2={backwardLane.x1} y2={backwardLane.y1}
-                        stroke={lineStroke} strokeWidth={1.8}
-                        strokeDasharray={lineDash}
-                        style={{ transition: "stroke 0.2s ease" }}
+                        stroke={palette.paperDim} strokeWidth={1.8}
+                        strokeDasharray="6 4"
                       />
-                    </>
+                      {/* Red ink overlay — fills source→target on fire */}
+                      <g filter={`url(#${glowId})`} style={{ opacity: backwardFired ? 1 : 0, transition: "opacity 0.1s ease" }}>
+                        <line
+                          x1={backwardLane.x2} y1={backwardLane.y2}
+                          x2={backwardArrowEnd.x} y2={backwardArrowEnd.y}
+                          stroke={palette.blood} strokeWidth={1.8}
+                          strokeDasharray={`${segLong} ${segLong}`}
+                          strokeDashoffset={backwardFired ? 0 : segLong}
+                          style={{ transition: `stroke-dashoffset ${durLong}s ease-out` }}
+                        />
+                        <line
+                          x1={backwardArrowEnd.x} y1={backwardArrowEnd.y}
+                          x2={backwardLane.x1} y2={backwardLane.y1}
+                          stroke={palette.blood} strokeWidth={1.8}
+                          strokeDasharray={`${segShort} ${segShort}`}
+                          strokeDashoffset={backwardFired ? 0 : segShort}
+                          style={{ transition: `stroke-dashoffset ${durShort}s ease-out ${durLong}s` }}
+                        />
+                      </g>
+                      {/* Arrow — beige until the line fills, then turns red */}
+                      <polygon
+                        points="-10,-5 0,0 -10,5"
+                        transform={`translate(${backwardArrowEnd.x},${backwardArrowEnd.y}) rotate(${lineAngleDeg + 180})`}
+                        fill={backwardFired ? palette.blood : palette.paperDim}
+                        style={{
+                          transition: `fill 0.15s ease ${backwardFired ? FIRE_FILL_DURATION : 0}s, filter 0.15s ease ${backwardFired ? FIRE_FILL_DURATION : 0}s`,
+                          filter: backwardFired ? "drop-shadow(0 0 1.8px rgba(201,58,48,0.55))" : "none",
+                        }}
+                      />
+                    </g>
                   )}
                 </g>
               );
@@ -198,6 +322,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
             colorId={p.colorOrAvatar}
             ducked={ducked(p.id)}
             dim={p.status === "dead"}
+            struck={game.round.phase === "reveal_bbb" && bbbVictims.has(p.id)}
           />
         </Box>
       ))}
