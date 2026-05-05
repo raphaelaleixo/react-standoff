@@ -3,6 +3,9 @@ import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { FlagFor } from "../flags";
 import type { Player } from "../../game/types";
+import { durations, popIn } from "../../theme/animations";
+
+const POP_TIMING = `${durations.base}ms cubic-bezier(.2,.7,.2,1.4) both`;
 
 export type CrewStatus =
   | "choosing" | "ready" | "yielded"
@@ -79,6 +82,9 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
                     borderRadius: "50%",
                     background: palette.yellow,
                     boxShadow: "0 0 4px rgba(230, 196, 64, 0.55)",
+                    // Each pip animates once on mount. Existing pips keep
+                    // their key, so only newly added shame pops in.
+                    animation: `${popIn} ${POP_TIMING}`,
                   }}
                 />
               ))}
@@ -102,11 +108,7 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  animation: fresh ? "freshWound 0.7s ease-in-out 1" : undefined,
-                  "@keyframes freshWound": {
-                    "0%, 100%": { transform: "scale(1)" },
-                    "50%": { transform: "scale(1.3)" },
-                  },
+                  animation: fresh ? `${popIn} ${POP_TIMING}` : undefined,
                 }}
               >
                 {filled ? (
@@ -147,6 +149,9 @@ function StatusPill({ status, label }: { status?: CrewStatus; label: string }) {
   return (
     <Box
       data-status={status ?? "none"}
+      // Remount on every status change so popIn re-triggers and the new
+      // label arrives with a beat instead of a cross-fade.
+      key={status ?? "none"}
       sx={{
         fontFamily: fonts.displayCaps,
         fontFeatureSettings: '"smcp"',
@@ -154,6 +159,7 @@ function StatusPill({ status, label }: { status?: CrewStatus; label: string }) {
         letterSpacing: "0.2em",
         whiteSpace: "nowrap",
         color: status ? STATUS_COLOR[status] : "transparent",
+        animation: status ? `${popIn} ${POP_TIMING}` : undefined,
       }}
     >
       {label || " "}
