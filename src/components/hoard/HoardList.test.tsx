@@ -10,25 +10,22 @@ describe("HoardList", () => {
     { value: 5000 as const },
   ];
 
-  it("renders one row per banknote", () => {
+  it("renders one card per banknote", () => {
     render(<HoardList loot={loot} />);
-    expect(screen.getAllByText(/PIECE|DOUBLOON/)).toHaveLength(5);
+    expect(screen.getByText("$20,000")).toBeInTheDocument();
+    expect(screen.getAllByText("$10,000")).toHaveLength(2);
+    expect(screen.getAllByText("$5,000")).toHaveLength(2);
   });
 
-  it("renders the total", () => {
+  it("renders the section header", () => {
     render(<HoardList loot={loot} />);
-    expect(screen.getByText("$50,000")).toBeInTheDocument();
+    expect(screen.getByText("On the Table")).toBeInTheDocument();
+    expect(screen.getByText("the captain's hoard")).toBeInTheDocument();
   });
 
-  it("shows note count and carry-over count in the subline", () => {
-    const withCarry = [...loot, { value: 5000 as const, carryFromRound: 2 }];
-    render(<HoardList loot={withCarry} />);
-    expect(screen.getByText(/6 NOTES/)).toBeInTheDocument();
-    expect(screen.getByText(/1 CARRY-OVER/)).toBeInTheDocument();
-  });
-
-  it("hides the carry-over fragment when there are none", () => {
-    render(<HoardList loot={loot} />);
-    expect(screen.queryByText(/CARRY-OVER/)).not.toBeInTheDocument();
+  it("renders an empty list when loot is empty", () => {
+    render(<HoardList loot={[]} />);
+    expect(screen.getByText("On the Table")).toBeInTheDocument();
+    expect(screen.queryByText(/\$/)).not.toBeInTheDocument();
   });
 });

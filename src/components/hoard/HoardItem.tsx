@@ -10,53 +10,58 @@ const NAMES: Record<Denomination, string> = {
   20000: "JEWELED PIECE",
 };
 
-const SUBLINES: Record<Denomination, string | undefined> = {
-  5000: undefined,
-  10000: undefined,
-  20000: "cut emerald",
-};
-
-const ROMAN: Record<number, string> = {
-  1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII",
-};
-
 interface HoardItemProps {
   value: Denomination;
-  carry?: boolean;
-  carryFromRound?: number;
 }
 
-export function HoardItem({ value, carry, carryFromRound }: HoardItemProps) {
-  const subline = carry
-    ? `from rd. ${carryFromRound ? ROMAN[carryFromRound]?.toLowerCase() ?? carryFromRound : "?"}`
-    : SUBLINES[value];
+export function HoardItem({ value }: HoardItemProps) {
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: "24px 1fr auto",
-        alignItems: "center",
-        gap: "0.4rem",
-        padding: "0.28rem 0.32rem",
-        background: carry
-          ? `repeating-linear-gradient(45deg, transparent 0 5px, rgba(237,224,196,0.08) 5px 10px)`
-          : "rgba(237, 224, 196, 0.05)",
-        border: `1px solid ${palette.ruleStrong}`,
+        position: "relative",
+        padding: "0.75rem 0.6rem",
+        clipPath:
+          "polygon(6px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px)",
+        backgroundColor: palette.ruleStrong,
       }}
     >
-      <DenominationIcon value={value} aria-label={NAMES[value].toLowerCase()} />
-      <Box>
-        <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.84rem", letterSpacing: "0.16em" }}>
-          {NAMES[value]}
+      <Box
+        sx={{
+          position: "absolute",
+          inset: "1px",
+          clipPath:
+            "polygon(6px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px)",
+          backgroundColor: palette.inkUp,
+        }}
+      ></Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          gap: "0.5rem",
+          zIndex: 1,
+        }}
+      >
+        <DenominationIcon
+          value={value}
+          size={22}
+          aria-label={NAMES[value].toLowerCase()}
+        />
+        <Box
+          sx={{
+            fontFamily: fonts.blackletter,
+            fontWeight: 400,
+            fontSize: "1.4rem",
+            letterSpacing: "0.02em",
+            color: palette.paper,
+            textBox: "trim-both ex alphabetic",
+            lineHeight: 1,
+          }}
+        >
+          ${value.toLocaleString()}
         </Box>
-        {subline && (
-          <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.79rem", color: palette.paperDim }}>
-            {subline}
-          </Box>
-        )}
-      </Box>
-      <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "0.92rem", letterSpacing: "0.04em" }}>
-        ${value.toLocaleString()}
       </Box>
     </Box>
   );
