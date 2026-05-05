@@ -68,11 +68,12 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
             alignItems: "center",
             justifyContent: "center",
             minHeight: 0,
-            position: "relative",
           }}
         >
-          <TargetingMap game={game} />
-          {inStandoff && count !== null && <StandoffStamp count={count} />}
+          <TargetingMap
+            game={game}
+            overlay={inStandoff && count !== null ? <StandoffStamp count={count} /> : undefined}
+          />
         </Box>
         <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
           <CrewRoster game={game} freshlyStruck={freshlyStruck} />

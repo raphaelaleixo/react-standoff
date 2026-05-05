@@ -16,6 +16,8 @@ interface TargetingMapProps {
   game: Game;
   /** Dim the whole map (used during the standoff countdown overlay). */
   dim?: boolean;
+  /** Optional overlay rendered as a sibling of the SVG / roundels. Sized to the map's square bounds. */
+  overlay?: React.ReactNode;
 }
 
 interface OffsetLine {
@@ -50,7 +52,7 @@ function pointAtRatio(line: OffsetLine, ratio: number) {
   };
 }
 
-export function TargetingMap({ game, dim }: TargetingMapProps) {
+export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   const uid = useId();
   const arrowId = `ah-${uid}`;
   const arrowBeigeId = `ah-beige-${uid}`;
@@ -363,6 +365,7 @@ export function TargetingMap({ game, dim }: TargetingMapProps) {
           />
         </Box>
       ))}
+      {overlay}
     </Box>
   );
 }
