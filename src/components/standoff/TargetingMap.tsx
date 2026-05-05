@@ -11,7 +11,11 @@ const RADIUS = 180;
 const LANE_GAP = 14;
 const ROUNDEL_RADIUS = 32; // Roundel default size is 64
 const ARROW_TARGET_PADDING = 6; // Pixels of breathing room between arrow tip and target circle edge
-const PHASES_WITH_LINES: RoundPhase[] = ["withdraw", "reveal_withdraw", "reveal_bbb", "reveal_others"];
+// `split` is included so the lines stay rendered through the round-end
+// fade-out — the wrapper <g> below transitions opacity to 0 during split,
+// and the per-line visibility logic (bbb-victim filter) keeps its
+// reveal_others state so nothing flickers visible just before it fades.
+const PHASES_WITH_LINES: RoundPhase[] = ["withdraw", "reveal_withdraw", "reveal_bbb", "reveal_others", "split"];
 
 interface TargetingMapProps {
   game: Game;
@@ -188,7 +192,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
           ) => {
             if (phase === "withdraw") return true;
             if (shooter?.withdrew || target?.withdrew) return false;
-            if (phase === "reveal_bbb" || phase === "reveal_others") {
+            if (phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
               const isBbbLine = shooter?.bullet === "bang_bang_bang";
               if (!isBbbLine && (bbbVictims.has(shooterId) || bbbVictims.has(targetId))) {
                 return false;
@@ -226,7 +230,16 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
             transition: `opacity ${durations.fast}ms ease-out`,
           };
           return (
-          <g>
+          <g
+            // Round-end fade: when phase becomes "split" the whole line set
+            // fades together over durations.base. The per-line filtering
+            // above keeps each line in its reveal_others state during the
+            // fade so nothing flickers visible just before it disappears.
+            style={{
+              opacity: phase === "split" ? 0 : 1,
+              transition: `opacity ${durations.base}ms ease`,
+            }}
+          >
             {pairs.map(({ i, j }) => {
               const pi = players[i];
               const pj = players[j];
