@@ -67,25 +67,30 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   // segment length) to fully drawn (offset = 0) over `durations.draw` the
   // first time the round enters PHASES_WITH_LINES. Subsequent phase changes
   // within the same round keep the lines stable.
-  const drewForRoundRef = useRef<number | null>(null);
+  // Track the showLines transition so the draw-in animation plays each time
+  // the lines mount (showLines false → true), not once per round. Phase
+  // transitions inside PHASES_WITH_LINES (withdraw → reveal_withdraw →
+  // reveal_bbb → reveal_others) keep the lines stable.
+  const wasShowingLinesRef = useRef(false);
   const [drawState, setDrawState] = useState<"pre" | "active" | "done">("done");
   // useLayoutEffect — not useEffect — so the "pre" state lands before the
   // browser ever paints the new round. Otherwise the arrows flash visible
   // for one frame between phase change and the draw-in starting.
   useLayoutEffect(() => {
-    if (!showLines) return;
-    if (drewForRoundRef.current === game.round.number) return;
+    if (!showLines) {
+      wasShowingLinesRef.current = false;
+      return;
+    }
+    if (wasShowingLinesRef.current) return;
+    wasShowingLinesRef.current = true;
     setDrawState("pre");
     const raf = requestAnimationFrame(() => setDrawState("active"));
-    const t = setTimeout(() => {
-      setDrawState("done");
-      drewForRoundRef.current = game.round.number;
-    }, durations.draw);
+    const t = setTimeout(() => setDrawState("done"), durations.draw);
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(t);
     };
-  }, [showLines, game.round.number]);
+  }, [showLines]);
   const ducked = (id: string) =>
     !!game.round.commits[id]?.withdrew &&
     (game.round.phase === "reveal_withdraw" || game.round.phase === "reveal_bbb" || game.round.phase === "reveal_others" || game.round.phase === "split");
