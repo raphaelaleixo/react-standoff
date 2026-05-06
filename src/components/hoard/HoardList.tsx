@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { SectionHeader } from "../shell/SectionHeader";
 import { HoardItem } from "./HoardItem";
 import type { Banknote } from "../../game/types";
-import { durations, fadeIn } from "../../theme/animations";
+import { durations, dropIn } from "../../theme/animations";
 
 interface HoardListProps {
   loot: Banknote[];
@@ -105,10 +105,10 @@ export function HoardList({ loot }: HoardListProps) {
             sx={{
               opacity: n.exiting ? 0 : 1,
               transition: `opacity ${FLIP_DURATION_MS}ms ease`,
-              // Fresh banknotes fade in with a per-item delay so a full
-              // round draw appears as a wave instead of a flash.
+              // Fresh banknotes drop onto the table with a per-item delay
+              // so a full round draw arrives as a wave instead of a flash.
               animation: n.enteringIndex !== undefined
-                ? `${fadeIn} ${FLIP_DURATION_MS}ms ease ${n.enteringIndex * STAGGER_STEP_MS}ms both`
+                ? `${dropIn} ${FLIP_DURATION_MS}ms cubic-bezier(.2,.7,.2,1.4) ${n.enteringIndex * STAGGER_STEP_MS}ms both`
                 : undefined,
             }}
           >

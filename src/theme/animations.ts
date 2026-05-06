@@ -25,6 +25,14 @@ export const popIn = keyframes`
   100% { transform: scale(1); }
 `;
 
+// Drop-in: a banknote being thrown onto the table — starts oversized and
+// settles into place with a subtle bounce.
+export const dropIn = keyframes`
+  0%   { opacity: 0; transform: scale(1.6); }
+  55%  { opacity: 1; transform: scale(0.94); }
+  100% { opacity: 1; transform: scale(1); }
+`;
+
 // Preserves the StandoffStamp's translateY(-0.18em) baseline correction
 // (UnifrakturCook digits sit low in the em-box) so the zoom doesn't undo
 // the centering nudge.
