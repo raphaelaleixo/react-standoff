@@ -70,7 +70,26 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
           {player.displayName}
         </Box>
         <Box sx={{ display: "flex", gap: "0.22rem", alignItems: "center", marginTop: "0.15rem", flexWrap: "wrap" }}>
-          <Box sx={{ fontFamily: fonts.blackletter, fontWeight: 700, fontSize: "1.15rem", color: cash === 0 ? palette.paperDim : palette.paper, lineHeight: 1 }}>
+          <Box
+            sx={{
+              fontFamily: fonts.blackletter,
+              fontWeight: 700,
+              fontSize: "1.15rem",
+              // Gold while the value is climbing, then settle back to paper.
+              color: cash === 0
+                ? palette.paperDim
+                : tickingCash !== cash
+                  ? palette.gold
+                  : palette.paper,
+              lineHeight: 1,
+              // Scale up while the value is interpolating, then ease back
+              // to 1 when it settles. Origin keeps the chip anchored to
+              // its row's left edge instead of drifting.
+              transformOrigin: "left center",
+              transform: tickingCash !== cash ? "scale(1.35)" : "scale(1)",
+              transition: `transform ${durations.base}ms cubic-bezier(.2,.7,.2,1.4), color ${durations.base}ms ease`,
+            }}
+          >
             ${(tickingCash / 1000).toFixed(0)}k
           </Box>
           {player.shame > 0 && (
