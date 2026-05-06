@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { SectionHeader } from "../shell/SectionHeader";
 import { HoardItem } from "./HoardItem";
 import type { Banknote } from "../../game/types";
-import { durations } from "../../theme/animations";
+import { durations, fadeIn } from "../../theme/animations";
 
 interface HoardListProps {
   loot: Banknote[];
@@ -11,30 +11,36 @@ interface HoardListProps {
 
 interface TrackedNote extends Banknote {
   exiting: boolean;
+  enteringIndex?: number;
 }
 
 const FLIP_DURATION_MS = durations.base;
+const STAGGER_STEP_MS = 80;
 
 // Sync `tracked` with the latest loot array: new banknotes append fresh,
 // notes that left the loot get marked `exiting: true` so they keep their
 // grid slot for one fade-out cycle, and previously exiting notes that came
-// back become live again.
+// back become live again. Newly-added banknotes get an `enteringIndex`
+// that drives the stagger of their fade-in animation.
 function syncTracked(tracked: TrackedNote[], loot: Banknote[]): TrackedNote[] {
   const lootById = new Map(loot.map(n => [n.id, n]));
   const trackedIds = new Set(tracked.map(t => t.id));
   const updated = tracked.map(t => {
     const live = lootById.get(t.id);
-    return live ? { ...live, exiting: false } : { ...t, exiting: true };
+    return live
+      ? { ...live, exiting: false, enteringIndex: t.enteringIndex }
+      : { ...t, exiting: true };
   });
+  let entering = 0;
   const additions = loot
     .filter(n => !trackedIds.has(n.id))
-    .map(n => ({ ...n, exiting: false }));
+    .map(n => ({ ...n, exiting: false, enteringIndex: entering++ }));
   return [...updated, ...additions];
 }
 
 export function HoardList({ loot }: HoardListProps) {
   const [tracked, setTracked] = useState<TrackedNote[]>(() =>
-    loot.map(n => ({ ...n, exiting: false })),
+    loot.map((n, idx) => ({ ...n, exiting: false, enteringIndex: idx })),
   );
 
   // Mark removed banknotes as `exiting` and schedule their unmount one
@@ -99,6 +105,11 @@ export function HoardList({ loot }: HoardListProps) {
             sx={{
               opacity: n.exiting ? 0 : 1,
               transition: `opacity ${FLIP_DURATION_MS}ms ease`,
+              // Fresh banknotes fade in with a per-item delay so a full
+              // round draw appears as a wave instead of a flash.
+              animation: n.enteringIndex !== undefined
+                ? `${fadeIn} ${FLIP_DURATION_MS}ms ease ${n.enteringIndex * STAGGER_STEP_MS}ms both`
+                : undefined,
             }}
           >
             <HoardItem value={n.value} />
