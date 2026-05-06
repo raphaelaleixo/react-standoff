@@ -16,7 +16,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import type { BulletCard, Game, Player, RoundPhase } from "../../game/types";
 import type { MockGameActions } from "./useMockGameState";
-import { STANDOFF_DURATION_MS } from "../../lib/phaseDurations";
+import { STANDOFF_DURATION_MS, WITHDRAW_DURATION_MS } from "../../lib/phaseDurations";
 
 const PHASES: RoundPhase[] = [
   "commit",
@@ -34,10 +34,12 @@ const PHASES: RoundPhase[] = [
 // `standoff` matches STANDOFF_DURATION_MS so the count animation finishes
 // exactly when MockBigScreen's auto-advance fires; this timer is a
 // belt-and-suspenders fallback that calls setPhase('withdraw') idempotently.
+// `withdraw` matches WITHDRAW_DURATION_MS so the on-screen seconds counter
+// shown by WithdrawStamp lines up with the actual phase duration.
 const PHASE_HOLD_MS: Record<RoundPhase, number> = {
   commit: 900,
   standoff: STANDOFF_DURATION_MS,
-  withdraw: 2500,
+  withdraw: WITHDRAW_DURATION_MS,
   reveal_withdraw: 1500,
   reveal_bbb: 2500,
   reveal_others: 2500,

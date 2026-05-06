@@ -6,10 +6,10 @@ import { normalizeGame } from "../game/deserialize";
 import { resolveRound } from "../game/resolver";
 import { startNextRound, endGameStatus } from "../game/transitions";
 import { useServerTime } from "./useServerTime";
-import { STANDOFF_DURATION_MS } from "../lib/phaseDurations";
+import { STANDOFF_DURATION_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
 
 const STANDOFF_MS = STANDOFF_DURATION_MS;
-const WITHDRAW_MS = 10000;
+const WITHDRAW_MS = WITHDRAW_DURATION_MS;
 const REVEAL_WITHDRAW_MS = 2500;
 const REVEAL_BBB_MS = 5000;
 const REVEAL_OTHERS_MS = 5000;

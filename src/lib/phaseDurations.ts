@@ -4,3 +4,4 @@
 // drift apart — they all derive from the same value.
 
 export const STANDOFF_DURATION_MS = 3000;
+export const WITHDRAW_DURATION_MS = 10000;

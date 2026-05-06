@@ -5,10 +5,12 @@ import { palette } from "../theme/colors";
 import { HoardList } from "./hoard/HoardList";
 import { TargetingMap } from "./standoff/TargetingMap";
 import { StandoffStamp } from "./standoff/StandoffStamp";
+import { WithdrawStamp } from "./standoff/WithdrawStamp";
 import { RevealBanner } from "./standoff/RevealBanner";
 import { CrewRoster } from "./crew/CrewRoster";
 import { useStandoffCount } from "../hooks/useStandoffCount";
-import { STANDOFF_DURATION_MS } from "../lib/phaseDurations";
+import { useSecondsRemaining } from "../hooks/useSecondsRemaining";
+import { STANDOFF_DURATION_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
 import { durations } from "../theme/animations";
 
 export type GameBoardBanner =
@@ -34,6 +36,16 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
   const lastCountRef = useRef(0);
   if (count !== null) lastCountRef.current = count;
   const showStamp = inStandoff && count !== null;
+
+  const inWithdraw = game.round.phase === "withdraw";
+  const withdrawSeconds = useSecondsRemaining({
+    active: inWithdraw,
+    startedAt: game.round.phaseStartedAt,
+    durationMs: WITHDRAW_DURATION_MS,
+  });
+  const lastWithdrawRef = useRef(0);
+  if (withdrawSeconds !== null) lastWithdrawRef.current = withdrawSeconds;
+  const showWithdraw = inWithdraw && withdrawSeconds !== null;
 
   return (
     <Box
@@ -76,11 +88,18 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
           <TargetingMap
             game={game}
             overlay={
-              <Fade in={showStamp} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
-                <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-                  <StandoffStamp count={lastCountRef.current} />
-                </Box>
-              </Fade>
+              <>
+                <Fade in={showStamp} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
+                  <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                    <StandoffStamp count={lastCountRef.current} />
+                  </Box>
+                </Fade>
+                <Fade in={showWithdraw} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
+                  <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                    <WithdrawStamp count={lastWithdrawRef.current} />
+                  </Box>
+                </Fade>
+              </>
             }
           />
         </Box>
