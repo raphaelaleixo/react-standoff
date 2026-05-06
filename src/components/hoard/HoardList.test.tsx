@@ -3,11 +3,11 @@ import { HoardList } from "./HoardList";
 
 describe("HoardList", () => {
   const loot = [
-    { value: 20000 as const },
-    { value: 10000 as const },
-    { value: 10000 as const },
-    { value: 5000 as const },
-    { value: 5000 as const },
+    { id: "bn-1", value: 20000 as const },
+    { id: "bn-2", value: 10000 as const },
+    { id: "bn-3", value: 10000 as const },
+    { id: "bn-4", value: 5000 as const },
+    { id: "bn-5", value: 5000 as const },
   ];
 
   it("renders one card per banknote", () => {

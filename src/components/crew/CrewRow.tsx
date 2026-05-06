@@ -4,8 +4,10 @@ import { fonts } from "../../theme/typography";
 import { FlagFor } from "../flags";
 import type { Player } from "../../game/types";
 import { durations, popIn } from "../../theme/animations";
+import { useTickingNumber } from "../../hooks/useTickingNumber";
 
 const POP_TIMING = `${durations.base}ms cubic-bezier(.2,.7,.2,1.4) both`;
+const CASH_TICK_DURATION_MS = 700;
 
 export type CrewStatus =
   | "choosing" | "ready" | "yielded"
@@ -28,6 +30,7 @@ interface CrewRowProps {
 
 export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid }: CrewRowProps) {
   const cash = player.cash.reduce((s, n) => s + n.value, 0);
+  const tickingCash = useTickingNumber(cash, CASH_TICK_DURATION_MS);
   const dead = player.status === "dead" || status === "dead";
   const struck = status === "struck";
   const yielded = status === "yielded";
@@ -68,7 +71,7 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
         </Box>
         <Box sx={{ display: "flex", gap: "0.22rem", alignItems: "center", marginTop: "0.15rem", flexWrap: "wrap" }}>
           <Box sx={{ fontFamily: fonts.blackletter, fontWeight: 700, fontSize: "1.15rem", color: cash === 0 ? palette.paperDim : palette.paper, lineHeight: 1 }}>
-            ${(cash / 1000).toFixed(0)}k
+            ${(tickingCash / 1000).toFixed(0)}k
           </Box>
           {player.shame > 0 && (
             <Box sx={{ display: "flex", gap: "2px", alignItems: "center", marginLeft: "0.5rem", marginTop: "3px" }}>

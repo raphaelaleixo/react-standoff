@@ -23,10 +23,6 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
-  // Map the round's banknote loot into the HoardList shape. Carry-over data
-  // is not currently tracked on Banknote; defer to a follow-up if/when it lands.
-  const loot = game.round.loot.map(n => ({ value: n.value }));
-
   const inStandoff = game.round.phase === "standoff";
   const count = useStandoffCount({
     active: inStandoff,
@@ -65,7 +61,7 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
         }}
       >
         <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
-          <HoardList loot={loot} />
+          <HoardList loot={game.round.loot} />
         </Box>
         <Box
           sx={{

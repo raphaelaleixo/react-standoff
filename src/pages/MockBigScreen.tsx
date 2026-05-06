@@ -91,7 +91,28 @@ export default function MockBigScreen() {
   // banners have data to render. The dev hook only tracks phase + commits;
   // the real resolver isn't wired in here, so we hand-pick a resolution per
   // phase. Other phases see no resolution and the banner stays hidden.
+  //
+  // For "split" we additionally redistribute loot to standing players' cash
+  // (so the cash tickers go up) and reduce game.round.loot to the carryover
+  // banknotes (so the awarded notes fade out of the hoard).
   const displayGame = useMemo<Game>(() => {
+    if (game.round.phase === "split") {
+      const awardedToC = game.round.loot.filter(n => n.id === "loot-1" || n.id === "loot-3");
+      const awardedToE = game.round.loot.filter(n => n.id === "loot-4");
+      const carryover = game.round.loot.filter(
+        n => n.id !== "loot-1" && n.id !== "loot-3" && n.id !== "loot-4",
+      );
+      const players = game.players.map(p => {
+        if (p.id === "c") return { ...p, cash: [...p.cash, ...awardedToC] };
+        if (p.id === "e") return { ...p, cash: [...p.cash, ...awardedToE] };
+        return p;
+      });
+      return {
+        ...game,
+        players,
+        round: { ...game.round, loot: carryover, resolution: RESOLUTION_KILL },
+      };
+    }
     const resolution =
       game.round.phase === "reveal_bbb" ? RESOLUTION_BROADSIDE :
       game.round.phase === "reveal_others" ? RESOLUTION_KILL :
