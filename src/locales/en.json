@@ -7,7 +7,6 @@
     "howToPlay": "How to Play"
   },
   "howToPlay": {
-    "title": "How to Play",
     "back": "Back"
   },
   "join": {
@@ -21,21 +20,16 @@
     "notFound": "Ship not found"
   },
   "playerJoin": {
-    "title": "Join the standoff",
     "raiseYerFlag": "— RAISE YER FLAG —",
-    "nameLabel": "Yer name",
     "namePlaceholder": "Cap'n Maud",
     "nameHint": "— or leave it & we'll pick one —",
     "nicknameEyebrow": "CHOOSE A NICKNAME",
-    "flagLabel": "Sail under whose colors?",
     "submit": "RAISE THE FLAG",
     "submitCaption": "— join the mutiny —",
-    "submitting": "Hoisting…",
     "lobbyFull": "Crew is full — voyage starting soon",
     "rejoinTitle": "Rejoin yer post"
   },
   "room": {
-    "loading": "Hoisting the colours…",
     "notFound": "No such ship in port",
     "lobbyTitle": "The Muster",
     "lobbyEyebrow": "— captain's absence —",
@@ -46,7 +40,6 @@
     "codeUrl": "at standoff.party/join",
     "playersHeading": "The crew so far",
     "playersHint": "raise yer flag",
-    "waitingForPlayers": "Awaiting crew…",
     "startGame": "Hoist the colours",
     "startGameSub": "— start the mutiny —",
     "aboard": "{{n}} ABOARD",
@@ -55,13 +48,10 @@
     "seatsLeft": "{{n}} SEATS LEFT",
     "seatsCap": "· up to VI ·",
     "emptySeat": "EMPTY SEAT",
-    "emptySeatHint": "awaiting crew",
-    "started": "Mutiny in progress"
+    "emptySeatHint": "awaiting crew"
   },
   "player": {
     "lobbyWaiting": "Waiting for the captain to call it…",
-    "started": "Mutiny in progress",
-    "spectator": "Ye walked the plank.",
     "watchScreen": "Watch the big screen…",
     "header": {
       "wounds": "wounds {{n}}/III"
@@ -69,15 +59,9 @@
   },
   "phase": {
     "commit": {
-      "pickLoad": "Choose a powder load",
       "pickTarget": "Pick yer mark",
       "ready": "Ready",
-      "locked": "Locked: {{load}} → {{target}}",
       "waiting": "Waiting for the others…"
-    },
-    "standoff": {
-      "aimingAt": "Aiming at {{target}}",
-      "label": "Aim true."
     },
     "withdraw": {
       "atEase": "AT EASE",
@@ -85,26 +69,14 @@
       "marks_one": "MARK ON YE",
       "marks_other": "{{n}} MARKS ON YE",
       "cost": "COST: ONE YELLOW STREAK",
-      "costSub": "—${{amount}} at the end of the day",
-      "yield": "YIELD",
-      "yielded": "Yielded (tap to undo)"
+      "costSub": "—${{amount}} at the end of the day"
     },
     "ended": "Game over"
   },
   "load": {
     "clic": "Click",
     "bang": "Shot",
-    "bang_bang_bang": "Quickdraw",
-    "description": {
-      "clic": "Empty hammer-snap",
-      "bang": "A clean shot",
-      "bang_bang_bang": "Triple-loaded — devastating"
-    }
-  },
-  "round": {
-    "of": "Round {{n}} of {{total}}",
-    "navyHours": "Navy ~{{hours}} hours out",
-    "sailsOnHorizon": "Sails on the horizon."
+    "bang_bang_bang": "Quickdraw"
   },
   "shell": {
     "round": "ROUND",
@@ -124,14 +96,5 @@
     "plankedRound": "walked the plank, rd. {{round}}",
     "playAgain": "Another round",
     "returnToPort": "Return to port"
-  },
-  "reveal": {
-    "broadside": "BROADSIDE!",
-    "quickdraw": "QUICKDRAW!",
-    "shot": "SHOT!",
-    "hit": "{{shooter}} shot {{target}}!",
-    "click": "{{shooter}} aimed at {{target}}… *click*",
-    "voidedDuck": "{{shooter}}'s shot wasted — {{target}} yielded.",
-    "voidedSurprised": "{{shooter}} caught off guard — shot wasted."
   }
 }
