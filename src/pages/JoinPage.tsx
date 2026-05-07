@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Alert, Box, Button, Container, Divider, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Divider } from "@mui/material";
 import { createInitialRoom, generateRoomId } from "react-gameroom";
-import type { Player } from "../game/types";
-import { roomExists } from "../hooks/useFirebaseRoom";
 import { ref, set } from "firebase/database";
 import { database } from "../firebase";
+import { palette } from "../theme/colors";
+import { fonts } from "../theme/typography";
+import { PageCanvas } from "../components/shell/PageCanvas";
+import { Button } from "../components/shell/Button";
+import { roomExists } from "../hooks/useFirebaseRoom";
+import type { Player } from "../game/types";
 
 const ROOM_CONFIG = { minPlayers: 4, maxPlayers: 6, requireFull: false };
 
@@ -37,8 +41,7 @@ export default function JoinPage() {
     }
   };
 
-  const onJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onJoin = async () => {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) return;
     setSubmitting("join");
@@ -59,37 +62,109 @@ export default function JoinPage() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {t("join.title")}
-        </Typography>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        padding: "8px",
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <PageCanvas sx={{ width: "min(480px, 100%)", padding: "2rem" }}>
+        <Box sx={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <Box
+            sx={{
+              fontFamily: fonts.blackletter,
+              fontWeight: 700,
+              fontSize: "2rem",
+              lineHeight: 1,
+              textAlign: "center",
+              color: palette.paper,
+            }}
+          >
+            {t("join.title")}
+          </Box>
 
-        <Button variant="contained" size="large" onClick={onCreate} disabled={submitting !== null}>
-          {submitting === "create" ? t("join.joinSubmitting") : t("join.createNew")}
-        </Button>
+          <Button
+            fullWidth
+            onClick={onCreate}
+            disabled={submitting !== null}
+            caption="— hoist new colours —"
+          >
+            {submitting === "create" ? t("join.joinSubmitting").toUpperCase() : t("join.createNew").toUpperCase()}
+          </Button>
 
-        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+          {error && <Alert severity="error">{error}</Alert>}
 
-        <Divider sx={{ my: 3 }}>{t("join.or")}</Divider>
+          <Divider
+            sx={{
+              borderColor: palette.ruleStrong,
+              "&::before, &::after": { borderColor: palette.ruleStrong },
+              color: palette.paperDim,
+              fontFamily: fonts.body,
+              fontStyle: "italic",
+            }}
+          >
+            {t("join.or")}
+          </Divider>
 
-        <Box component="form" onSubmit={onJoin}>
-          <Stack spacing={2}>
-            <TextField
-              label={t("join.codeLabel")}
-              placeholder={t("join.codePlaceholder")}
+          <Box
+            component="form"
+            onSubmit={(e: React.FormEvent) => {
+              e.preventDefault();
+              if (!code.trim() || submitting !== null) return;
+              onJoin();
+            }}
+            sx={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}
+          >
+            <Box
+              sx={{
+                fontFamily: fonts.displayCaps,
+                fontFeatureSettings: '"smcp"',
+                fontSize: "0.62rem",
+                letterSpacing: "0.36em",
+                color: palette.paperDim,
+                textAlign: "center",
+              }}
+            >
+              {t("join.codeLabel").toUpperCase()}
+            </Box>
+            <Box
+              component="input"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value.toUpperCase())}
+              placeholder={t("join.codePlaceholder")}
               autoFocus
-              slotProps={{ htmlInput: { style: { textTransform: "uppercase" } } }}
+              maxLength={8}
+              sx={{
+                background: "transparent",
+                border: "none",
+                borderBottom: `2px solid ${palette.paper}`,
+                textAlign: "center",
+                fontFamily: fonts.displayCaps,
+                fontFeatureSettings: '"smcp"',
+                fontSize: "2rem",
+                letterSpacing: "0.36em",
+                color: palette.paper,
+                padding: "0.4rem 0.4rem 0.3rem",
+                textTransform: "uppercase",
+                "&::placeholder": { color: palette.paperFaint, opacity: 1 },
+                "&:focus": { outline: "none", borderColor: palette.blood },
+              }}
             />
-            <Button type="submit" variant="outlined" size="large" disabled={!code.trim() || submitting !== null}>
-              {submitting === "join" ? t("join.joinSubmitting") : t("join.joinSubmit")}
+            <Button
+              variant="ghost"
+              fullWidth
+              disabled={!code.trim() || submitting !== null}
+              onClick={onJoin}
+            >
+              {submitting === "join" ? t("join.joinSubmitting").toUpperCase() : t("join.joinSubmit").toUpperCase()}
             </Button>
-          </Stack>
+          </Box>
         </Box>
-      </Box>
-    </Container>
+      </PageCanvas>
+    </Box>
   );
 }
-
