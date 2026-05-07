@@ -109,8 +109,6 @@
   "reckoning": {
     "winnerEyebrow": "— AND THE LION'S SHARE GOES TO —",
     "winnerCry": "— walks away with the lot —",
-    "rankShame": "− ${{amount}} ({{n}} streak)",
-    "rankShames": "− ${{amount}} ({{n}} streaks)",
     "forfeit": "— forfeit —",
     "dead": "DEAD",
     "plankedRound": "walked the plank, rd. {{round}}",

@@ -34,13 +34,10 @@ describe("EndGameRow", () => {
     render(<EndGameRow rank={2} player={ALIVE} eliminatedRound={null} />);
     expect(screen.getByText("II")).toBeInTheDocument();
     expect(screen.getByText("Mad Mary")).toBeInTheDocument();
-    // 50,000 - 5,000 shame = 45,000
+    // 50,000 cash, 5,000 shame penalty, 45,000 net.
+    expect(screen.getByText("$50,000")).toBeInTheDocument();
+    expect(screen.getByText("$5,000")).toBeInTheDocument();
     expect(screen.getByText("$45,000")).toBeInTheDocument();
-  });
-
-  it("shows the shame breakdown chip", () => {
-    render(<EndGameRow rank={2} player={ALIVE} eliminatedRound={null} />);
-    expect(screen.getByText(/− \$5,000/)).toBeInTheDocument();
   });
 
   it("renders DEAD score for an eliminated player and the elimination round in the nickname", () => {

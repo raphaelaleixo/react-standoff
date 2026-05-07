@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { FlagFor, jollyRogerForColor } from "../flags";
+import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import type { Player } from "../../game/types";
 import { cashTotal, shamePenalty, netScore } from "../../lib/score";
 import { toRoman } from "../../lib/navyHours";
@@ -24,8 +25,8 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: "64px 56px 1fr auto auto",
-        gap: "1.2rem",
+        gridTemplateColumns: "44px 60px 1fr auto auto auto",
+        gap: "1rem",
         alignItems: "center",
         padding: "0.5rem 0",
         borderBottom: `1px solid ${palette.rule}`,
@@ -44,10 +45,11 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
       >
         {toRoman(rank)}
       </Box>
+      {/* Flag chip — flag aspect, matches CrewRow's pattern. */}
       <Box
         sx={{
-          width: 48,
-          height: 48,
+          width: 60,
+          height: 40,
           border: `2px solid ${palette.paper}`,
           background: flagColor(player.colorOrAvatar),
           color: palette.paper,
@@ -56,7 +58,7 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
           justifyContent: "center",
         }}
       >
-        <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={34} />
+        <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={28} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
         <Box
@@ -86,37 +88,41 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
           )}
         </Box>
       </Box>
-      <Box
-        sx={{
-          fontFamily: fonts.body,
-          fontStyle: "italic",
-          fontSize: "0.85rem",
-          color: palette.paperDim,
-          whiteSpace: "nowrap",
-        }}
-      >
+      {/* Wound + shame pips — visceral count, mirrors the in-game CrewRow. */}
+      <Box sx={{ display: "flex", flexDirection: "column", gap: "3px", alignItems: "flex-end" }}>
+        <WoundPips count={player.wounds} />
+        <ShamePips count={player.shame} />
+      </Box>
+      {/* Cash − penalty breakdown. Dollar amounts in blackletter, separator in
+          italic body — same money treatment as the crew column's cash chip. */}
+      <Box sx={{ whiteSpace: "nowrap", display: "flex", alignItems: "baseline", gap: "0.4em" }}>
         {dead ? (
-          t("reckoning.forfeit")
+          <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.85rem", color: palette.paperDim }}>
+            {t("reckoning.forfeit")}
+          </Box>
         ) : (
           <>
-            ${cash.toLocaleString()}
+            <Box sx={{ fontFamily: fonts.blackletter, fontWeight: 700, fontSize: "1.1rem", color: palette.paper }}>
+              ${cash.toLocaleString()}
+            </Box>
             {player.shame > 0 && (
-              <Box component="span" sx={{ color: palette.blood, paddingLeft: "0.4em" }}>
-                {t(player.shame === 1 ? "reckoning.rankShame" : "reckoning.rankShames", {
-                  amount: penalty.toLocaleString(),
-                  n: toRoman(player.shame),
-                })}
-              </Box>
+              <>
+                <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.85rem", color: palette.paperDim }}>−</Box>
+                <Box sx={{ fontFamily: fonts.blackletter, fontWeight: 700, fontSize: "1.1rem", color: palette.blood }}>
+                  ${penalty.toLocaleString()}
+                </Box>
+              </>
             )}
           </>
         )}
       </Box>
       <Box
         sx={{
-          fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "1.25rem",
-          letterSpacing: "0.06em",
+          fontFamily: dead ? fonts.displayCaps : fonts.blackletter,
+          fontFeatureSettings: dead ? '"smcp"' : undefined,
+          fontWeight: dead ? undefined : 700,
+          fontSize: "1.4rem",
+          letterSpacing: dead ? "0.06em" : undefined,
           color: dead ? palette.blood : palette.paper,
           fontStyle: dead ? "italic" : "normal",
           minWidth: "5em",

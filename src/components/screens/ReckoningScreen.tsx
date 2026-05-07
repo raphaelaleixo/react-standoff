@@ -6,6 +6,7 @@ import { PageCanvas } from "../shell/PageCanvas";
 import { Masthead } from "../shell/Masthead";
 import { Button } from "../shell/Button";
 import { FlagFor, jollyRogerForColor } from "../flags";
+import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
 import { netScore } from "../../lib/score";
 import { toRoman } from "../../lib/navyHours";
@@ -123,21 +124,22 @@ function WinnerEnthronement({ winner, t }: { winner: Player; t: (k: string, p?: 
         >
           I
         </Box>
+        {/* Flag-aspect medallion — same proportions as the row chips and
+            the in-game crew flag, scaled up for the reckoning's prominence. */}
         <Box
           sx={{
-            width: 100,
-            height: 100,
+            width: 156,
+            height: 108,
             border: `4px solid ${palette.paper}`,
             background: flagColor(winner.colorOrAvatar),
             color: palette.paper,
-            borderRadius: "50%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             boxShadow: `6px 6px 0 ${palette.inkDeep}`,
           }}
         >
-          <FlagFor id={jollyRogerForColor(winner.colorOrAvatar)} size={70} />
+          <FlagFor id={jollyRogerForColor(winner.colorOrAvatar)} size={84} />
         </Box>
         <Box sx={{ textAlign: "left" }}>
           <Box
@@ -150,12 +152,16 @@ function WinnerEnthronement({ winner, t }: { winner: Player; t: (k: string, p?: 
           >
             {winner.displayName}
           </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.45rem" }}>
+            <WoundPips count={winner.wounds} />
+            {winner.shame > 0 && <ShamePips count={winner.shame} />}
+          </Box>
           <Box
             sx={{
-              fontFamily: fonts.displayCaps,
-              fontFeatureSettings: '"smcp"',
-              fontSize: "1.15rem",
-              letterSpacing: "0.32em",
+              fontFamily: fonts.blackletter,
+              fontWeight: 700,
+              fontSize: "2rem",
+              lineHeight: 1,
               marginTop: "0.4rem",
               color: titleColor,
             }}
