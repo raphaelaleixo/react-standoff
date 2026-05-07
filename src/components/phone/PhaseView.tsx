@@ -5,10 +5,12 @@ import type { BulletCard, Game, Player } from "../../game/types";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { FlagFor, jollyRogerForColor } from "../flags";
-import { FlintlockBarrel } from "../FlintlockBarrel";
 import { YieldButton } from "../YieldButton";
 import { Button } from "../shell/Button";
 import { toRoman } from "../../lib/navyHours";
+import { useStandoffCount } from "../../hooks/useStandoffCount";
+import { STANDOFF_DURATION_MS } from "../../lib/phaseDurations";
+import { AimBarrel } from "./AimBarrel";
 import { Hand } from "./Hand";
 import { TargetList } from "./TargetList";
 
@@ -27,6 +29,15 @@ interface PhaseViewProps {
 // so the mock player page can render the exact same UI against fixture state.
 export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps) {
   const { t } = useTranslation();
+  // Standoff countdown — `active` only during the count itself; the silent
+  // standoff_hold beat that follows shouldn't restart the timer. Computed
+  // unconditionally to satisfy hook rules; only consumed in the standoff
+  // branch below.
+  const standoffCount = useStandoffCount({
+    active: game.round.phase === "standoff",
+    startedAt: game.round.phaseStartedAt,
+    durationMs: STANDOFF_DURATION_MS,
+  });
   if (game.phase === "ended") {
     return (
       <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
@@ -51,11 +62,53 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
 
   if (phase === "standoff" || phase === "standoff_hold") {
     const target = game.players.find(p => p.id === myCommit?.target);
+    // Show the count only during the standoff countdown itself. During the
+    // standoff_hold silent beat that follows, the count is hidden (mirrors
+    // the big-screen StandoffStamp behaviour) and the barrel just shows the
+    // locked target's jolly roger.
     return (
-      <FlintlockBarrel
-        targetFlag={target?.colorOrAvatar ?? "generic"}
-        targetName={target?.displayName ?? "?"}
-      />
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "1.1rem",
+          padding: "1rem",
+        }}
+      >
+        <AimBarrel
+          colorOrAvatar={target?.colorOrAvatar ?? null}
+          size={240}
+          count={phase === "standoff" ? standoffCount : null}
+        />
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            sx={{
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: "0.75rem",
+              letterSpacing: "0.4em",
+              color: palette.paperDim,
+            }}
+          >
+            AIMING AT
+          </Box>
+          <Box
+            sx={{
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: "1.2rem",
+              letterSpacing: "0.22em",
+              color: palette.paper,
+              marginTop: "0.25rem",
+            }}
+          >
+            {target?.displayName ?? "?"}
+          </Box>
+        </Box>
+      </Box>
     );
   }
 

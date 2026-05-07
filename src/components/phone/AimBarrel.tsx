@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { palette } from "../../theme/colors";
+import { fonts } from "../../theme/typography";
 import { FlagFor, jollyRogerForColor } from "../flags";
 
 interface AimBarrelProps {
@@ -11,16 +12,25 @@ interface AimBarrelProps {
    */
   colorOrAvatar?: string | null;
   size?: number;
+  /**
+   * Standoff-phase countdown numeral. When provided (non-null, > 0), a giant
+   * blackletter digit is overlaid on top of the dimmed jolly roger and a
+   * "STAND" label sits beneath it inside the disc. Pass null/undefined for
+   * the commit-phase aim view (no count, full-opacity flag).
+   */
+  count?: number | null;
 }
 
 // Circular flintlock-barrel sights — paper-colored disc on the inside of an
 // ink rim, blood-tinted jolly roger silhouette aimed through it, dashed
-// blood crosshair lines crossing the centre. Used both as the standoff-phase
-// "AIM TRUE" focal visual (FlintlockBarrel wraps this) and as the commit-
-// phase aim display inside TargetList.
-export function AimBarrel({ colorOrAvatar, size = 160 }: AimBarrelProps) {
+// blood crosshair lines crossing the centre. Shared between the commit-phase
+// aim view (TargetList) and the standoff-phase aim view (PhaseView). When
+// `count` is set, the standoff dressing kicks in: flag dims, big blackletter
+// numeral overlays, "STAND" label sits beneath.
+export function AimBarrel({ colorOrAvatar, size = 160, count }: AimBarrelProps) {
   const flagSize = Math.round(size * 0.55);
   const insetGlow = Math.round(size * 0.14);
+  const showCount = count != null && count > 0;
   return (
     <Box
       sx={{
@@ -36,7 +46,16 @@ export function AimBarrel({ colorOrAvatar, size = 160 }: AimBarrelProps) {
       }}
     >
       {colorOrAvatar ? (
-        <Box sx={{ color: palette.blood }}>
+        <Box
+          sx={{
+            color: palette.blood,
+            // The flag dims to ~40% during the standoff count so the giant
+            // numeral on top reads cleanly without being overpowered by the
+            // silhouette beneath.
+            opacity: showCount ? 0.4 : 1,
+            transition: "opacity 0.2s ease",
+          }}
+        >
           <FlagFor id={jollyRogerForColor(colorOrAvatar)} size={flagSize} />
         </Box>
       ) : (
@@ -80,6 +99,42 @@ export function AimBarrel({ colorOrAvatar, size = 160 }: AimBarrelProps) {
           transform: "translateX(-50%)",
         }}
       />
+      {/* Standoff overlay: giant blackletter numeral + STAND label. */}
+      {showCount && (
+        <>
+          <Box
+            sx={{
+              position: "absolute",
+              fontFamily: fonts.blackletter,
+              fontSize: Math.round(size * 0.62),
+              lineHeight: 1,
+              color: palette.ink,
+              textShadow: `0 0 ${Math.round(size * 0.08)}px rgba(255, 195, 120, 0.55)`,
+              zIndex: 2,
+              // Slight upward nudge — UnifrakturCook digits sit low in the em
+              // box; same correction used by the big-screen StandoffStamp.
+              transform: "translateY(-0.06em)",
+            }}
+          >
+            {count}
+          </Box>
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: `${Math.round(size * 0.13)}px`,
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: Math.round(size * 0.07),
+              letterSpacing: "0.4em",
+              color: palette.ink,
+              opacity: 0.8,
+              zIndex: 2,
+            }}
+          >
+            STAND
+          </Box>
+        </>
+      )}
     </Box>
   );
 }
