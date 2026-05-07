@@ -29,20 +29,38 @@ const opponents: Player[] = [
 ];
 
 describe("TargetList", () => {
-  it("renders each opponent's displayName and cash", () => {
-    render(<TargetList opponents={opponents} />);
-    expect(screen.getByText("Mad Mary")).toBeInTheDocument();
+  it("renders one chip per opponent labelled by last name word", () => {
+    const { container } = render(<TargetList opponents={opponents} />);
+    expect(container.querySelectorAll("[data-target-id]")).toHaveLength(2);
+    expect(screen.getByText("Mary")).toBeInTheDocument();
     expect(screen.getByText("One-Eye")).toBeInTheDocument();
-    expect(screen.getByText("$25,000")).toBeInTheDocument();
-    expect(screen.getByText("$5,000")).toBeInTheDocument();
   });
 
-  it("highlights the selected target and invokes onPick on tap", () => {
+  it("shows 'Pick yer mark' when no target is selected", () => {
+    render(<TargetList opponents={opponents} />);
+    expect(screen.getByText(/pick yer mark/i)).toBeInTheDocument();
+  });
+
+  it("renders the selected target's full name and cash inside the barrel display", () => {
+    render(<TargetList opponents={opponents} selectedId="b" />);
+    expect(screen.getByText("Mad Mary")).toBeInTheDocument();
+    expect(screen.getByText("$25,000")).toBeInTheDocument();
+  });
+
+  it("highlights the selected chip and invokes onPick when a chip is tapped", () => {
     const fn = vi.fn();
-    render(<TargetList opponents={opponents} selectedId="b" onPick={fn} />);
-    const row = screen.getByText("Mad Mary").closest("[data-target-id]") as HTMLElement;
-    expect(row.getAttribute("data-selected")).toBe("true");
-    fireEvent.click(row);
+    const { container } = render(<TargetList opponents={opponents} selectedId="b" onPick={fn} />);
+    const chip = container.querySelector('[data-target-id="b"]') as HTMLElement;
+    expect(chip.getAttribute("data-selected")).toBe("true");
+    fireEvent.click(chip);
     expect(fn).toHaveBeenCalledWith("b");
+  });
+
+  it("invokes onPick when an unselected chip is tapped", () => {
+    const fn = vi.fn();
+    const { container } = render(<TargetList opponents={opponents} selectedId="b" onPick={fn} />);
+    const chip = container.querySelector('[data-target-id="c"]') as HTMLElement;
+    fireEvent.click(chip);
+    expect(fn).toHaveBeenCalledWith("c");
   });
 });

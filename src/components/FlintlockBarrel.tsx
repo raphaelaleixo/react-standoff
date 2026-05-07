@@ -1,11 +1,11 @@
 import { Box, Typography } from "@mui/material";
 import { palette } from "../theme/colors";
-import { FlagFor, jollyRogerForColor } from "./flags";
+import { AimBarrel } from "./phone/AimBarrel";
 
-// Phase 2 phone view: a flintlock barrel-end framing the target's jolly roger.
-// `targetFlag` carries the target player's colorOrAvatar so we can tint via
-// the per-color jolly roger silhouette — same pattern used in the targeting
-// roundels, the crew rows, and the reckoning chips.
+// Phase 2 phone view: the standoff-phase aim display. Big barrel sights with
+// the locked-in target's jolly roger inside, plus the AIM TRUE caption and
+// the "Aiming at NAME" subtext. The barrel visual itself is shared with the
+// commit-phase TargetList via <AimBarrel>.
 export function FlintlockBarrel({ targetFlag, targetName }: {
   targetFlag: string;
   targetName: string;
@@ -20,42 +20,7 @@ export function FlintlockBarrel({ targetFlag, targetName }: {
         py: 4,
       }}
     >
-      <Box
-        sx={{
-          position: "relative",
-          width: 220,
-          height: 220,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${palette.paper} 0%, ${palette.paper} 55%, ${palette.ink} 60%, ${palette.ink} 100%)`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: `inset 0 0 30px rgba(90,55,29,0.6)`,
-        }}
-      >
-        <Box sx={{ color: palette.blood }}>
-          <FlagFor id={jollyRogerForColor(targetFlag)} size={120} />
-        </Box>
-        <Box
-          sx={{
-            position: "absolute",
-            inset: "50% 0 auto 0",
-            height: 2,
-            bgcolor: palette.blood,
-            opacity: 0.5,
-          }}
-        />
-        <Box
-          sx={{
-            position: "absolute",
-            inset: "0 50% auto auto",
-            width: 2,
-            height: "100%",
-            bgcolor: palette.blood,
-            opacity: 0.5,
-          }}
-        />
-      </Box>
+      <AimBarrel colorOrAvatar={targetFlag} size={220} />
       <Typography variant="h4" sx={{ color: palette.ink, letterSpacing: 4 }}>
         AIM TRUE
       </Typography>
