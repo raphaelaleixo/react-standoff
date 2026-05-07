@@ -22,10 +22,14 @@
   },
   "playerJoin": {
     "title": "Join the standoff",
+    "raiseYerFlag": "— RAISE YER FLAG —",
     "nameLabel": "Yer name",
-    "namePlaceholder": "Enter your name",
+    "namePlaceholder": "Cap'n Maud",
+    "nameHint": "— or leave it & we'll pick one —",
+    "nicknameEyebrow": "CHOOSE A NICKNAME",
     "flagLabel": "Sail under whose colors?",
-    "submit": "Hoist the colors",
+    "submit": "RAISE THE FLAG",
+    "submitCaption": "— join the mutiny —",
     "submitting": "Hoisting…",
     "lobbyFull": "Crew is full — voyage starting soon",
     "rejoinTitle": "Rejoin yer post"
