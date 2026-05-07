@@ -139,11 +139,28 @@ src/components/RevealOverlay.tsx     # superseded by Stage 2 RevealBanner
 
 ---
 
-## Stage 2 — Dramatic moments
+## Stage 2 — Dramatic moments — ✅ DONE (with deviations)
 
 Layer in the standoff countdown stamp, the in-place reveal banner, and the line-glow + fresh-pip animations. After Stage 2 the in-game screen has its TV-moment behaviour.
 
-### Task 2.1: `<StandoffStamp>`
+> **Status as of 2026-05-07:** Stage 2 is shipped. The implementation diverged from the spec — flagging the diffs here so future readers don't get confused by the unchecked task boxes below.
+>
+> **Deviations from the original spec:**
+> - **`<RevealBanner>` was replaced by `<RevealStamp>`** (commit `c5243d0`). The red corner-banner with broadside/kill copy was reworked into a centred QUICKDRAW! / SHOTS stamp that matches the visual language of `<StandoffStamp>` and `<WithdrawStamp>`. The static phase-keyed label superseded the data-derived banner kind.
+> - **Task 2.5 (`useRevealBanner`) was abandoned** as a consequence — `<RevealStamp>` reads its label from a `Partial<Record<RoundPhase, string>>` lookup in `<GameBoard>` rather than from a derivation hook over the resolution. No kill-banner variant was built; eliminations are conveyed by the dead crew row and (later) the RECKONING screen.
+>
+> **Added beyond the plan:**
+> - `<WithdrawStamp>` (commits `4db8027`, `7842887`) — countdown numeral over the map during the yield window, mirrors the standoff stamp.
+> - `<BloodSplatter>` + procedural-per-player splatter behind struck roundels (commits `f422e2a` → `be4e531`).
+> - Line draw-in animation via SVG mask, with arrow-fills wiping in red as ink arrives (commits `2a24c80`, `b681079`, `53ce40f`, `fa55f41`).
+> - End-of-round fade-out on the lines from `reveal_others` → `split` (commit `88ce8c5`).
+> - Hoard banknote drop-in / fade-out at split, with crew-cash tick-up (commits `f336a16`, `a7e637a`, `868e213`, `cab639b`).
+> - **`standoff_hold` round phase** — silent 2s beat between the standoff count and the yield countdown, where the targeting lines draw in. Required additions to `RoundPhase`, `phaseDurations`, `useGameState`, `TargetingMap`, `CrewRoster`, `DevControlsPanel`, `MockBigScreen`, `PlayerPage`. Also fixed a stale-timestamp bug in `useSecondsRemaining` / `useStandoffCount` and the resolution-apply timing in `useGameState` (resolution now lands at split, not reveal entry, so reveal-phase visual deltas don't double-count).
+> - Per-color jolly roger silhouettes for the central targeting roundels and crew-row flags.
+>
+> **Carried-over follow-ups still open:** the i18n cleanup for the in-game shell strings (`Masthead`/`Foot`/`navyHoursLabel`) noted at the top of this plan was not absorbed into Stage 2 — fold into Stage 3 (Task 3.1 is already i18n-shaped).
+
+### Task 2.1: `<StandoffStamp>` — ✅ done
 
 **Files:**
 - Create: `src/components/standoff/StandoffStamp.tsx`
@@ -248,7 +265,9 @@ git add src/components/standoff/StandoffStamp.tsx src/components/standoff/Stando
 git commit -m "feat(standoff): add StandoffStamp countdown overlay"
 ```
 
-### Task 2.2: `<RevealBanner>`
+### Task 2.2: `<RevealBanner>` — ❌ superseded by `<RevealStamp>`
+
+Built differently (see Stage-2 deviations note above). The red corner-banner spec below was discarded in favour of a centred phase-keyed stamp matching the standoff/withdraw stamps. Steps below are **kept for historical reference only** — do not re-execute.
 
 **Files:**
 - Create: `src/components/standoff/RevealBanner.tsx`
@@ -350,7 +369,7 @@ git add src/components/standoff/RevealBanner.tsx src/components/standoff/RevealB
 git commit -m "feat(standoff): add RevealBanner for broadside and kill moments"
 ```
 
-### Task 2.3: Wire `<StandoffStamp>` into the GameBoard middle column during phase 2
+### Task 2.3: Wire `<StandoffStamp>` into the GameBoard middle column during phase 2 — ✅ done
 
 **Files:**
 - Modify: `src/components/GameBoard.tsx`
@@ -464,7 +483,9 @@ git add src/components/GameBoard.tsx src/hooks/useStandoffCount.ts src/hooks/use
 git commit -m "feat(standoff): overlay StandoffStamp on the map during phase 2"
 ```
 
-### Task 2.4: Wire `<RevealBanner>` during reveal phases
+### Task 2.4: Wire `<RevealBanner>` during reveal phases — ✅ done as `<RevealStamp>`
+
+Wired in `<GameBoard>` via a `Partial<Record<RoundPhase, string>>` lookup (`reveal_bbb` → "Quickdraw!", `reveal_others` → "Shots"), faded with the same `Fade` wrapper used by the standoff/withdraw stamps. No props passed from `RoomPage`. Steps below are kept for historical reference only.
 
 **Files:**
 - Modify: `src/components/GameBoard.tsx`
@@ -526,7 +547,9 @@ git add src/components/GameBoard.tsx src/pages/MockBigScreen.tsx
 git commit -m "feat(big-screen): wire RevealBanner into GameBoard via prop"
 ```
 
-### Task 2.5: Reveal-phase banner derivation in RoomPage
+### Task 2.5: Reveal-phase banner derivation in RoomPage — ❌ abandoned
+
+Obsoleted when `<RevealBanner>` was reworked into the static-label `<RevealStamp>` (see Task 2.2). No `useRevealBanner` hook was built; eliminations are not announced by a banner — they're shown via the dead crew row and (later) the RECKONING end-game screen. Steps below kept for historical reference only.
 
 **Files:**
 - Modify: `src/pages/RoomPage.tsx`
@@ -634,7 +657,9 @@ git add src/hooks/useRevealBanner.ts src/hooks/useRevealBanner.test.ts src/pages
 git commit -m "feat(reveal): derive RevealBanner from round resolution"
 ```
 
-### Task 2.6: Visual fidelity sweep in MockBigScreen across phases
+### Task 2.6: Visual fidelity sweep in MockBigScreen across phases — ✅ done via `DevControlsPanel`
+
+Implemented as a richer `<DevControlsPanel>` (already shipped under the `mockboard-dev-controls` plan) that drives `useMockGameState` through every phase including the new `standoff_hold`. Steps below kept for historical reference only.
 
 **Files:**
 - Modify: `src/pages/MockBigScreen.tsx`
