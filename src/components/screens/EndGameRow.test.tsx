@@ -36,7 +36,7 @@ describe("EndGameRow", () => {
     expect(screen.getByText("Mad Mary")).toBeInTheDocument();
     // 50,000 cash, 5,000 shame penalty, 45,000 net.
     expect(screen.getByText("$50,000")).toBeInTheDocument();
-    expect(screen.getByText("$5,000")).toBeInTheDocument();
+    expect(screen.getByText("− $5,000")).toBeInTheDocument();
     expect(screen.getByText("$45,000")).toBeInTheDocument();
   });
 

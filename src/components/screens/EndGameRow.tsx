@@ -15,6 +15,13 @@ interface EndGameRowProps {
   eliminatedRound: number | null;
 }
 
+// Each piece of info gets its own grid column so values line up across rows
+// like a proper ledger. Widths are fixed where the content is bounded
+// (rank, chip, pips, money strings) so vertical alignment holds even when
+// cash totals shrink or shame counts vary; the name column is the only
+// flex 1fr.
+const GRID_COLUMNS = "44px 60px 1fr 52px 80px 110px 110px 130px";
+
 export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
   const { t } = useTranslation();
   const dead = player.status === "dead";
@@ -25,7 +32,7 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: "44px 60px 1fr auto auto auto",
+        gridTemplateColumns: GRID_COLUMNS,
         gap: "1rem",
         alignItems: "center",
         padding: "0.5rem 0",
@@ -33,6 +40,7 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
         opacity: dead ? 0.55 : 1,
       }}
     >
+      {/* Rank */}
       <Box
         sx={{
           textAlign: "right",
@@ -45,7 +53,7 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
       >
         {toRoman(rank)}
       </Box>
-      {/* Flag chip — flag aspect, matches CrewRow's pattern. */}
+      {/* Flag chip */}
       <Box
         sx={{
           width: 60,
@@ -60,6 +68,7 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
       >
         <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={28} />
       </Box>
+      {/* Name (+ optional planked-round suffix) */}
       <Box sx={{ minWidth: 0 }}>
         <Box
           sx={{
@@ -88,34 +97,22 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
           )}
         </Box>
       </Box>
-      {/* Wound + shame pips — visceral count, mirrors the in-game CrewRow. */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: "3px", alignItems: "flex-end" }}>
+      {/* Wounds */}
+      <Box sx={{ display: "flex", justifyContent: "center" }}>
         <WoundPips count={player.wounds} />
+      </Box>
+      {/* Shame */}
+      <Box sx={{ display: "flex", justifyContent: "center" }}>
         <ShamePips count={player.shame} />
       </Box>
-      {/* Cash − penalty breakdown. Dollar amounts in blackletter, separator in
-          italic body — same money treatment as the crew column's cash chip. */}
-      <Box sx={{ whiteSpace: "nowrap", display: "flex", alignItems: "baseline", gap: "0.4em" }}>
-        {dead ? (
-          <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.85rem", color: palette.paperDim }}>
-            {t("reckoning.forfeit")}
-          </Box>
-        ) : (
-          <>
-            <Box sx={{ fontFamily: fonts.blackletter, fontWeight: 700, fontSize: "1.1rem", color: palette.paper }}>
-              ${cash.toLocaleString()}
-            </Box>
-            {player.shame > 0 && (
-              <>
-                <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.85rem", color: palette.paperDim }}>−</Box>
-                <Box sx={{ fontFamily: fonts.blackletter, fontWeight: 700, fontSize: "1.1rem", color: palette.blood }}>
-                  ${penalty.toLocaleString()}
-                </Box>
-              </>
-            )}
-          </>
-        )}
-      </Box>
+      {/* Cash */}
+      <MoneyCell value={dead ? null : `$${cash.toLocaleString()}`} color={palette.paper} />
+      {/* Shame penalty (negative) */}
+      <MoneyCell
+        value={dead || player.shame === 0 ? null : `− $${penalty.toLocaleString()}`}
+        color={palette.blood}
+      />
+      {/* Net score / DEAD */}
       <Box
         sx={{
           fontFamily: dead ? fonts.displayCaps : fonts.blackletter,
@@ -125,12 +122,37 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
           letterSpacing: dead ? "0.06em" : undefined,
           color: dead ? palette.blood : palette.paper,
           fontStyle: dead ? "italic" : "normal",
-          minWidth: "5em",
           textAlign: "right",
         }}
       >
         {dead ? t("reckoning.dead") : `$${score!.toLocaleString()}`}
       </Box>
+    </Box>
+  );
+}
+
+// Money column cell — blackletter bold for non-null values, em-dash placeholder
+// when the column doesn't apply to this row (dead player, or no shame penalty).
+function MoneyCell({ value, color }: { value: string | null; color: string }) {
+  if (value == null) {
+    return (
+      <Box sx={{ textAlign: "right", color: palette.paperFaint, fontFamily: fonts.body, fontStyle: "italic" }}>
+        —
+      </Box>
+    );
+  }
+  return (
+    <Box
+      sx={{
+        textAlign: "right",
+        fontFamily: fonts.blackletter,
+        fontWeight: 700,
+        fontSize: "1.1rem",
+        color,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {value}
     </Box>
   );
 }
