@@ -76,8 +76,10 @@
       "label": "Aim true."
     },
     "withdraw": {
-      "aimedAt": "Aimed at by: {{names}}",
-      "noOne": "Nobody is aiming at ye.",
+      "atEase": "AT EASE",
+      "atEaseSub": "the field be quiet",
+      "marks_one": "MARK ON YE",
+      "marks_other": "{{n}} MARKS ON YE",
       "yield": "YIELD",
       "yielded": "Yielded (tap to undo)"
     },

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import type { BulletCard, Game, Player } from "../../game/types";
-import { palette } from "../../theme/colors";
+import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
+import { FlagFor, jollyRogerForColor } from "../flags";
 import { FlintlockBarrel } from "../FlintlockBarrel";
 import { YieldButton } from "../YieldButton";
 import { Button } from "../shell/Button";
+import { toRoman } from "../../lib/navyHours";
 import { Hand } from "./Hand";
 import { TargetList } from "./TargetList";
 
@@ -58,16 +60,13 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
   }
 
   if (phase === "withdraw") {
-    const aimedAtMe = Object.entries(game.round.commits)
+    const attackers = Object.entries(game.round.commits)
       .filter(([sid, c]) => sid !== me.id && c.target === me.id)
-      .map(([sid]) => game.players.find(p => p.id === sid)?.displayName ?? sid);
+      .map(([sid]) => game.players.find(p => p.id === sid))
+      .filter((p): p is Player => !!p);
     return (
-      <Stack spacing={2} sx={{ padding: "1rem" }}>
-        {aimedAtMe.length > 0 ? (
-          <Alert severity="warning">{t("phase.withdraw.aimedAt", { names: aimedAtMe.join(", ") })}</Alert>
-        ) : (
-          <Alert severity="info">{t("phase.withdraw.noOne")}</Alert>
-        )}
+      <Stack spacing={2} sx={{ padding: "1rem", flex: 1, justifyContent: "center" }}>
+        <ThreatPanel attackers={attackers} />
         <YieldButton
           yielded={!!myCommit?.withdrew}
           onToggle={() => submitDuck(me.id, !myCommit?.withdrew)}
@@ -159,6 +158,121 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
         >
           {t("phase.commit.ready").toUpperCase()}
         </Button>
+      </Box>
+    </Box>
+  );
+}
+
+// Withdraw-phase threat readout. Two states:
+//
+// - Nobody aiming → an "AT EASE" stamp + a calm italic subline. Same paper-
+//   dim treatment used by other reflective beats in the broadside language.
+// - One or more aiming → blood-coloured "MARK ON YE" / "II MARKS ON YE"
+//   headline (roman numeral count for >1) and a row of attacker chips below
+//   showing each shooter's per-colour jolly roger + display name. Concrete
+//   info beats a "Aimed at by: X, Y, Z" sentence — the player can see
+//   exactly who they're up against at a glance.
+function ThreatPanel({ attackers }: { attackers: Player[] }) {
+  const { t } = useTranslation();
+  if (attackers.length === 0) {
+    return (
+      <Box sx={{ textAlign: "center", padding: "0.5rem 0" }}>
+        <Box
+          sx={{
+            fontFamily: fonts.displayCaps,
+            fontFeatureSettings: '"smcp"',
+            fontSize: "1.4rem",
+            letterSpacing: "0.4em",
+            color: palette.paperDim,
+            lineHeight: 1.05,
+          }}
+        >
+          {t("phase.withdraw.atEase")}
+        </Box>
+        <Box
+          sx={{
+            fontFamily: fonts.body,
+            fontStyle: "italic",
+            color: palette.paperDim,
+            marginTop: "0.4rem",
+            fontSize: "0.9rem",
+          }}
+        >
+          {t("phase.withdraw.atEaseSub")}
+        </Box>
+      </Box>
+    );
+  }
+  return (
+    <Box sx={{ textAlign: "center", padding: "0.5rem 0" }}>
+      <Box
+        sx={{
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "1.3rem",
+          letterSpacing: "0.32em",
+          color: palette.blood,
+          lineHeight: 1.05,
+          textShadow: `0 0 12px rgba(201,58,48,0.35)`,
+        }}
+      >
+        {t("phase.withdraw.marks", { count: attackers.length, n: toRoman(attackers.length) })}
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "0.45rem",
+          marginTop: "0.7rem",
+          flexWrap: "wrap",
+        }}
+      >
+        {attackers.map(p => (
+          <AttackerChip key={p.id} player={p} />
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+function AttackerChip({ player }: { player: Player }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.45rem",
+        padding: "0.32rem 0.5rem 0.32rem 0.4rem",
+        background: palette.inkUp,
+        border: `1.5px solid ${palette.blood}`,
+        boxShadow: `2px 2px 0 ${palette.inkDeep}`,
+      }}
+    >
+      <Box
+        sx={{
+          width: 32,
+          height: 22,
+          border: `1px solid ${palette.paper}`,
+          background: flagColor(player.colorOrAvatar),
+          color: palette.paper,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={16} />
+      </Box>
+      <Box
+        sx={{
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "0.78rem",
+          letterSpacing: "0.12em",
+          color: palette.paper,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {player.displayName}
       </Box>
     </Box>
   );
