@@ -7,12 +7,15 @@ import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import type { Player } from "../../game/types";
 import { cashTotal, shamePenalty, netScore } from "../../lib/score";
 import { toRoman } from "../../lib/navyHours";
+import { slideUpIn } from "../../theme/animations";
 
 interface EndGameRowProps {
   rank: number;
   player: Player;
   /** Round number when this player walked the plank, or null if they survived. */
   eliminatedRound: number | null;
+  /** Stagger delay for the entrance animation (ms). 0 = animates immediately. */
+  enterDelayMs?: number;
 }
 
 // Each piece of info gets its own grid column so values line up across rows
@@ -22,7 +25,7 @@ interface EndGameRowProps {
 // flex 1fr.
 const GRID_COLUMNS = "44px 60px 1fr 52px 80px 110px 110px 130px";
 
-export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
+export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0 }: EndGameRowProps) {
   const { t } = useTranslation();
   const dead = player.status === "dead";
   const cash = cashTotal(player);
@@ -37,7 +40,13 @@ export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
         alignItems: "center",
         padding: "0.5rem 0",
         borderBottom: `1px solid ${palette.rule}`,
-        opacity: dead ? 0.55 : 1,
+        // The slide-up animation fades opacity 0 → 1; dead-row dim has to
+        // ride on top of that without being overridden by the animation's
+        // final keyframe, so we use filter:opacity instead of plain opacity.
+        // animation-fill-mode `both` pins the row at the "from" state during
+        // the stagger delay so unannounced ranks don't flash visible.
+        animation: `${slideUpIn} 400ms ease-out ${enterDelayMs}ms both`,
+        filter: dead ? "opacity(0.55)" : undefined,
       }}
     >
       {/* Rank */}

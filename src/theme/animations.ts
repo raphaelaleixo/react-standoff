@@ -54,3 +54,11 @@ export const bloodSplash = keyframes`
   55%  { opacity: 1; transform: scale(1.15) rotate(3deg); }
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
 `;
+
+// Slide-up: a row sliding into a ledger from below as it's announced. Paired
+// with `animation-fill-mode: both` so the element holds the "from" state
+// (invisible, off-screen) during the stagger delay before its turn comes up.
+export const slideUpIn = keyframes`
+  0%   { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0); }
+`;

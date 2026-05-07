@@ -10,7 +10,17 @@ import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
 import { netScore } from "../../lib/score";
 import { toRoman } from "../../lib/navyHours";
+import { popIn, fadeIn } from "../../theme/animations";
 import type { Game, Player } from "../../game/types";
+
+// Stagger budget for the entrance choreography. Rows announce in reverse —
+// last place first — at ROW_STAGGER_MS apart, then a beat of silence, then
+// the winner section pops in with maximum flourish, then the foot buttons
+// fade in last.
+const ROW_STAGGER_MS = 110;
+const WINNER_BUFFER_MS = 280;
+const WINNER_DURATION_MS = 600;
+const BUTTONS_AFTER_WINNER_MS = 350;
 
 interface ReckoningScreenProps {
   game: Game;
@@ -42,6 +52,13 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
   const winner = ranked[0];
   const rest = ranked.slice(1);
 
+  // Reverse-order stagger: the last-place row enters first (delay 0) so the
+  // ledger fills bottom-up; second-place lands just before the winner
+  // enthronement pops in.
+  const rowsTotalMs = rest.length * ROW_STAGGER_MS;
+  const winnerDelayMs = rowsTotalMs + WINNER_BUFFER_MS;
+  const buttonsDelayMs = winnerDelayMs + WINNER_DURATION_MS + BUTTONS_AFTER_WINNER_MS - 200;
+
   return (
     <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
@@ -61,7 +78,7 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
             minHeight: 0,
           }}
         >
-          <WinnerEnthronement winner={winner} t={t} />
+          <WinnerEnthronement winner={winner} t={t} enterDelayMs={winnerDelayMs} durationMs={WINNER_DURATION_MS} />
 
           <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "auto", marginTop: "0.4rem" }}>
             {rest.map((p, i) => (
@@ -70,12 +87,21 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
                 rank={i + 2}
                 player={p}
                 eliminatedRound={eliminatedByRound[p.id] ?? null}
+                enterDelayMs={(rest.length - 1 - i) * ROW_STAGGER_MS}
               />
             ))}
           </Box>
         </Box>
 
-        <Box sx={{ padding: "0.7rem 1.5rem 0.8rem", display: "flex", justifyContent: "center", gap: "1.5rem" }}>
+        <Box
+          sx={{
+            padding: "0.7rem 1.5rem 0.8rem",
+            display: "flex",
+            justifyContent: "center",
+            gap: "1.5rem",
+            animation: `${fadeIn} 500ms ease-out ${buttonsDelayMs}ms both`,
+          }}
+        >
           <Button variant="primary" onClick={onPlayAgain}>
             {t("reckoning.playAgain").toUpperCase()}
           </Button>
@@ -88,10 +114,25 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
   );
 }
 
-function WinnerEnthronement({ winner, t }: { winner: Player; t: (k: string, p?: Record<string, unknown>) => string }) {
+function WinnerEnthronement({
+  winner,
+  t,
+  enterDelayMs,
+  durationMs,
+}: {
+  winner: Player;
+  t: (k: string, p?: Record<string, unknown>) => string;
+  enterDelayMs: number;
+  durationMs: number;
+}) {
   const winnerDead = winner.status !== "alive";
   const score = netScore(winner);
   const titleColor = winnerDead ? palette.paperDim : palette.paper;
+  // Sub-stagger inside the winner block: the eyebrow leads, the medallion
+  // pops in with the most flourish, and the cry tags out at the end.
+  const eyebrowDelayMs = enterDelayMs;
+  const medallionDelayMs = enterDelayMs + 180;
+  const cryDelayMs = enterDelayMs + durationMs - 100;
   return (
     <Box
       sx={{
@@ -108,11 +149,21 @@ function WinnerEnthronement({ winner, t }: { winner: Player; t: (k: string, p?: 
           fontSize: "0.78rem",
           letterSpacing: "0.6em",
           color: palette.paperDim,
+          animation: `${fadeIn} 400ms ease-out ${eyebrowDelayMs}ms both`,
         }}
       >
         {t("reckoning.winnerEyebrow")}
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1.5rem", marginTop: "0.5rem" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "1.5rem",
+          marginTop: "0.5rem",
+          animation: `${popIn} ${durationMs}ms cubic-bezier(.2,.7,.2,1.4) ${medallionDelayMs}ms both`,
+        }}
+      >
         <Box
           sx={{
             fontFamily: fonts.blackletter,
@@ -177,6 +228,7 @@ function WinnerEnthronement({ winner, t }: { winner: Player; t: (k: string, p?: 
           fontSize: "1.15rem",
           color: palette.blood,
           marginTop: "0.5rem",
+          animation: `${fadeIn} 500ms ease-out ${cryDelayMs}ms both`,
         }}
       >
         {t("reckoning.winnerCry")}
