@@ -46,3 +46,11 @@ export const pulse = keyframes`
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.3); }
 `;
+
+// Blood-splash entrance: starts undersized and slightly rotated, overshoots
+// to suggest impact, then settles. Used by the struck-roundel halo.
+export const bloodSplash = keyframes`
+  0%   { opacity: 0; transform: scale(0.35) rotate(-18deg); }
+  55%  { opacity: 1; transform: scale(1.15) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+`;

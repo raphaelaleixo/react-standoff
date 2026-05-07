@@ -3,6 +3,7 @@ import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { FlagFor } from "../flags";
 import { BloodSplatter } from "./BloodSplatter";
+import { bloodSplash } from "../../theme/animations";
 
 interface RoundelProps {
   flagId: string;
@@ -54,7 +55,12 @@ export function Roundel({
           inset: "-50%",
           pointerEvents: "none",
           opacity: struck ? 1 : 0,
-          transition: "opacity 0.4s ease",
+          // Splash-in keyframe runs whenever struck flips true; exit falls
+          // back to a smooth opacity fade through the transition below.
+          animation: struck
+            ? `${bloodSplash} 520ms cubic-bezier(.2,.7,.2,1.4) both`
+            : undefined,
+          transition: "opacity 0.35s ease",
         }}
       >
         <BloodSplatter seed={colorId ?? flagId} />
