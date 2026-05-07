@@ -33,7 +33,7 @@ export function RevealStamp({ label }: RevealStampProps) {
           textShadow: "0 0 20px rgba(201, 58, 48, 0.55), 0 0 40px rgba(201, 58, 48, 0.3)",
           // Blackletter glyphs sit low in their em-box, plus we want the
           // label visually above the map's centre rather than dead-on it.
-          transform: "translateY(-0.6em)",
+          transform: "translateY(-1.2em)",
           animation: `${popIn} 360ms cubic-bezier(.2,.7,.2,1.4) both`,
         }}
       >
