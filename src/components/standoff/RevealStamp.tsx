@@ -23,21 +23,22 @@ export function RevealStamp({ label }: RevealStampProps) {
         zIndex: 5,
       }}
     >
-      <Box
-        key={label}
-        sx={{
-          fontFamily: fonts.blackletter,
-          fontSize: "7rem",
-          lineHeight: 1,
-          color: palette.blood,
-          textShadow: "0 0 20px rgba(201, 58, 48, 0.55), 0 0 40px rgba(201, 58, 48, 0.3)",
-          // Blackletter glyphs sit low in their em-box, plus we want the
-          // label visually above the map's centre rather than dead-on it.
-          transform: "translateY(-1.2em)",
-          animation: `${popIn} 360ms cubic-bezier(.2,.7,.2,1.4) both`,
-        }}
-      >
-        {label}
+      {/* Outer Box owns the static translate; inner Box runs popIn so the
+        animation's transform: scale(...) doesn't override the offset. */}
+      <Box sx={{ transform: "translateY(-1.2em)" }}>
+        <Box
+          key={label}
+          sx={{
+            fontFamily: fonts.blackletter,
+            fontSize: "7rem",
+            lineHeight: 1,
+            color: palette.blood,
+            textShadow: "0 0 20px rgba(201, 58, 48, 0.55), 0 0 40px rgba(201, 58, 48, 0.3)",
+            animation: `${popIn} 360ms cubic-bezier(.2,.7,.2,1.4) both`,
+          }}
+        >
+          {label}
+        </Box>
       </Box>
     </Box>
   );
