@@ -51,14 +51,20 @@ const PHASE_HOLD_MS: Record<RoundPhase, number> = {
 const BULLETS: Array<BulletCard | "none"> = ["none", "clic", "bang", "bang_bang_bang"];
 const WOUNDS: Array<0 | 1 | 2 | 3> = [0, 1, 2, 3];
 
+export type DevScreen = "game" | "muster" | "reckoning";
+const SCREENS: DevScreen[] = ["game", "muster", "reckoning"];
+
 interface DevControlsPanelProps {
   open: boolean;
   game: Game;
   actions: MockGameActions;
   onClose(): void;
+  /** Which big-screen surface MockBigScreen is rendering. */
+  screen: DevScreen;
+  onScreenChange(screen: DevScreen): void;
 }
 
-export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPanelProps) {
+export function DevControlsPanel({ open, game, actions, onClose, screen, onScreenChange }: DevControlsPanelProps) {
   const [playing, setPlaying] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -119,6 +125,27 @@ export function DevControlsPanel({ open, game, actions, onClose }: DevControlsPa
       </Stack>
 
       <Box sx={{ overflowY: "auto", flex: 1 }}>
+        <Section title="Screen">
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={screen}
+            onChange={(_, value: DevScreen | null) => value && onScreenChange(value)}
+            sx={{ flexWrap: "wrap" }}
+          >
+            {SCREENS.map(s => (
+              <ToggleButton key={s} value={s} sx={{ textTransform: "none" }}>
+                {s}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+          {screen !== "game" && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+              Phase / players / commits below only drive the in-game ledger. Switch back to <em>game</em> to use them.
+            </Typography>
+          )}
+        </Section>
+
         <Section title="Round">
           <Typography variant="caption">Phase</Typography>
           <ToggleButtonGroup
