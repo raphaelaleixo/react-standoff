@@ -55,10 +55,9 @@ export function Roundel({
           pointerEvents: "none",
           opacity: struck ? 1 : 0,
           transition: "opacity 0.4s ease",
-          transform: "rotate(-8deg)",
         }}
       >
-        <BloodSplatter />
+        <BloodSplatter seed={colorId ?? flagId} />
       </Box>
       {/* Always-opaque backplate so targeting lines never bleed through a dimmed roundel. */}
       <Box
