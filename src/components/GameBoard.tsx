@@ -31,10 +31,12 @@ export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
     durationMs: STANDOFF_DURATION_MS,
   });
   // Latch the last visible count so the StandoffStamp keeps reading the
-  // same digit while it fades out after the phase has already advanced.
+  // same digit while it fades out. The standoff phase persists for an
+  // extra silent beat (STANDOFF_HOLD_MS) after the count reaches 0; we
+  // hide the stamp at that point so the "0" digit isn't held on screen.
   const lastCountRef = useRef(0);
-  if (count !== null) lastCountRef.current = count;
-  const showStamp = inStandoff && count !== null;
+  if (count !== null && count > 0) lastCountRef.current = count;
+  const showStamp = inStandoff && count !== null && count > 0;
 
   const inWithdraw = game.round.phase === "withdraw";
   const withdrawSeconds = useSecondsRemaining({

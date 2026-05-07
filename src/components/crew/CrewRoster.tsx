@@ -71,6 +71,7 @@ function deriveStatus(
     case "commit":
       return c?.bullet && c?.target ? "ready" : "choosing";
     case "standoff":
+    case "standoff_hold":
     case "withdraw":
       return undefined;
     case "reveal_withdraw":

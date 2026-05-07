@@ -14,7 +14,7 @@ import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel } from "../components/dev/DevControlsPanel";
 import { useStandoffCount } from "../hooks/useStandoffCount";
-import { STANDOFF_DURATION_MS } from "../lib/phaseDurations";
+import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS } from "../lib/phaseDurations";
 
 const PLAYERS: Player[] = [
   { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",  bullets: ["bang","clic","clic","clic","clic","bang","bang_bang_bang"], cash: [{ id: "bn-a1", value: 10000 }, { id: "bn-a2", value: 5000 }], wounds: 1, shame: 0, status: "alive", effects: [] },
@@ -34,13 +34,13 @@ const RESOLUTION_BROADSIDE: RoundResolution = {
   shots: [
     { shooter: "b", target: "a", card: "bang_bang_bang", outcome: "hit" },
     { shooter: "a", target: "c", card: "bang", outcome: "hit" },
-    { shooter: "c", target: "e", card: "bang", outcome: "hit" },
+    { shooter: "c", target: "d", card: "bang", outcome: "hit" },
     { shooter: "d", target: "b", card: "bang", outcome: "hit" },
     { shooter: "e", target: "f", card: "clic", outcome: "no_effect_clic" },
   ],
   ducks: [],
-  standing: ["a", "b", "c", "e", "f"],
-  woundedThisRound: { a: 1, b: 1, c: 1, e: 1 },
+  standing: ["c", "e"],
+  woundedThisRound: { a: 1, b: 1, d: 1 },
   eliminated: [],
   awards: {},
   carryover: [],
@@ -48,8 +48,7 @@ const RESOLUTION_BROADSIDE: RoundResolution = {
 
 const RESOLUTION_KILL: RoundResolution = {
   ...RESOLUTION_BROADSIDE,
-  woundedThisRound: { ...RESOLUTION_BROADSIDE.woundedThisRound, d: 1 },
-  // d had 2 wounds going in; another shot tips them over and they walk the plank.
+  // d had 2 wounds going in; c's bang tips them over and they walk the plank.
   eliminated: ["d"],
 };
 
@@ -70,7 +69,7 @@ const FIXTURE_GAME: Game = {
     commits: {
       a: { bullet: "bang", target: "c" },
       b: { bullet: "bang_bang_bang", target: "a" },
-      c: { bullet: "bang", target: "e" },
+      c: { bullet: "bang", target: "d" },
       d: { bullet: "bang", target: "b" },
       e: { bullet: "clic", target: "f" },
       f: { withdrew: true, bullet: "clic", target: "a" },
@@ -130,7 +129,14 @@ export default function MockBigScreen() {
   });
   useEffect(() => {
     if (game.round.phase === "standoff" && standoffCount === 0) {
-      actions.setPhase("withdraw");
+      actions.setPhase("standoff_hold");
+      return;
+    }
+    if (game.round.phase === "standoff_hold") {
+      // Hold beat where the targeting lines draw in. Match the production
+      // duration so the mock previews real pacing.
+      const t = setTimeout(() => actions.setPhase("withdraw"), STANDOFF_HOLD_MS);
+      return () => clearTimeout(t);
     }
   }, [game.round.phase, standoffCount, actions]);
 

@@ -16,7 +16,10 @@ const ARROW_TARGET_PADDING = 6; // Pixels of breathing room between arrow tip an
 // fade-out — the wrapper <g> below transitions opacity to 0 during split,
 // and the per-line visibility logic (bbb-victim filter) keeps its
 // reveal_others state so nothing flickers visible just before it fades.
-const PHASES_WITH_LINES: RoundPhase[] = ["withdraw", "reveal_withdraw", "reveal_bbb", "reveal_others", "split"];
+// Lines first appear during the silent `standoff_hold` beat — they draw in
+// while the standoff stamp has already faded and before the yield countdown
+// starts — then stay through withdraw and the reveal sequence.
+const PHASES_WITH_LINES: RoundPhase[] = ["standoff_hold", "withdraw", "reveal_withdraw", "reveal_bbb", "reveal_others", "split"];
 
 interface TargetingMapProps {
   game: Game;
@@ -176,7 +179,9 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
         </defs>
         {showLines && (() => {
           const phase = game.round.phase;
-          // Withdraw shows every committed line (yields are still private).
+          // standoff_hold and withdraw show every committed line (yields are
+          // still private — the YieldButton only appears during withdraw, and
+          // even toggled mid-countdown the choice can't be revealed yet).
           // Once yields are public (reveal_withdraw and on), any line touching
           // a ducked player is voided — both the duckee's shot and any shot
           // aimed at them, per the gangster rule.
@@ -191,7 +196,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
             shooterId: string,
             targetId: string,
           ) => {
-            if (phase === "withdraw") return true;
+            if (phase === "standoff_hold" || phase === "withdraw") return true;
             if (shooter?.withdrew || target?.withdrew) return false;
             if (phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
               const isBbbLine = shooter?.bullet === "bang_bang_bang";

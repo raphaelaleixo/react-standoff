@@ -6,9 +6,10 @@ import { normalizeGame } from "../game/deserialize";
 import { resolveRound } from "../game/resolver";
 import { startNextRound, endGameStatus } from "../game/transitions";
 import { useServerTime } from "./useServerTime";
-import { STANDOFF_DURATION_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
+import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
 
 const STANDOFF_MS = STANDOFF_DURATION_MS;
+const STANDOFF_HOLD = STANDOFF_HOLD_MS;
 const WITHDRAW_MS = WITHDRAW_DURATION_MS;
 const REVEAL_WITHDRAW_MS = 2500;
 const REVEAL_BBB_MS = 5000;
@@ -54,11 +55,28 @@ export function useGameState(roomId: string | undefined) {
     });
   }, [roomId, game]);
 
-  // standoff → withdraw (timed)
+  // standoff → standoff_hold (timed; the count animation plays out, then we
+  // hand off to a silent hold phase where the targeting lines draw in).
   useEffect(() => {
     if (!roomId || !game) return;
     if (game.round.phase !== "standoff") return;
     const remaining = STANDOFF_MS - (serverNow() - game.round.phaseStartedAt);
+    const fire = () => {
+      update(ref(database, `rooms/${roomId}/game/round`), {
+        phase: "standoff_hold",
+        phaseStartedAt: serverTimestamp(),
+      });
+    };
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // standoff_hold → withdraw (timed; lines have drawn in by now, this is the
+  // breath before the yield countdown starts).
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "standoff_hold") return;
+    const remaining = STANDOFF_HOLD - (serverNow() - game.round.phaseStartedAt);
     const fire = () => {
       update(ref(database, `rooms/${roomId}/game/round`), {
         phase: "withdraw",

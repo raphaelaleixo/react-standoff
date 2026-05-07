@@ -131,7 +131,7 @@ function PhaseView({ game, me, submitCommit, submitDuck }: {
     return <CommitPicker me={me} opponents={opponents} myCommit={myCommit} onSubmit={submitCommit} />;
   }
 
-  if (phase === "standoff") {
+  if (phase === "standoff" || phase === "standoff_hold") {
     const target = game.players.find(p => p.id === myCommit?.target);
     return (
       <FlintlockBarrel

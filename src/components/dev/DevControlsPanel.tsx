@@ -16,11 +16,12 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import type { BulletCard, Game, Player, RoundPhase } from "../../game/types";
 import type { MockGameActions } from "./useMockGameState";
-import { STANDOFF_DURATION_MS, WITHDRAW_DURATION_MS } from "../../lib/phaseDurations";
+import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS, WITHDRAW_DURATION_MS } from "../../lib/phaseDurations";
 
 const PHASES: RoundPhase[] = [
   "commit",
   "standoff",
+  "standoff_hold",
   "withdraw",
   "reveal_withdraw",
   "reveal_bbb",
@@ -32,13 +33,14 @@ const PHASES: RoundPhase[] = [
 // the round. Tuned for at-the-table watchability, not real-game speed.
 //
 // `standoff` matches STANDOFF_DURATION_MS so the count animation finishes
-// exactly when MockBigScreen's auto-advance fires; this timer is a
-// belt-and-suspenders fallback that calls setPhase('withdraw') idempotently.
-// `withdraw` matches WITHDRAW_DURATION_MS so the on-screen seconds counter
-// shown by WithdrawStamp lines up with the actual phase duration.
+// exactly when the panel advances. `standoff_hold` is the silent beat where
+// the targeting lines draw in before the yield countdown begins. `withdraw`
+// matches WITHDRAW_DURATION_MS so the on-screen seconds counter shown by
+// WithdrawStamp lines up with the actual phase duration.
 const PHASE_HOLD_MS: Record<RoundPhase, number> = {
   commit: 900,
   standoff: STANDOFF_DURATION_MS,
+  standoff_hold: STANDOFF_HOLD_MS,
   withdraw: WITHDRAW_DURATION_MS,
   reveal_withdraw: 1500,
   reveal_bbb: 2500,

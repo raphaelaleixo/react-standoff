@@ -27,6 +27,7 @@ export interface Player {
 export type RoundPhase =
   | 'commit'
   | 'standoff'
+  | 'standoff_hold'
   | 'withdraw'
   | 'reveal_withdraw'
   | 'reveal_bbb'
