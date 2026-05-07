@@ -1,8 +1,11 @@
 import { Box, Typography } from "@mui/material";
 import { palette } from "../theme/colors";
-import { FlagFor } from "./flags";
+import { FlagFor, jollyRogerForColor } from "./flags";
 
-// Phase 2 phone view: a flintlock barrel-end framing the target's flag.
+// Phase 2 phone view: a flintlock barrel-end framing the target's jolly roger.
+// `targetFlag` carries the target player's colorOrAvatar so we can tint via
+// the per-color jolly roger silhouette — same pattern used in the targeting
+// roundels, the crew rows, and the reckoning chips.
 export function FlintlockBarrel({ targetFlag, targetName }: {
   targetFlag: string;
   targetName: string;
@@ -31,7 +34,7 @@ export function FlintlockBarrel({ targetFlag, targetName }: {
         }}
       >
         <Box sx={{ color: palette.blood }}>
-          <FlagFor id={targetFlag} size={120} />
+          <FlagFor id={jollyRogerForColor(targetFlag)} size={120} />
         </Box>
         <Box
           sx={{
