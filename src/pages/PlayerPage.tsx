@@ -4,22 +4,41 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   Box,
-  Button,
-  Chip,
   CircularProgress,
   Container,
-  Divider,
   Stack,
   Typography,
 } from "@mui/material";
-import type { BulletCard, Game, Player } from "../game/types";
+import type { BulletCard, Game, Player, RoundPhase } from "../game/types";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
 import { FlagFor } from "../components/flags";
-import { PowderLoadCard } from "../components/PowderLoadCard";
 import { FlintlockBarrel } from "../components/FlintlockBarrel";
 import { YieldButton } from "../components/YieldButton";
 import { flagColor, palette } from "../theme/colors";
+import { fonts } from "../theme/typography";
+import { PhoneShell } from "../components/shell/PhoneShell";
+import { Button } from "../components/shell/Button";
+import { Hand } from "../components/phone/Hand";
+import { TargetList } from "../components/phone/TargetList";
+
+// Sorted in the same order as the Hand grid, so we can map the selected
+// BulletCard back to a displayed-index for highlight.
+const HAND_ORDER: Record<BulletCard, number> = { clic: 0, bang: 1, bang_bang_bang: 2 };
+
+// Concise phase labels for the PhoneShell's round/phase strip. The reveal
+// sub-phases all collapse to "REVEAL" — the player has nothing to do during
+// them anyway; the big screen is the show.
+const PHASE_LABEL: Record<RoundPhase, string> = {
+  commit: "LOAD & AIM",
+  standoff: "STANDOFF",
+  standoff_hold: "STANDOFF",
+  withdraw: "YIELD?",
+  reveal_withdraw: "REVEAL",
+  reveal_bbb: "REVEAL",
+  reveal_others: "REVEAL",
+  split: "SPLIT",
+};
 
 export default function PlayerPage() {
   const { t } = useTranslation();
@@ -81,32 +100,18 @@ export default function PlayerPage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Stack spacing={3}>
-        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-          <Box sx={{ color: flagColor(me.colorOrAvatar), opacity: me.status === "dead" ? 0.4 : 1 }}>
-            <FlagFor id={me.colorOrAvatar} size={56} />
-          </Box>
-          <Box>
-            <Typography variant="h6">{me.displayName}</Typography>
-            <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
-              <Chip size="small" label={`wounds ${me.wounds}/3`} color={me.wounds >= 2 ? "warning" : "default"} />
-              <Chip size="small" label={`yellow ×${me.shame}`} />
-              <Chip size="small" label={`$${me.cash.reduce((s, n) => s + n.value, 0).toLocaleString()}`} color="success" />
-            </Stack>
-          </Box>
-        </Stack>
-
-        <Divider />
-
-        <PhaseView
-          game={game}
-          me={me}
-          submitCommit={submitCommit}
-          submitDuck={submitDuck}
-        />
-      </Stack>
-    </Container>
+    <PhoneShell
+      me={me}
+      round={game.round.number}
+      phaseLabel={PHASE_LABEL[game.round.phase]}
+    >
+      <PhaseView
+        game={game}
+        me={me}
+        submitCommit={submitCommit}
+        submitDuck={submitDuck}
+      />
+    </PhoneShell>
   );
 }
 
@@ -118,10 +123,18 @@ function PhaseView({ game, me, submitCommit, submitDuck }: {
 }) {
   const { t } = useTranslation();
   if (game.phase === "ended") {
-    return <Typography variant="h5">{t("phase.ended")}</Typography>;
+    return (
+      <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
+        <Typography variant="h5">{t("phase.ended")}</Typography>
+      </Box>
+    );
   }
   if (me.status === "dead") {
-    return <Typography color="text.secondary">{t("player.spectator")}</Typography>;
+    return (
+      <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
+        <Typography color="text.secondary">{t("player.spectator")}</Typography>
+      </Box>
+    );
   }
   const phase = game.round.phase;
   const myCommit = game.round.commits[me.id];
@@ -146,7 +159,7 @@ function PhaseView({ game, me, submitCommit, submitDuck }: {
       .filter(([sid, c]) => sid !== me.id && c.target === me.id)
       .map(([sid]) => game.players.find(p => p.id === sid)?.displayName ?? sid);
     return (
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ padding: "1rem" }}>
         {aimedAtMe.length > 0 ? (
           <Alert severity="warning">{t("phase.withdraw.aimedAt", { names: aimedAtMe.join(", ") })}</Alert>
         ) : (
@@ -161,7 +174,11 @@ function PhaseView({ game, me, submitCommit, submitDuck }: {
   }
 
   if (phase === "reveal_withdraw" || phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
-    return <Typography color="text.secondary">{t("player.watchScreen")}</Typography>;
+    return (
+      <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
+        <Typography color="text.secondary">{t("player.watchScreen")}</Typography>
+      </Box>
+    );
   }
 
   return null;
@@ -176,82 +193,70 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
   const { t } = useTranslation();
   const [load, setLoad] = useState<BulletCard | null>(null);
   const [target, setTarget] = useState<string | null>(null);
-  const counts = countBullets(me.bullets);
   const ready = myCommit?.bullet && myCommit.target;
 
   if (ready) {
     const targetName = opponents.find(o => o.id === myCommit?.target)?.displayName ?? myCommit?.target;
     return (
-      <Stack spacing={1}>
-        <Alert severity="success">
-          {t("phase.commit.locked", { load: t(`load.${myCommit.bullet!}`), target: targetName })}
-        </Alert>
-        <Typography color="text.secondary">{t("phase.commit.waiting")}</Typography>
-      </Stack>
+      <Box sx={{ padding: "1.4rem", textAlign: "center", display: "flex", flexDirection: "column", gap: "0.7rem" }}>
+        <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "1rem", letterSpacing: "0.22em", color: palette.paper }}>
+          {t(`load.${myCommit.bullet!}`).toUpperCase()} → {targetName}
+        </Box>
+        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", color: palette.paperDim }}>
+          {t("phase.commit.waiting")}
+        </Box>
+      </Box>
     );
   }
 
-  const loadOrder: BulletCard[] = ["bang_bang_bang", "bang", "clic"];
+  // Map the chosen BulletCard back to a displayed-index for the Hand's highlight.
+  // If the player has multiple cards of the same load (e.g. two CLICKs), the
+  // first matching slot is highlighted — visually identical, interchangeable.
+  const sorted = [...me.bullets].sort((a, b) => HAND_ORDER[a] - HAND_ORDER[b]);
+  const selectedIndex = load ? sorted.indexOf(load) : undefined;
 
   return (
-    <Stack spacing={3}>
-      <Box>
-        <Typography variant="overline" color="text.secondary">{t("phase.commit.pickLoad")}</Typography>
-        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", mt: 1 }} useFlexGap>
-          {loadOrder.map(b => (
-            <PowderLoadCard
-              key={b}
-              load={b}
-              count={counts[b]}
-              selected={load === b}
-              onSelect={() => setLoad(b)}
-            />
-          ))}
-        </Stack>
-      </Box>
+    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <Hand
+        bullets={me.bullets}
+        selectedIndex={selectedIndex !== -1 ? selectedIndex : undefined}
+        onPick={(b) => setLoad(b)}
+      />
 
-      <Box>
-        <Typography variant="overline" color="text.secondary">{t("phase.commit.pickTarget")}</Typography>
-        <Stack spacing={1} sx={{ mt: 1 }}>
-          {opponents.map(o => (
-            <Box
-              key={o.id}
-              role="button"
-              onClick={() => setTarget(o.id)}
-              sx={{
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                p: 1,
-                bgcolor: palette.paper,
-                border: `2px solid ${target === o.id ? palette.blood : palette.ink}`,
-                borderRadius: 1,
-              }}
-            >
-              <Box sx={{ color: flagColor(o.colorOrAvatar) }}>
-                <FlagFor id={o.colorOrAvatar} size={36} />
-              </Box>
-              <Typography sx={{ color: palette.ink, fontWeight: 600 }}>{o.displayName}</Typography>
-            </Box>
-          ))}
-        </Stack>
-      </Box>
-
-      <Button
-        variant="contained"
-        size="large"
-        disabled={!load || !target}
-        onClick={() => load && target && onSubmit(me.id, load, target)}
+      <Box
+        sx={{
+          padding: "0.55rem 0 0.25rem",
+          textAlign: "center",
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "0.7rem",
+          letterSpacing: "0.32em",
+          color: palette.paperDim,
+        }}
       >
-        {t("phase.commit.ready")}
-      </Button>
-    </Stack>
-  );
-}
+        {t("phase.commit.pickTarget")}
+      </Box>
 
-function countBullets(bullets: BulletCard[]): Record<BulletCard, number> {
-  const c = { clic: 0, bang: 0, bang_bang_bang: 0 } as Record<BulletCard, number>;
-  for (const b of bullets) c[b] += 1;
-  return c;
+      <TargetList
+        opponents={opponents}
+        selectedId={target}
+        onPick={(id) => setTarget(id)}
+      />
+
+      <Box sx={{ padding: "0.7rem 0.85rem 0.85rem" }}>
+        <Button
+          fullWidth
+          disabled={!load || !target}
+          onClick={() => load && target && onSubmit(me.id, load, target)}
+          caption={
+            load && target
+              ? `— ${t(`load.${load}`).toLowerCase()} · ${opponents.find(o => o.id === target)?.displayName ?? "?"} —`
+              : undefined
+          }
+        >
+          {t("phase.commit.ready").toUpperCase()}
+        </Button>
+      </Box>
+    </Box>
+  );
 }
