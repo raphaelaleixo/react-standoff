@@ -42,6 +42,21 @@ export function Roundel({
         height: size,
       }}
     >
+      {/* Blood halo — fades in behind a struck roundel. Sits below the
+        backplate so only the outer ring (extending past the roundel's edge)
+        shows; the inner area is still covered by the opaque backplate. */}
+      <Box
+        sx={{
+          position: "absolute",
+          inset: "-32%",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(201,58,48,0.65) 0%, rgba(201,58,48,0.25) 45%, rgba(201,58,48,0) 70%)",
+          filter: "blur(5px)",
+          pointerEvents: "none",
+          opacity: struck ? 1 : 0,
+          transition: "opacity 0.4s ease",
+        }}
+      />
       {/* Always-opaque backplate so targeting lines never bleed through a dimmed roundel. */}
       <Box
         sx={{
