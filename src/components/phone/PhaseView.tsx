@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import type { BulletCard, Game, Player } from "../../game/types";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { FlagFor, jollyRogerForColor } from "../flags";
-import { YieldButton } from "../YieldButton";
 import { Button } from "../shell/Button";
 import { toRoman } from "../../lib/navyHours";
 import { useStandoffCount } from "../../hooks/useStandoffCount";
 import { STANDOFF_DURATION_MS } from "../../lib/phaseDurations";
+import { SHAME_PENALTY } from "../../lib/score";
 import { AimBarrel } from "./AimBarrel";
 import { Hand } from "./Hand";
 import { TargetList } from "./TargetList";
+import { YieldRibbon } from "./YieldRibbon";
 
 // Sorted in the same order as the Hand grid, so we can map the selected
 // BulletCard back to a displayed-index for highlight.
@@ -118,13 +119,47 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
       .map(([sid]) => game.players.find(p => p.id === sid))
       .filter((p): p is Player => !!p);
     return (
-      <Stack spacing={2} sx={{ padding: "1rem", flex: 1, justifyContent: "center" }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: "1.2rem",
+          padding: "0.8rem 1rem 1rem",
+        }}
+      >
         <ThreatPanel attackers={attackers} />
-        <YieldButton
+        <YieldRibbon
           yielded={!!myCommit?.withdrew}
           onToggle={() => submitDuck(me.id, !myCommit?.withdrew)}
         />
-      </Stack>
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            sx={{
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: "0.65rem",
+              letterSpacing: "0.32em",
+              color: palette.paperDim,
+            }}
+          >
+            {t("phase.withdraw.cost")}
+          </Box>
+          <Box
+            sx={{
+              fontFamily: fonts.body,
+              fontStyle: "italic",
+              fontSize: "0.78rem",
+              letterSpacing: "0.04em",
+              color: palette.paper,
+              marginTop: "0.2rem",
+            }}
+          >
+            {t("phase.withdraw.costSub", { amount: SHAME_PENALTY.toLocaleString() })}
+          </Box>
+        </Box>
+      </Box>
     );
   }
 

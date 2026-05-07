@@ -80,6 +80,8 @@
       "atEaseSub": "the field be quiet",
       "marks_one": "MARK ON YE",
       "marks_other": "{{n}} MARKS ON YE",
+      "cost": "COST: ONE YELLOW STREAK",
+      "costSub": "—${{amount}} at the end of the day",
       "yield": "YIELD",
       "yielded": "Yielded (tap to undo)"
     },

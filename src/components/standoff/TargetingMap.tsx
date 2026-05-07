@@ -180,7 +180,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
         {showLines && (() => {
           const phase = game.round.phase;
           // standoff_hold and withdraw show every committed line (yields are
-          // still private — the YieldButton only appears during withdraw, and
+          // still private — the YieldRibbon only appears during withdraw, and
           // even toggled mid-countdown the choice can't be revealed yet).
           // Once yields are public (reveal_withdraw and on), any line touching
           // a ducked player is voided — both the duckee's shot and any shot
