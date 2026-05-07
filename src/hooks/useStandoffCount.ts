@@ -7,14 +7,17 @@ interface Args {
 }
 
 export function useStandoffCount({ active, startedAt, durationMs }: Args): number | null {
-  const [now, setNow] = useState(() => Date.now());
+  // Read time fresh from Date.now() in the render body so the first frame
+  // after `active` flips on doesn't compute against a stale, mount-time
+  // timestamp. The interval is only used to schedule re-renders.
+  const [, setTick] = useState(0);
   useEffect(() => {
     if (!active) return;
-    const id = setInterval(() => setNow(Date.now()), 100);
+    const id = setInterval(() => setTick(n => n + 1), 100);
     return () => clearInterval(id);
   }, [active]);
   if (!active) return null;
-  const elapsed = now - startedAt;
+  const elapsed = Date.now() - startedAt;
   const remaining = Math.max(0, durationMs - elapsed);
   const stepMs = durationMs / 3;
   // Bucket remaining time into 3 / 2 / 1 / 0. Once it lands on 0 the
