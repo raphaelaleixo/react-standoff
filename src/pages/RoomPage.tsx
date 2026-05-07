@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   Box,
-  Button,
   Chip,
   CircularProgress,
   Container,
@@ -11,13 +10,14 @@ import {
   Typography,
 } from "@mui/material";
 import { ref, update } from "firebase/database";
-import { buildJoinUrl, RoomQRCode, startGame, useRoomState } from "react-gameroom";
+import { buildJoinUrl, startGame, useRoomState } from "react-gameroom";
 import type { RoomState } from "react-gameroom";
 import type { Player } from "../game/types";
 import { initGame } from "../game/setup";
 import { GameBoard } from "../components/GameBoard";
 import { FlagFor } from "../components/flags";
 import { flagColor } from "../theme/colors";
+import { MusterScreen } from "../components/screens/MusterScreen";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
 import { database } from "../firebase";
@@ -61,7 +61,6 @@ export default function RoomPage() {
     return <GameView game={game} roomId={id ?? ""} />;
   }
 
-  const claimed = roomState.players.filter(p => p.status !== "empty");
   const joinUrl = id ? buildJoinUrl(id) : "";
 
   const onStart = async () => {
@@ -79,52 +78,12 @@ export default function RoomPage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack spacing={4}>
-        <Box>
-          <Typography variant="overline" color="text.secondary">{t("room.code")}</Typography>
-          <Typography variant="h2" component="div" sx={{ letterSpacing: 8, fontFamily: "monospace" }}>
-            {roomState.roomId}
-          </Typography>
-        </Box>
-
-        <Stack direction={{ xs: "column", md: "row" }} spacing={4} sx={{ alignItems: { md: "flex-start" } }}>
-          <Box>
-            <Typography variant="overline" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-              {t("room.scanToJoin")}
-            </Typography>
-            <RoomQRCode roomId={roomState.roomId} url={joinUrl} size={220} />
-          </Box>
-
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h5" gutterBottom>{t("room.playersHeading")}</Typography>
-            <Stack spacing={1.5}>
-              {claimed.map(p => (
-                <Stack key={p.id} direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                  <Box sx={{ color: flagColor(p.data?.colorOrAvatar ?? "generic"), width: 48, height: 48 }}>
-                    <FlagFor id={p.data?.colorOrAvatar ?? "generic"} size={48} />
-                  </Box>
-                  <Typography variant="h6">{p.name}</Typography>
-                </Stack>
-              ))}
-              {claimed.length === 0 && (
-                <Typography color="text.secondary">{t("room.waitingForPlayers")}</Typography>
-              )}
-            </Stack>
-          </Box>
-        </Stack>
-
-        <Box>
-          {derived.canStart ? (
-            <Button variant="contained" size="large" onClick={onStart}>
-              {t("room.startGame")}
-            </Button>
-          ) : (
-            <Typography color="text.secondary">{t("room.waitingForPlayers")}</Typography>
-          )}
-        </Box>
-      </Stack>
-    </Container>
+    <MusterScreen
+      roomState={roomState}
+      joinUrl={joinUrl}
+      canStart={derived.canStart}
+      onStart={onStart}
+    />
   );
 }
 
