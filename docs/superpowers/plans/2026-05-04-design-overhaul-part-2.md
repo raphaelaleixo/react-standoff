@@ -728,7 +728,9 @@ git commit -m "feat(mock): phase selector in MockBigScreen for visual QA"
 
 ---
 
-## Stage 3 — Lobby (THE MUSTER)
+## Stage 3 — Lobby (THE MUSTER) — ✅ DONE
+
+> Built `<MusterScreen>` + `<InvertedQR>`, wired into `RoomPage`. Followed the spec's structure with small adjustments — used the existing `toRoman` from `lib/navyHours`, foot row uses a 3-column grid (rather than space-between flex) so the `ABOARD` / `Hoist the colours` button / `SEATS LEFT` cluster aligns regardless of chip width. Empty seat tiles are simplified to a dashed-border square with the EMPTY SEAT / awaiting crew labels.
 
 Big-screen lobby state. Replaces the QR-and-player-list layout in `RoomPage` with a broadside-styled muster screen.
 
@@ -1090,7 +1092,18 @@ git commit -m "feat(big-screen): wire MusterScreen into RoomPage lobby branch"
 
 ---
 
-## Stage 4 — End-game (THE RECKONING)
+## Stage 4 — End-game (THE RECKONING) — ✅ DONE
+
+> Built `<EndGameRow>` + `<ReckoningScreen>`, wired into `RoomPage`. Several iterations on top of the spec:
+>
+> - Header matches the in-game Masthead (`ROUND VIII of VIII · The Standoff · ROOM <code>`) instead of the bespoke "ROUND VIII PASSED / NAVY at the dock" treatment — visual continuity with the rest of the big-screen surfaces. The reckoning's title/subtitle/passedRound/navyDocked i18n keys were dropped.
+> - Pirate flag-names dropped throughout — display name promoted to the prominent blackletter title in the winner section, and to the row label in EndGameRow.
+> - All flag chips use `jollyRogerForColor()` (per-color jolly roger) instead of the player's pirate flag SVG.
+> - EndGameRow rebuilt as an 8-column ledger grid (rank · chip · name · wounds · shame · cash · penalty · score) with each piece of info in its own column. Wound + shame pip clusters extracted into `<WoundPips>` / `<ShamePips>` (`src/components/marks/PlayerMarks.tsx`) and shared with `CrewRow`.
+> - Money displays use blackletter bold to match `CrewRow`'s cash chip; `MoneyCell` falls back to a faint italic em-dash when the column doesn't apply (cash + penalty for dead players, penalty for shame-clean players).
+> - Staggered entrance animations: rows announce in reverse (last place enters first, second place last) at 110ms apart via a new `slideUpIn` keyframe; after a 280ms beat the winner enthronement pops in (eyebrow → medallion popIn → cry); buttons fade in last.
+> - Extracted `netScore` + `SHAME_PENALTY` to `src/lib/score.ts`.
+> - `<Masthead>` grew a `centerSub` prop, used here.
 
 The climax screen. One row at the top for the winner; the rest in rank order below.
 
@@ -1499,7 +1512,16 @@ git commit -m "feat(big-screen): wire ReckoningScreen into RoomPage end-game bra
 
 ---
 
-## Stage 5 — Phone foundation + commit
+## Stage 5 — Phone foundation + commit — ✅ DONE
+
+> Built `<PhoneShell>`, `<PowderCard>`, `<Hand>`, `<TargetList>`. Wired commit phase into `PlayerPage`. Adjustments from the spec:
+>
+> - PhoneShell drops the spec's pirate flag-name slot — the displayName is the only label, in displayCaps small caps. Cash in blackletter bold + a `WoundPips` chip on the right.
+> - `<TargetList>` was iterated twice: first as a vertical card list (per spec), then as a horizontal aim-scroller, then unified with the standoff aim view by being rebuilt around a shared `<AimBarrel>` primitive (`src/components/phone/AimBarrel.tsx`). The final shape: a 130px AimBarrel showing whoever's currently in the sights, with the target's display name + cash beneath, plus a small chip row at the bottom for picking. When the round locks into standoff, the same sights stay on screen — visual continuity instead of swapping picker UIs.
+> - All flag chips on the phone surface use `jollyRogerForColor()`.
+> - Pre-loaded the phone-mock fixture's commits (in `mockFixtures.ts`) so `MockPlayerPage` can demo the withdraw threat readout per seat.
+> - PhaseView extracted from `PlayerPage` into `src/components/phone/PhaseView.tsx` so `MockPlayerPage` can render the same UI against fixture state.
+> - **Bonus mock**: `MockPlayerPage` at `/mock/player[/:id]` mirrors `MockBigScreen` for phone surface iteration. SEAT chip pinned top-left toggles which player is "me"; DevControlsPanel drives phase / round / commits / wounds.
 
 Build the phone shell and the most-input-heavy phase (commit).
 
@@ -2217,7 +2239,15 @@ git commit -m "feat(phone): wire PhoneShell + Hand + TargetList for commit phase
 
 ---
 
-## Stage 6 — Phone other phases (standoff / yield / spectator)
+## Stage 6 — Phone other phases (standoff / yield / spectator) — ✅ DONE
+
+> Built `<YieldRibbon>` + `<Spectator>`, added a count-overlay variant to `<AimBarrel>` for the standoff phase, broadside-styled threat readout for the withdraw phase. Adjustments from the spec:
+>
+> - The spec's separate `<Barrel>` component (with iron sights + bore rings) was rolled into the existing `<AimBarrel>` instead — when `count` is set, the silhouette dims to ~40% and a giant blackletter numeral overlays + STAND label sits beneath. Same primitive used for both commit (no count) and standoff (with count) so the two phases stay visually continuous.
+> - Withdraw phase: spec's "Aimed at by: X, Y, Z" sentence replaced with a full `<ThreatPanel>` — "AT EASE / the field be quiet" reflective state, or "MARK ON YE" / "II MARKS ON YE" headline with attacker chips below, each chip pairing a per-color jolly roger with the shooter's display name. Plus the spec's COST: ONE YELLOW STREAK / —$5,000 reminder beneath the ribbon (interpolated from `SHAME_PENALTY`).
+> - `<YieldRibbon>` builds the spec but with cleaner CSS clip-path notched ends instead of pseudo-element wedges.
+> - `<Spectator>` per spec — optional 'YE WALKED THE PLANK' banner (with roman-numeral round) + 'WATCH THE BIG SCREEN' eyebrow + the live `<CrewRoster>` (mirrors the in-game ledger from the phone).
+> - Sub-cleanup: `FlintlockBarrel.tsx` and `YieldButton.tsx` were the only consumers of the older paper-on-ink yield treatment — both deleted.
 
 ### Task 6.1: `<Barrel>`
 
@@ -2666,7 +2696,11 @@ git commit -m "feat(phone): add Spectator mirror for reveal/split/eliminated sta
 
 ---
 
-## Stage 7 — Player join
+## Stage 7 — Player join — ✅ DONE
+
+> Built `<FlagPickerGrid>`, refactored `PlayerJoinPage`. Followed the spec closely. The picker is the one place in the app where the original pirate flag SVGs are still used (rather than the per-color jolly rogers) — the player is choosing which historical pirate to fly under, and the distinct flag designs are how they tell the options apart. After they've picked, `jollyRogerForColor` represents them in-game.
+>
+> Sub-cleanup: extracted `jollyRogerForColor` into its own file (`src/components/flags/jollyRogerForColor.ts`) so `flags/index.tsx` is exclusively components, satisfying the `react-refresh/only-export-components` lint rule. Existing import sites are unchanged (re-exported from the index).
 
 The first thing each player sees on their device.
 
@@ -2964,7 +2998,9 @@ git commit -m "feat(phone): rebuild PlayerJoinPage with FlagPickerGrid and PageC
 
 ---
 
-## Stage 8 — Static pages
+## Stage 8 — Static pages — ✅ DONE
+
+> Refactored `HomePage`, `HowToPlayPage`, `JoinPage` per spec. HowToPlayPage's lead "mutiny" paragraph gets a blood-coloured displayCaps drop-cap on its first letter; step list updated to `Quickdraw!` (was `Broadside!`) to match the i18n rename.
 
 Light pass on Home / How-To-Play / Join. The user explicitly noted these as low-leverage; we keep the changes simple but consistent with the broadside identity.
 
@@ -3266,7 +3302,13 @@ git commit -m "feat(join): rebuild JoinPage with broadside form on PageCanvas"
 
 ---
 
-## Stage 9 — Cleanup
+## Stage 9 — Cleanup — ✅ DONE
+
+> Deleted obsolete components: `loot/CaptainsChest`, `loot/Coin`, `loot/` (dir), `MapFrame`, `PowderLoadCard`, `RevealOverlay`. (`FlintlockBarrel` and `YieldButton` were already removed earlier alongside their replacements.)
+>
+> Pruned 25 unused i18n keys from `en.json` via a script that walks `src/` looking for literal references; kept the dynamic-use false-positives (i18next plural variants `marks_one` / `_other`, plus `load.${id}` template entries).
+>
+> Final state: 193 tests pass, `tsc -b` clean, `npm run build` clean.
 
 Delete obsolete components, sweep for dead references, run the full suite + build.
 
