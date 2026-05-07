@@ -106,6 +106,21 @@
     "navyHoursLabel": "— navy ~{{hours}} hours out —",
     "sailsLabel": "— sails on the horizon —"
   },
+  "reckoning": {
+    "title": "The Reckoning",
+    "subtitle": "THE LEDGER OF THE MUTINY · CLOSED THIS DAY",
+    "passedRound": "— ROUND VIII PASSED —",
+    "navyDocked": "NAVY at the dock",
+    "winnerEyebrow": "— AND THE LION'S SHARE GOES TO —",
+    "winnerCry": "— walks away with the lot —",
+    "rankShame": "− ${{amount}} ({{n}} streak)",
+    "rankShames": "− ${{amount}} ({{n}} streaks)",
+    "forfeit": "— forfeit —",
+    "dead": "DEAD",
+    "plankedRound": "walked the plank, rd. {{round}}",
+    "playAgain": "Another round",
+    "returnToPort": "Return to port"
+  },
   "reveal": {
     "broadside": "BROADSIDE!",
     "shot": "SHOT!",
