@@ -131,6 +131,17 @@ export const FIXTURE_GAME: Game = {
 // a four-card face-up hand so the Hand grid is interactive from any seat.
 // Round starts on `commit` so the picker is the default surface; the dev can
 // flip to other phases via DevControlsPanel.
+//
+// Commits match FIXTURE_GAME so flipping to withdraw / standoff exercises a
+// realistic threat readout. Per-seat attacker counts are:
+//   a — II MARKS ON YE (b, f)
+//   b — MARK ON YE (d)
+//   c — MARK ON YE (a)
+//   d — MARK ON YE (c)
+//   e — AT EASE
+//   f — MARK ON YE (e)
+// MockPlayerPage masks the active seat's commit during the commit phase, so
+// the picker remains interactive regardless of these defaults.
 export const FIXTURE_GAME_PHONE: Game = {
   seed: "mock-phone",
   players: MOCK_PHONE_PLAYERS,
@@ -145,7 +156,14 @@ export const FIXTURE_GAME_PHONE: Game = {
       { id: "loot-4", value: 5000 },
       { id: "loot-5", value: 5000 },
     ],
-    commits: {},
+    commits: {
+      a: { bullet: "bang", target: "c" },
+      b: { bullet: "bang_bang_bang", target: "a" },
+      c: { bullet: "bang", target: "d" },
+      d: { bullet: "bang", target: "b" },
+      e: { bullet: "clic", target: "f" },
+      f: { withdrew: true, bullet: "clic", target: "a" },
+    },
   },
   bankDeck: [],
   discardedBullets: [],
