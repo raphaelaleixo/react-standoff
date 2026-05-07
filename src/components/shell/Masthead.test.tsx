@@ -13,4 +13,10 @@ describe("Masthead", () => {
     render(<Masthead left="x" right="y" />);
     expect(screen.getByText("The Standoff")).toBeInTheDocument();
   });
+
+  it("renders the centerSub line under the title when provided", () => {
+    render(<Masthead center="The Reckoning" centerSub="THE LEDGER · CLOSED THIS DAY" />);
+    expect(screen.getByText("The Reckoning")).toBeInTheDocument();
+    expect(screen.getByText("THE LEDGER · CLOSED THIS DAY")).toBeInTheDocument();
+  });
 });
