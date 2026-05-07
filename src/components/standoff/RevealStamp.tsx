@@ -31,10 +31,9 @@ export function RevealStamp({ label }: RevealStampProps) {
           lineHeight: 1,
           color: palette.blood,
           textShadow: "0 0 20px rgba(201, 58, 48, 0.55), 0 0 40px rgba(201, 58, 48, 0.3)",
-          // UnifrakturCook glyphs sit low in their em-box (same correction
-          // we apply to the StandoffStamp numeral) — nudge up to land on
-          // the map's geometric centre.
-          transform: "translateY(-0.18em)",
+          // Blackletter glyphs sit low in their em-box, plus we want the
+          // label visually above the map's centre rather than dead-on it.
+          transform: "translateY(-0.6em)",
           animation: `${popIn} 360ms cubic-bezier(.2,.7,.2,1.4) both`,
         }}
       >

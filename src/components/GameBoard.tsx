@@ -19,8 +19,8 @@ interface GameBoardProps {
 }
 
 const REVEAL_LABEL: Partial<Record<Game["round"]["phase"], string>> = {
-  reveal_bbb: "QUICKDRAW!",
-  reveal_others: "SHOTS",
+  reveal_bbb: "Quickdraw!",
+  reveal_others: "Shots",
 };
 
 export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
