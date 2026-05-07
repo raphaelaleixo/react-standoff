@@ -39,34 +39,49 @@ function makeGame(): Game {
 }
 
 describe("ReckoningScreen", () => {
-  it("crowns the highest-scoring alive player in the enthronement region", () => {
+  it("crowns the highest-scoring alive player by display name", () => {
     render(
       <ReckoningScreen
         game={makeGame()}
+        roomId="QSPY"
         eliminatedByRound={{}}
         onPlayAgain={() => {}}
         onReturn={() => {}}
       />,
     );
-    expect(screen.getByText(/Cap'n Maud/)).toBeInTheDocument();
-    // Winner is rendered with the flag-name "Calico Jack" (mixed case) — appears
-    // in the blackletter title; runner-up rows render flag names in upper-case
-    // small caps.
-    expect(screen.getByText("Calico Jack")).toBeInTheDocument();
+    expect(screen.getByText("Cap'n Maud")).toBeInTheDocument();
   });
 
-  it("renders the rest in rank order under the winner", () => {
+  it("renders the rest in rank order under the winner, by display name", () => {
     render(
       <ReckoningScreen
         game={makeGame()}
+        roomId="QSPY"
         eliminatedByRound={{}}
         onPlayAgain={() => {}}
         onReturn={() => {}}
       />,
     );
-    expect(screen.getByText("Blackbeard")).toBeInTheDocument();
-    expect(screen.getByText("Edward Low")).toBeInTheDocument();
+    expect(screen.getByText("Mad Mary")).toBeInTheDocument();
+    expect(screen.getByText("Wet Match")).toBeInTheDocument();
     expect(screen.getByText("DEAD")).toBeInTheDocument();
+  });
+
+  it("renders the in-game-style masthead with round + room", () => {
+    render(
+      <ReckoningScreen
+        game={makeGame()}
+        roomId="QSPY"
+        eliminatedByRound={{}}
+        onPlayAgain={() => {}}
+        onReturn={() => {}}
+      />,
+    );
+    expect(screen.getByText("ROUND")).toBeInTheDocument();
+    expect(screen.getByText("VIII of VIII")).toBeInTheDocument();
+    expect(screen.getByText("ROOM")).toBeInTheDocument();
+    expect(screen.getByText("QSPY")).toBeInTheDocument();
+    expect(screen.getByText("The Standoff")).toBeInTheDocument();
   });
 
   it("invokes the play-again and return callbacks via the foot buttons", () => {
@@ -75,6 +90,7 @@ describe("ReckoningScreen", () => {
     render(
       <ReckoningScreen
         game={makeGame()}
+        roomId="QSPY"
         eliminatedByRound={{}}
         onPlayAgain={() => { again += 1; }}
         onReturn={() => { port += 1; }}

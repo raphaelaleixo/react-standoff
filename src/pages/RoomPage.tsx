@@ -101,6 +101,7 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
     return (
       <ReckoningScreen
         game={game}
+        roomId={roomId}
         eliminatedByRound={{}}
         onPlayAgain={() => navigate("/")}
         onReturn={() => navigate("/")}

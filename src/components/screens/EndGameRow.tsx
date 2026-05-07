@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
-import { FlagFor } from "../flags";
+import { FlagFor, jollyRogerForColor } from "../flags";
 import type { Player } from "../../game/types";
 import { cashTotal, shamePenalty, netScore } from "../../lib/score";
 import { toRoman } from "../../lib/navyHours";
@@ -10,12 +10,11 @@ import { toRoman } from "../../lib/navyHours";
 interface EndGameRowProps {
   rank: number;
   player: Player;
-  flagName: string;
   /** Round number when this player walked the plank, or null if they survived. */
   eliminatedRound: number | null;
 }
 
-export function EndGameRow({ rank, player, flagName, eliminatedRound }: EndGameRowProps) {
+export function EndGameRow({ rank, player, eliminatedRound }: EndGameRowProps) {
   const { t } = useTranslation();
   const dead = player.status === "dead";
   const cash = cashTotal(player);
@@ -57,7 +56,7 @@ export function EndGameRow({ rank, player, flagName, eliminatedRound }: EndGameR
           justifyContent: "center",
         }}
       >
-        <FlagFor id={player.colorOrAvatar} size={34} />
+        <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={34} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
         <Box
@@ -69,23 +68,22 @@ export function EndGameRow({ rank, player, flagName, eliminatedRound }: EndGameR
             color: palette.paper,
           }}
         >
-          {flagName}
-          <Box
-            component="span"
-            sx={{
-              fontFamily: fonts.body,
-              fontStyle: "italic",
-              letterSpacing: "0.04em",
-              color: palette.paperDim,
-              paddingLeft: "0.6em",
-              fontSize: "0.9rem",
-            }}
-          >
-            {player.displayName}
-            {eliminatedRound != null && (
-              <> · {t("reckoning.plankedRound", { round: eliminatedRound })}</>
-            )}
-          </Box>
+          {player.displayName}
+          {eliminatedRound != null && (
+            <Box
+              component="span"
+              sx={{
+                fontFamily: fonts.body,
+                fontStyle: "italic",
+                letterSpacing: "0.04em",
+                color: palette.paperDim,
+                paddingLeft: "0.6em",
+                fontSize: "0.9rem",
+              }}
+            >
+              · {t("reckoning.plankedRound", { round: eliminatedRound })}
+            </Box>
+          )}
         </Box>
       </Box>
       <Box

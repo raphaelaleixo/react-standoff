@@ -107,10 +107,6 @@
     "sailsLabel": "— sails on the horizon —"
   },
   "reckoning": {
-    "title": "The Reckoning",
-    "subtitle": "THE LEDGER OF THE MUTINY · CLOSED THIS DAY",
-    "passedRound": "— ROUND VIII PASSED —",
-    "navyDocked": "NAVY at the dock",
     "winnerEyebrow": "— AND THE LION'S SHARE GOES TO —",
     "winnerCry": "— walks away with the lot —",
     "rankShame": "− ${{amount}} ({{n}} streak)",

@@ -30,22 +30,21 @@ const DEAD: Player = {
 };
 
 describe("EndGameRow", () => {
-  it("renders rank, flag name, nickname, and final score for an alive player", () => {
-    render(<EndGameRow rank={2} player={ALIVE} flagName="BLACKBEARD" eliminatedRound={null} />);
+  it("renders rank, display name, and final score for an alive player", () => {
+    render(<EndGameRow rank={2} player={ALIVE} eliminatedRound={null} />);
     expect(screen.getByText("II")).toBeInTheDocument();
-    expect(screen.getByText("BLACKBEARD")).toBeInTheDocument();
-    expect(screen.getByText(/Mad Mary/)).toBeInTheDocument();
+    expect(screen.getByText("Mad Mary")).toBeInTheDocument();
     // 50,000 - 5,000 shame = 45,000
     expect(screen.getByText("$45,000")).toBeInTheDocument();
   });
 
   it("shows the shame breakdown chip", () => {
-    render(<EndGameRow rank={2} player={ALIVE} flagName="X" eliminatedRound={null} />);
+    render(<EndGameRow rank={2} player={ALIVE} eliminatedRound={null} />);
     expect(screen.getByText(/− \$5,000/)).toBeInTheDocument();
   });
 
   it("renders DEAD score for an eliminated player and the elimination round in the nickname", () => {
-    render(<EndGameRow rank={5} player={DEAD} flagName="EDWARD LOW" eliminatedRound={6} />);
+    render(<EndGameRow rank={5} player={DEAD} eliminatedRound={6} />);
     expect(screen.getByText("DEAD")).toBeInTheDocument();
     expect(screen.getByText(/walked the plank, rd\. 6/i)).toBeInTheDocument();
   });

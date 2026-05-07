@@ -214,6 +214,7 @@ export default function MockBigScreen() {
     surface = (
       <ReckoningScreen
         game={RECKONING_GAME}
+        roomId="MOCK"
         eliminatedByRound={RECKONING_ELIMINATED_BY_ROUND}
         onPlayAgain={() => {}}
         onReturn={() => {}}

@@ -5,15 +5,16 @@ import { fonts } from "../../theme/typography";
 import { PageCanvas } from "../shell/PageCanvas";
 import { Masthead } from "../shell/Masthead";
 import { Button } from "../shell/Button";
-import { FlagFor } from "../flags";
-import { FLAG_LABELS } from "../../game/playerFlags";
+import { FlagFor, jollyRogerForColor } from "../flags";
 import { EndGameRow } from "./EndGameRow";
 import { netScore } from "../../lib/score";
+import { toRoman } from "../../lib/navyHours";
 import type { Game, Player } from "../../game/types";
-import type { FlagId } from "../../theme/colors";
 
 interface ReckoningScreenProps {
   game: Game;
+  /** Big-screen room id, shown in the Masthead's right slot. */
+  roomId: string;
   /** Map of playerId → round number when they were eliminated. Empty if not tracked. */
   eliminatedByRound: Record<string, number>;
   onPlayAgain: () => void;
@@ -34,11 +35,7 @@ function compareForRanking(a: Player, b: Player): number {
   return b.wounds - a.wounds;
 }
 
-function flagName(colorOrAvatar: string): string {
-  return (FLAG_LABELS as Record<string, string>)[colorOrAvatar] ?? colorOrAvatar.toUpperCase();
-}
-
-export function ReckoningScreen({ game, eliminatedByRound, onPlayAgain, onReturn }: ReckoningScreenProps) {
+export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, onReturn }: ReckoningScreenProps) {
   const { t } = useTranslation();
   const ranked = [...game.players].sort(compareForRanking);
   const winner = ranked[0];
@@ -48,10 +45,8 @@ export function ReckoningScreen({ game, eliminatedByRound, onPlayAgain, onReturn
     <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={t("reckoning.passedRound")}
-          center={t("reckoning.title")}
-          centerSub={t("reckoning.subtitle")}
-          right={t("reckoning.navyDocked")}
+          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(game.round.number) })}</em></>}
+          right={<>{t("shell.room")} <em>{roomId}</em></>}
         />
 
         <Box
@@ -73,7 +68,6 @@ export function ReckoningScreen({ game, eliminatedByRound, onPlayAgain, onReturn
                 key={p.id}
                 rank={i + 2}
                 player={p}
-                flagName={flagName(p.colorOrAvatar)}
                 eliminatedRound={eliminatedByRound[p.id] ?? null}
               />
             ))}
@@ -134,7 +128,7 @@ function WinnerEnthronement({ winner, t }: { winner: Player; t: (k: string, p?: 
             width: 100,
             height: 100,
             border: `4px solid ${palette.paper}`,
-            background: flagColor(winner.colorOrAvatar as FlagId),
+            background: flagColor(winner.colorOrAvatar),
             color: palette.paper,
             borderRadius: "50%",
             display: "flex",
@@ -143,7 +137,7 @@ function WinnerEnthronement({ winner, t }: { winner: Player; t: (k: string, p?: 
             boxShadow: `6px 6px 0 ${palette.inkDeep}`,
           }}
         >
-          <FlagFor id={winner.colorOrAvatar} size={70} />
+          <FlagFor id={jollyRogerForColor(winner.colorOrAvatar)} size={70} />
         </Box>
         <Box sx={{ textAlign: "left" }}>
           <Box
@@ -154,18 +148,7 @@ function WinnerEnthronement({ winner, t }: { winner: Player; t: (k: string, p?: 
               color: titleColor,
             }}
           >
-            {flagName(winner.colorOrAvatar)}
-          </Box>
-          <Box
-            sx={{
-              fontFamily: fonts.body,
-              fontStyle: "italic",
-              fontSize: "1rem",
-              color: palette.paperDim,
-              marginTop: "0.1rem",
-            }}
-          >
-            — {winner.displayName} —
+            {winner.displayName}
           </Box>
           <Box
             sx={{
