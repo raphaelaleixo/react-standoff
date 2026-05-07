@@ -69,7 +69,15 @@ export function useGameState(roomId: string | undefined) {
     return () => clearTimeout(t);
   }, [roomId, game, serverNow]);
 
-  // withdraw → reveal_withdraw (timed; locks yields and computes & persists resolution at transition)
+  // withdraw → reveal_withdraw (timed; locks yields and persists the resolution
+  // for the reveal-phase visualizations to read).
+  //
+  // We deliberately do NOT write `players: result.players` here. The reveal
+  // phases (reveal_withdraw → reveal_bbb → reveal_others → split) compute
+  // visual deltas (shame +1 for duckers, wound +1 for struck) on top of the
+  // pre-resolution `players`. Persisting the post-resolution state at this
+  // beat would double-count those deltas in the UI. The resolved players
+  // are applied at the split → next-round transition instead.
   useEffect(() => {
     if (!roomId || !game) return;
     if (game.round.phase !== "withdraw") return;
@@ -80,7 +88,6 @@ export function useGameState(roomId: string | undefined) {
         "round/phase": "reveal_withdraw",
         "round/phaseStartedAt": serverTimestamp(),
         "round/resolution": result.resolution,
-        players: result.players,
         discardedBullets: [...game.discardedBullets, ...result.discardedBullets],
       });
     };
@@ -128,18 +135,28 @@ export function useGameState(roomId: string | undefined) {
   }, [roomId, game, serverNow]);
 
   // split → next round (commit) OR ended (no recap pause; commit phase is itself
-  // untimed and serves as the disconnect-pause boundary)
+  // untimed and serves as the disconnect-pause boundary).
+  //
+  // This is also where the round's resolution actually lands on player state:
+  // wounds, shame, status (eliminations), and cash awards. Holding the apply
+  // until now lets the reveal phases animate visual deltas on top of the
+  // pre-resolution baseline without double-counting.
   useEffect(() => {
     if (!roomId || !game) return;
     if (game.round.phase !== "split") return;
     const remaining = SPLIT_MS - (serverNow() - game.round.phaseStartedAt);
     const fire = () => {
-      const status = endGameStatus(game);
+      const result = resolveRound(game.round.commits, game.players, game.round.loot);
+      const resolved = { ...game, players: result.players };
+      const status = endGameStatus(resolved);
       if (status.ended) {
-        update(ref(database, `rooms/${roomId}/game`), { phase: "ended" });
+        update(ref(database, `rooms/${roomId}/game`), {
+          phase: "ended",
+          players: result.players,
+        });
         return;
       }
-      const nextGame = startNextRound(game, serverNow());
+      const nextGame = startNextRound(resolved, serverNow());
       set(ref(database, `rooms/${roomId}/game`), nextGame);
     };
     const t = setTimeout(fire, Math.max(0, remaining));
