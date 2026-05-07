@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { FlagFor, jollyRogerForColor } from "../flags";
+import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import type { Player } from "../../game/types";
 import { durations, popIn } from "../../theme/animations";
 import { useTickingNumber } from "../../hooks/useTickingNumber";
@@ -93,67 +94,15 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
             ${(tickingCash / 1000).toFixed(0)}k
           </Box>
           {player.shame > 0 && (
-            <Box sx={{ display: "flex", gap: "2px", alignItems: "center", marginLeft: "0.5rem", marginTop: "3px" }}>
-              {Array.from({ length: player.shame }).map((_, i) => (
-                <Box
-                  key={i}
-                  data-pip="shame"
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: palette.yellow,
-                    boxShadow: "0 0 4px rgba(230, 196, 64, 0.55)",
-                    // Each pip animates once on mount. Existing pips keep
-                    // their key, so only newly added shame pops in.
-                    animation: `${popIn} ${POP_TIMING}`,
-                  }}
-                />
-              ))}
+            <Box sx={{ marginLeft: "0.5rem", marginTop: "3px" }}>
+              <ShamePips count={player.shame} animateNew />
             </Box>
           )}
         </Box>
       </Box>
       <Box sx={{ display: "flex", flexDirection: "column", gap: "0.18rem", alignItems: "flex-end" }}>
         <StatusPill status={status} label={status ? STATUS_LABEL[status] : ""} />
-        <Box sx={{ display: "flex", gap: "3px" }}>
-          {[0, 1, 2].map(i => {
-            const filled = i < player.wounds;
-            const fresh = filled && freshWoundIndex === i;
-            return (
-              <Box
-                key={i}
-                data-pip={filled ? "filled" : "empty"}
-                sx={{
-                  width: 12,
-                  height: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  animation: fresh ? `${popIn} ${POP_TIMING}` : undefined,
-                }}
-              >
-                {filled ? (
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 10 10"
-                    style={{
-                      filter: fresh
-                        ? "drop-shadow(0 0 2px rgba(201,58,48,0.85))"
-                        : "drop-shadow(0 0 1.5px rgba(201,58,48,0.55))",
-                    }}
-                  >
-                    <line x1="2" y1="2" x2="8" y2="8" stroke={palette.blood} strokeWidth="2.2" strokeLinecap="round" />
-                    <line x1="8" y1="2" x2="2" y2="8" stroke={palette.blood} strokeWidth="2.2" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", border: `1px solid ${palette.paper}`, opacity: 0.55 }} />
-                )}
-              </Box>
-            );
-          })}
-        </Box>
+        <WoundPips count={player.wounds} freshIndex={freshWoundIndex} />
       </Box>
     </Box>
   );
