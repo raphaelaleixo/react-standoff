@@ -1,13 +1,10 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
   Box,
-  Chip,
   CircularProgress,
   Container,
-  Stack,
-  Typography,
 } from "@mui/material";
 import { ref, update } from "firebase/database";
 import { buildJoinUrl, startGame, useRoomState } from "react-gameroom";
@@ -15,9 +12,8 @@ import type { RoomState } from "react-gameroom";
 import type { Player } from "../game/types";
 import { initGame } from "../game/setup";
 import { GameBoard } from "../components/GameBoard";
-import { FlagFor } from "../components/flags";
-import { flagColor } from "../theme/colors";
 import { MusterScreen } from "../components/screens/MusterScreen";
+import { ReckoningScreen } from "../components/screens/ReckoningScreen";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
 import { database } from "../firebase";
@@ -89,6 +85,7 @@ export default function RoomPage() {
 
 function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["game"]; roomId: string }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   if (!game) {
     return (
       <Container sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -98,15 +95,16 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
   }
 
   if (game.phase === "ended") {
+    // Per-player elimination round isn't tracked in game state yet — pass an
+    // empty map; EndGameRow falls back to "— forfeit —" for dead players
+    // without an attached round number.
     return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Typography variant="h3" gutterBottom>{t("phase.ended")}</Typography>
-        <Stack spacing={1}>
-          {[...game.players].sort((a, b) => totalScore(b) - totalScore(a)).map(p => (
-            <PlayerCard key={p.id} player={p} score={totalScore(p)} />
-          ))}
-        </Stack>
-      </Container>
+      <ReckoningScreen
+        game={game}
+        eliminatedByRound={{}}
+        onPlayAgain={() => navigate("/")}
+        onReturn={() => navigate("/")}
+      />
     );
   }
 
@@ -127,28 +125,4 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
       </PageCanvas>
     </Box>
   );
-}
-
-function PlayerCard({ player, score }: { player: Player; score?: number }) {
-  const cashTotal = player.cash.reduce((s, n) => s + n.value, 0);
-  return (
-    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-      <Box sx={{ color: flagColor(player.colorOrAvatar), opacity: player.status === "dead" ? 0.4 : 1, width: 32, height: 32 }}>
-        <FlagFor id={player.colorOrAvatar} size={32} />
-      </Box>
-      <Typography sx={{ minWidth: 120, textDecoration: player.status === "dead" ? "line-through" : "none" }}>
-        {player.displayName}
-      </Typography>
-      <Chip size="small" label={`wounds ${player.wounds}/3`} color={player.wounds >= 2 ? "warning" : "default"} />
-      <Chip size="small" label={`shame ${player.shame}`} />
-      <Chip size="small" label={`bullets ${player.bullets.length}`} />
-      <Chip size="small" label={`$${cashTotal.toLocaleString()}`} color="success" />
-      {score !== undefined && <Chip size="small" label={`score $${score.toLocaleString()}`} />}
-    </Stack>
-  );
-}
-
-function totalScore(p: Player): number {
-  if (p.status !== "alive") return 0;
-  return p.cash.reduce((s, n) => s + n.value, 0) - 5000 * p.shame;
 }
