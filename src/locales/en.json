@@ -56,9 +56,12 @@
   },
   "player": {
     "lobbyWaiting": "Waiting for the captain to call it…",
-    "started": "Standoff in progress",
+    "started": "Mutiny in progress",
     "spectator": "Ye walked the plank.",
-    "watchScreen": "Watch the big screen…"
+    "watchScreen": "Watch the big screen…",
+    "header": {
+      "wounds": "wounds {{n}}/III"
+    }
   },
   "phase": {
     "commit": {
@@ -83,7 +86,7 @@
   "load": {
     "clic": "Click",
     "bang": "Shot",
-    "bang_bang_bang": "Broadside",
+    "bang_bang_bang": "Quickdraw",
     "description": {
       "clic": "Empty hammer-snap",
       "bang": "A clean shot",
@@ -116,6 +119,7 @@
   },
   "reveal": {
     "broadside": "BROADSIDE!",
+    "quickdraw": "QUICKDRAW!",
     "shot": "SHOT!",
     "hit": "{{shooter}} shot {{target}}!",
     "click": "{{shooter}} aimed at {{target}}… *click*",
