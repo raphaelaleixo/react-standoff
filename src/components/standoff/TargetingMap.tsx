@@ -5,6 +5,7 @@ import type { Game, RoundPhase } from "../../game/types";
 import { Roundel } from "./Roundel";
 import { seatPositions, pairGeometry } from "./geometry";
 import { durations } from "../../theme/animations";
+import { jollyRogerForColor } from "../flags";
 
 const CANVAS = 480;
 const RADIUS = 180;
@@ -451,7 +452,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
           }}
         >
           <Roundel
-            flagId="jolly_roger"
+            flagId={jollyRogerForColor(p.colorOrAvatar)}
             colorId={p.colorOrAvatar}
             ducked={ducked(p.id)}
             dim={p.status === "dead"}

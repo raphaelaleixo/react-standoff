@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
-import { FlagFor } from "../flags";
+import { FlagFor, jollyRogerForColor } from "../flags";
 import type { Player } from "../../game/types";
 import { durations, popIn } from "../../theme/animations";
 import { useTickingNumber } from "../../hooks/useTickingNumber";
@@ -63,7 +63,7 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
           justifyContent: "center",
         }}
       >
-        <FlagFor id="jolly_roger" size={24} />
+        <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={24} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
         <Box sx={{ fontFamily: fonts.body, fontWeight: 700, fontSize: "1.1rem", lineHeight: 1.1, letterSpacing: "0.02em", color: `color-mix(in srgb, ${flagColor(player.colorOrAvatar)} 60%, ${palette.paperDim})`, textDecoration: dead ? "line-through" : "none" }}>
