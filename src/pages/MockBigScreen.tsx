@@ -13,7 +13,6 @@ import type { Game, Player, RoundResolution } from "../game/types";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel } from "../components/dev/DevControlsPanel";
-import { useRevealBanner } from "../hooks/useRevealBanner";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 import { STANDOFF_DURATION_MS } from "../lib/phaseDurations";
 
@@ -120,8 +119,6 @@ export default function MockBigScreen() {
     return { ...game, round: { ...game.round, resolution } };
   }, [game]);
 
-  const banner = useRevealBanner(displayGame);
-
   // Mock-only auto-advance: in production the server transitions the round
   // out of standoff. Here, watch the StandoffStamp's count and advance to
   // withdraw the moment it reads 0 so the dev mock matches the on-screen
@@ -144,7 +141,7 @@ export default function MockBigScreen() {
           left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(displayGame.round.number) })}</em></>}
           right={<>{t("shell.room")} <em>MOCK</em></>}
         />
-        <GameBoard game={displayGame} banner={banner} />
+        <GameBoard game={displayGame} />
         <Foot
           left={`${countAlive(displayGame)} ${t("shell.alive")} · ${countYielded(displayGame)} ${t("shell.yielded")} · ${countDead(displayGame)} ${t("shell.dead")}`}
           cry={navyHoursLabel(displayGame.round.number, t)}

@@ -20,7 +20,6 @@ import { FlagFor } from "../components/flags";
 import { flagColor } from "../theme/colors";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
-import { useRevealBanner } from "../hooks/useRevealBanner";
 import { database } from "../firebase";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Masthead } from "../components/shell/Masthead";
@@ -131,7 +130,6 @@ export default function RoomPage() {
 
 function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["game"]; roomId: string }) {
   const { t } = useTranslation();
-  const banner = useRevealBanner(game);
   if (!game) {
     return (
       <Container sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -161,7 +159,7 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
           left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(round.number) })}</em></>}
           right={<>{t("shell.room")} <em>{roomId}</em></>}
         />
-        <GameBoard game={game} banner={banner} />
+        <GameBoard game={game} />
         <Foot
           left={`${countAlive(game)} ${t("shell.alive")} · ${countYielded(game)} ${t("shell.yielded")} · ${countDead(game)} ${t("shell.dead")}`}
           cry={navyHoursLabel(round.number, t)}

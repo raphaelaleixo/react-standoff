@@ -6,25 +6,24 @@ import { HoardList } from "./hoard/HoardList";
 import { TargetingMap } from "./standoff/TargetingMap";
 import { StandoffStamp } from "./standoff/StandoffStamp";
 import { WithdrawStamp } from "./standoff/WithdrawStamp";
-import { RevealBanner } from "./standoff/RevealBanner";
+import { RevealStamp } from "./standoff/RevealStamp";
 import { CrewRoster } from "./crew/CrewRoster";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 import { useSecondsRemaining } from "../hooks/useSecondsRemaining";
 import { STANDOFF_DURATION_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
 import { durations } from "../theme/animations";
 
-export type GameBoardBanner =
-  | { kind: "broadside"; struckCount: number }
-  | { kind: "kill"; name: string }
-  | null;
-
 interface GameBoardProps {
   game: Game;
   freshlyStruck?: Set<string>;
-  banner?: GameBoardBanner;
 }
 
-export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
+const REVEAL_LABEL: Partial<Record<Game["round"]["phase"], string>> = {
+  reveal_bbb: "QUICKDRAW!",
+  reveal_others: "SHOTS",
+};
+
+export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
   const inStandoff = game.round.phase === "standoff";
   const count = useStandoffCount({
     active: inStandoff,
@@ -47,6 +46,11 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
   if (withdrawSeconds !== null) lastWithdrawRef.current = withdrawSeconds;
   const showWithdraw = inWithdraw && withdrawSeconds !== null;
 
+  const revealLabel = REVEAL_LABEL[game.round.phase];
+  const lastRevealLabelRef = useRef("");
+  if (revealLabel) lastRevealLabelRef.current = revealLabel;
+  const showReveal = !!revealLabel;
+
   return (
     <Box
       sx={{
@@ -57,11 +61,6 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
         position: "relative",
       }}
     >
-      {banner && (
-        banner.kind === "broadside"
-          ? <RevealBanner kind="broadside" struckCount={banner.struckCount} />
-          : <RevealBanner kind="kill" name={banner.name} />
-      )}
       <Box
         sx={{
           flex: 1,
@@ -97,6 +96,11 @@ export function GameBoard({ game, freshlyStruck, banner }: GameBoardProps) {
                 <Fade in={showWithdraw} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
                   <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
                     <WithdrawStamp count={lastWithdrawRef.current} />
+                  </Box>
+                </Fade>
+                <Fade in={showReveal} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
+                  <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                    <RevealStamp label={lastRevealLabelRef.current} />
                   </Box>
                 </Fade>
               </>
