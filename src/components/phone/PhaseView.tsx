@@ -12,6 +12,7 @@ import { STANDOFF_DURATION_MS } from "../../lib/phaseDurations";
 import { SHAME_PENALTY } from "../../lib/score";
 import { AimBarrel } from "./AimBarrel";
 import { Hand } from "./Hand";
+import { Spectator } from "./Spectator";
 import { TargetList } from "./TargetList";
 import { YieldRibbon } from "./YieldRibbon";
 
@@ -47,11 +48,7 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
     );
   }
   if (me.status === "dead") {
-    return (
-      <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
-        <Typography color="text.secondary">{t("player.spectator")}</Typography>
-      </Box>
-    );
+    return <Spectator game={game} eliminated />;
   }
   const phase = game.round.phase;
   const myCommit = game.round.commits[me.id];
@@ -164,11 +161,7 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
   }
 
   if (phase === "reveal_withdraw" || phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
-    return (
-      <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
-        <Typography color="text.secondary">{t("player.watchScreen")}</Typography>
-      </Box>
-    );
+    return <Spectator game={game} />;
   }
 
   return null;
