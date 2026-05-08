@@ -8,6 +8,7 @@ import { FlagFor, jollyRogerForColor } from "../flags";
 import { Button } from "../shell/Button";
 import { toRoman } from "../../lib/navyHours";
 import { useStandoffCount } from "../../hooks/useStandoffCount";
+import { useHandSlots, type HandSlot } from "../../hooks/useHandSlots";
 import { STANDOFF_DURATION_MS } from "../../lib/phaseDurations";
 import { SHAME_PENALTY } from "../../lib/score";
 import { AimBarrel } from "./AimBarrel";
@@ -15,10 +16,6 @@ import { Hand } from "./Hand";
 import { Spectator } from "./Spectator";
 import { TargetList } from "./TargetList";
 import { YieldRibbon } from "./YieldRibbon";
-
-// Sorted in the same order as the Hand grid, so we can map the selected
-// BulletCard back to a displayed-index for highlight.
-const HAND_ORDER: Record<BulletCard, number> = { clic: 0, bang: 1, bang_bang_bang: 2 };
 
 interface PhaseViewProps {
   game: Game;
@@ -40,6 +37,10 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
     startedAt: game.round.phaseStartedAt,
     durationMs: STANDOFF_DURATION_MS,
   });
+  // Stable hand layout — slot positions persist across phases/rounds so a
+  // card spent earlier stays in its original slot (dimmed face + red X)
+  // instead of remaining cards re-sorting to fill the gap.
+  const handSlots = useHandSlots(me.bullets, me.id);
   if (game.phase === "ended") {
     return (
       <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
@@ -55,7 +56,15 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
   const opponents = game.players.filter(p => p.id !== me.id && p.status === "alive");
 
   if (phase === "commit") {
-    return <CommitPicker me={me} opponents={opponents} myCommit={myCommit} onSubmit={submitCommit} />;
+    return (
+      <CommitPicker
+        me={me}
+        opponents={opponents}
+        myCommit={myCommit}
+        onSubmit={submitCommit}
+        handSlots={handSlots}
+      />
+    );
   }
 
   if (phase === "standoff" || phase === "standoff_hold") {
@@ -167,14 +176,15 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
   return null;
 }
 
-function CommitPicker({ me, opponents, myCommit, onSubmit }: {
+function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
   me: Player;
   opponents: Player[];
   myCommit?: { bullet?: BulletCard; target?: string };
   onSubmit: (id: string, b: BulletCard, t: string) => Promise<void>;
+  handSlots: HandSlot[];
 }) {
   const { t } = useTranslation();
-  const [load, setLoad] = useState<BulletCard | null>(null);
+  const [pick, setPick] = useState<{ load: BulletCard; slotIndex: number } | null>(null);
   const [target, setTarget] = useState<string | null>(null);
   const ready = myCommit?.bullet && myCommit.target;
 
@@ -192,18 +202,12 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
     );
   }
 
-  // Map the chosen BulletCard back to a displayed-index for the Hand's
-  // highlight by sorting bullets the same way Hand does. Duplicate-load
-  // cases highlight the first matching slot — visually interchangeable.
-  const sorted = [...me.bullets].sort((a, b) => HAND_ORDER[a] - HAND_ORDER[b]);
-  const selectedIndex = load ? sorted.indexOf(load) : undefined;
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <Hand
-        bullets={me.bullets}
-        selectedIndex={selectedIndex !== -1 ? selectedIndex : undefined}
-        onPick={(b) => setLoad(b)}
+        slots={handSlots}
+        selectedSlotIndex={pick?.slotIndex}
+        onPick={(load, slotIndex) => setPick({ load, slotIndex })}
       />
 
       <Box
@@ -229,11 +233,11 @@ function CommitPicker({ me, opponents, myCommit, onSubmit }: {
       <Box sx={{ padding: "0.7rem 0.85rem 0.85rem" }}>
         <Button
           fullWidth
-          disabled={!load || !target}
-          onClick={() => load && target && onSubmit(me.id, load, target)}
+          disabled={!pick || !target}
+          onClick={() => pick && target && onSubmit(me.id, pick.load, target)}
           caption={
-            load && target
-              ? `— ${t(`load.${load}`).toLowerCase()} · ${opponents.find(o => o.id === target)?.displayName ?? "?"} —`
+            pick && target
+              ? `— ${t(`load.${pick.load}`).toLowerCase()} · ${opponents.find(o => o.id === target)?.displayName ?? "?"} —`
               : undefined
           }
         >

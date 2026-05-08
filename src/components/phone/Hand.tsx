@@ -1,27 +1,26 @@
 import { Box } from "@mui/material";
 import type { BulletCard } from "../../game/types";
+import type { HandSlot } from "../../hooks/useHandSlots";
 import { PowderCard } from "./PowderCard";
 
-// click → shot → quickdraw, so the player's hand reads in escalating-threat
-// order regardless of the order the cards were dealt.
-const ORDER: Record<BulletCard, number> = { clic: 0, bang: 1, bang_bang_bang: 2 };
-
 interface HandProps {
-  bullets: BulletCard[];
-  /** Index of the currently chosen card in the displayed (sorted) hand. */
-  selectedIndex?: number;
-  /** Tapping a face-up card. (load, displayedIndex) */
-  onPick?: (load: BulletCard, index: number) => void;
+  /**
+   * The full hand layout, including spent slots. Constructed by
+   * `useHandSlots` so positions stay stable across rounds — a card spent
+   * in round 2 keeps its slot (dimmed face + red X overlay) through the
+   * rest of the game instead of remaining cards sliding into the gap.
+   */
+  slots: HandSlot[];
+  /** Slot index of the currently chosen card. */
+  selectedSlotIndex?: number;
+  /** Tapping a face-up card. (load, slotIndex) */
+  onPick?: (load: BulletCard, slotIndex: number) => void;
 }
 
-// 4×2 grid that always renders 8 slots — face-up cards from `bullets` followed
-// by face-down spent slots filling the remainder. Players start with 8
-// chambers (4 face-up, 4 face-down spent), and as cards are committed the
-// face-up half shrinks and spent backs grow, but the shape of the grid never
-// changes.
-export function Hand({ bullets, selectedIndex, onPick }: HandProps) {
-  const sorted = [...bullets].sort((a, b) => ORDER[a] - ORDER[b]);
-  const spentCount = Math.max(0, 8 - sorted.length);
+// 4×2 grid of PowderCards. Slot count and ordering are determined by the
+// caller via `slots`; spent slots render with the original face dimmed +
+// red X, face-up slots are tappable.
+export function Hand({ slots, selectedSlotIndex, onPick }: HandProps) {
   return (
     <Box
       sx={{
@@ -36,18 +35,14 @@ export function Hand({ bullets, selectedIndex, onPick }: HandProps) {
         gap: "0.45rem",
       }}
     >
-      {sorted.map((b, i) => (
-        <Box key={`up-${i}`} data-card-slot data-position={i}>
+      {slots.map((slot, i) => (
+        <Box key={`slot-${i}`} data-card-slot data-position={i}>
           <PowderCard
-            load={b}
-            selected={selectedIndex === i}
-            onClick={() => onPick?.(b, i)}
+            load={slot.load}
+            spent={slot.spent}
+            selected={!slot.spent && selectedSlotIndex === i}
+            onClick={slot.spent ? undefined : () => onPick?.(slot.load, i)}
           />
-        </Box>
-      ))}
-      {Array.from({ length: spentCount }).map((_, i) => (
-        <Box key={`spent-${i}`} data-card-slot data-position={sorted.length + i}>
-          <PowderCard load="bang" spent />
         </Box>
       ))}
     </Box>

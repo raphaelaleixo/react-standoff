@@ -22,10 +22,14 @@ describe("PowderCard", () => {
     expect(container.querySelector('[data-glyph="bolt"]')).not.toBeNull();
   });
 
-  it("flips face-down when spent", () => {
-    render(<PowderCard load="bang" spent />);
-    expect(screen.getByText("SPENT")).toBeInTheDocument();
-    expect(screen.queryByText("SHOT")).not.toBeInTheDocument();
+  it("dims the face and overlays a red X when spent — face stays visible underneath", () => {
+    const { container } = render(<PowderCard load="bang" spent data-testid="c" />);
+    expect(screen.getByTestId("c").dataset.spent).toBe("true");
+    // SHOT label still rendered (dimmed) so the player can see which round
+    // they used the card in without opening a history panel.
+    expect(screen.getByText("SHOT")).toBeInTheDocument();
+    // Red X overlay element is mounted.
+    expect(container.querySelector("[data-spent-x]")).not.toBeNull();
   });
 
   it("calls onClick when tapped", () => {

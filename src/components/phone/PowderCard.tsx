@@ -22,40 +22,6 @@ const NAME_LINES: Record<BulletCard, string[]> = {
 };
 
 export function PowderCard({ load, selected, spent, onClick, "data-testid": testid }: PowderCardProps) {
-  if (spent) {
-    return (
-      <Box
-        data-testid={testid}
-        data-spent="true"
-        sx={{
-          aspectRatio: "2 / 3",
-          background: palette.inkDeep,
-          border: `1.5px solid ${palette.paperFaint}`,
-          color: palette.paperDim,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "0.25rem",
-        }}
-      >
-        <Box sx={{ fontSize: "1.4rem", lineHeight: 1 }}>☠</Box>
-        <Box sx={{ width: "50%", borderTop: `1px solid ${palette.paperDim}`, opacity: 0.5 }} />
-        <Box
-          sx={{
-            fontFamily: fonts.displayCaps,
-            fontFeatureSettings: '"smcp"',
-            fontSize: "0.5rem",
-            letterSpacing: "0.22em",
-            opacity: 0.6,
-          }}
-        >
-          SPENT
-        </Box>
-      </Box>
-    );
-  }
-
   const handle = () => {
     if (spent) return;
     onClick?.();
@@ -63,31 +29,40 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
 
   return (
     <Box
-      role="button"
-      tabIndex={0}
+      role={spent ? undefined : "button"}
+      tabIndex={spent ? -1 : 0}
       data-testid={testid}
       data-load={load}
-      data-selected={selected ? "true" : "false"}
-      onClick={handle}
+      data-selected={selected && !spent ? "true" : "false"}
+      data-spent={spent ? "true" : "false"}
+      onClick={spent ? undefined : handle}
       onKeyDown={(e: React.KeyboardEvent) => {
+        if (spent) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           handle();
         }
       }}
       sx={{
+        position: "relative",
         aspectRatio: "2 / 3",
-        background: selected ? palette.blood : palette.inkUp,
+        background: spent
+          ? palette.inkDeep
+          : selected
+            ? palette.blood
+            : palette.inkUp,
         color: palette.paper,
-        border: `1.5px solid ${palette.paper}`,
-        boxShadow: selected
-          ? `3px 3px 0 ${palette.inkDeep}, inset 0 0 0 2px ${palette.paper}`
-          : `2px 2px 0 ${palette.inkDeep}`,
+        border: `1.5px solid ${spent ? palette.paperFaint : palette.paper}`,
+        boxShadow: spent
+          ? "none"
+          : selected
+            ? `3px 3px 0 ${palette.inkDeep}, inset 0 0 0 2px ${palette.paper}`
+            : `2px 2px 0 ${palette.inkDeep}`,
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
-        cursor: "pointer",
-        transform: selected ? "translateY(-3px)" : "none",
+        cursor: spent ? "default" : "pointer",
+        transform: !spent && selected ? "translateY(-3px)" : "none",
         transition: "transform 0.1s ease, box-shadow 0.1s ease",
         "&:focus-visible": {
           outline: `2px solid ${palette.paper}`,
@@ -95,7 +70,18 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
         },
       }}
     >
-      <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0.5rem" }}>
+      {/* Card face — kept underneath the spent X overlay so the player can
+          still see which round they used each card in. */}
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0.5rem",
+          opacity: spent ? 0.35 : 1,
+        }}
+      >
         <BulletStack load={load} />
       </Box>
       <Box
@@ -107,12 +93,35 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
           lineHeight: 1.15,
           paddingBottom: "0.45rem",
           color: palette.paper,
+          opacity: spent ? 0.35 : 1,
         }}
       >
         {NAME_LINES[load].map(line => (
           <Box key={line}>{line}</Box>
         ))}
       </Box>
+      {/* Spent overlay — big red X struck across the card face. The face
+          stays visible (dimmed) underneath so the player can read which
+          round they used the card in without opening a history pane. */}
+      {spent && (
+        <Box
+          component="svg"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          data-spent-x
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+          }}
+        >
+          <line x1="14" y1="14" x2="86" y2="86" stroke={palette.blood} strokeWidth="6" strokeLinecap="round" opacity={0.9} />
+          <line x1="86" y1="14" x2="14" y2="86" stroke={palette.blood} strokeWidth="6" strokeLinecap="round" opacity={0.9} />
+        </Box>
+      )}
     </Box>
   );
 }
