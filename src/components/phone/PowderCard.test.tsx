@@ -3,23 +3,23 @@ import { describe, it, expect, vi } from "vitest";
 import { PowderCard } from "./PowderCard";
 
 describe("PowderCard", () => {
-  it("renders the click face with one hollow bullet pip", () => {
+  it("renders the click face with the dash glyph", () => {
     const { container } = render(<PowderCard load="clic" onClick={() => {}} />);
     expect(screen.getByText("CLICK")).toBeInTheDocument();
-    expect(container.querySelectorAll('[data-bullet-pip="hollow"]')).toHaveLength(1);
-    expect(container.querySelectorAll('[data-bullet-pip="filled"]')).toHaveLength(0);
+    expect(container.querySelector('[data-glyph="dash"]')).not.toBeNull();
   });
 
-  it("renders the shot face with one filled bullet pip", () => {
+  it("renders the shot face with the target reticle glyph", () => {
     const { container } = render(<PowderCard load="bang" onClick={() => {}} />);
     expect(screen.getByText("SHOT")).toBeInTheDocument();
-    expect(container.querySelectorAll('[data-bullet-pip="filled"]')).toHaveLength(1);
+    expect(container.querySelector('[data-glyph="reticle"]')).not.toBeNull();
   });
 
-  it("renders the quickdraw face with three filled bullet pips", () => {
+  it("renders the quickdraw face on two lines with the lightning bolt glyph", () => {
     const { container } = render(<PowderCard load="bang_bang_bang" onClick={() => {}} />);
-    expect(screen.getByText("QUICKDRAW")).toBeInTheDocument();
-    expect(container.querySelectorAll('[data-bullet-pip="filled"]')).toHaveLength(3);
+    expect(screen.getByText("QUICK")).toBeInTheDocument();
+    expect(screen.getByText("DRAW")).toBeInTheDocument();
+    expect(container.querySelector('[data-glyph="bolt"]')).not.toBeNull();
   });
 
   it("flips face-down when spent", () => {
