@@ -27,7 +27,12 @@ export function Hand({ bullets, selectedIndex, onPick }: HandProps) {
       sx={{
         padding: "0.55rem 0.75rem 0.35rem",
         display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
+        // Cap each column at 75px max so the cards stay thumb-sized even
+        // when the phone canvas itself runs wider (440px max). On narrower
+        // viewports the columns shrink to fit; on wider ones the grid
+        // centres itself in the row.
+        gridTemplateColumns: "repeat(4, minmax(0, 75px))",
+        justifyContent: "center",
         gap: "0.45rem",
       }}
     >
