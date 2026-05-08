@@ -26,8 +26,23 @@ export function PhoneShell({ me, round, phaseLabel, children }: PhoneShellProps)
   const { t } = useTranslation();
   const cash = cashTotal(me);
   return (
-    <Box sx={{ width: "100vw", height: "100vh", padding: "8px", boxSizing: "border-box" }}>
-      <PageCanvas borderRadius={28} sx={{ width: "100%", height: "100%" }}>
+    <Box
+      sx={{
+        width: "100vw",
+        height: "100vh",
+        padding: "8px",
+        boxSizing: "border-box",
+        // Cap the canvas at phone-width on larger screens so the layout stays
+        // thumb-sized regardless of where it's rendered (mock page on desktop,
+        // player view on a tablet, etc.).
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <PageCanvas
+        borderRadius={28}
+        sx={{ width: "100%", maxWidth: "440px", height: "100%" }}
+      >
         {/* Header strip — flag chip + name on the left, cash + wounds on the right. */}
         <Box
           sx={{

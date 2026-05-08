@@ -43,8 +43,20 @@ export default function PlayerJoinPage() {
     // the player can pick their previous identity from this device.
     const claimed = roomState.players.filter(p => p.status !== "empty");
     return (
-      <Box sx={{ width: "100vw", height: "100vh", padding: "8px", boxSizing: "border-box" }}>
-        <PageCanvas borderRadius={28} sx={{ width: "100%", height: "100%" }}>
+      <Box
+        sx={{
+          width: "100vw",
+          height: "100vh",
+          padding: "8px",
+          boxSizing: "border-box",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <PageCanvas
+          borderRadius={28}
+          sx={{ width: "100%", maxWidth: "440px", height: "100%" }}
+        >
           <Box sx={{ flex: 1, padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
             <Box
               sx={{
@@ -112,8 +124,20 @@ export default function PlayerJoinPage() {
   };
 
   return (
-    <Box sx={{ width: "100vw", height: "100vh", padding: "8px", boxSizing: "border-box" }}>
-      <PageCanvas borderRadius={28} sx={{ width: "100%", height: "100%" }}>
+    <Box
+      sx={{
+        width: "100vw",
+        height: "100vh",
+        padding: "8px",
+        boxSizing: "border-box",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <PageCanvas
+        borderRadius={28}
+        sx={{ width: "100%", maxWidth: "440px", height: "100%" }}
+      >
         {/* Room code header — small displayCaps eyebrow with a body-italic
             "The Standoff" subtitle, mirrors the in-game shell's masthead in
             spirit but compressed for phone width. */}
