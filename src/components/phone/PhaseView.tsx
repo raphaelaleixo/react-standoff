@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Typography } from "@mui/material";
 import type { BulletCard, Game, Player } from "../../game/types";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
+import { fadeIn, slideUpIn } from "../../theme/animations";
 import { FlagFor, jollyRogerForColor } from "../flags";
 import { Button } from "../shell/Button";
 import { toRoman } from "../../lib/navyHours";
@@ -22,11 +23,18 @@ interface PhaseViewProps {
   me: Player;
   submitCommit: (id: string, b: BulletCard, t: string) => Promise<void>;
   submitDuck: (id: string, w: boolean) => Promise<void>;
+  /**
+   * Mock-only override: bullets to seed `useHandSlots` as already-spent on
+   * mount, so MockPlayerPage can demonstrate the post-spend visual treatment
+   * on every seat (production never passes this — bullets shrink naturally
+   * across rounds).
+   */
+  handPrespent?: BulletCard[];
 }
 
 // The phase-by-phase body of the player surface — extracted from PlayerPage
 // so the mock player page can render the exact same UI against fixture state.
-export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps) {
+export function PhaseView({ game, me, submitCommit, submitDuck, handPrespent }: PhaseViewProps) {
   const { t } = useTranslation();
   // Standoff countdown — `active` only during the count itself; the silent
   // standoff_hold beat that follows shouldn't restart the timer. Computed
@@ -40,16 +48,31 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
   // Stable hand layout — slot positions persist across phases/rounds so a
   // card spent earlier stays in its original slot (dimmed face + red X)
   // instead of remaining cards re-sorting to fill the gap.
-  const handSlots = useHandSlots(me.bullets, me.id);
+  const handSlots = useHandSlots(me.bullets, me.id, handPrespent);
+  // Group phases that should NOT cross-fade between each other (standoff and
+  // standoff_hold share the same render branch — the AimBarrel handles its
+  // own count → no-count fade — so flipping between them shouldn't trigger
+  // the PhaseFader's exit/enter cycle).
+  const phaseKey =
+    game.phase === "ended" ? "ended"
+    : me.status === "dead" ? "spectator"
+    : game.round.phase === "commit" ? "commit"
+    : game.round.phase === "standoff" || game.round.phase === "standoff_hold" ? "standoff"
+    : game.round.phase === "withdraw" ? "withdraw"
+    : "reveal";
+
+  let content: React.ReactNode = null;
+
   if (game.phase === "ended") {
-    return (
+    content = (
       <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
         <Typography variant="h5">{t("phase.ended")}</Typography>
       </Box>
     );
+    return <PhaseFader phaseKey={phaseKey}>{content}</PhaseFader>;
   }
   if (me.status === "dead") {
-    return <Spectator game={game} eliminated />;
+    return <PhaseFader phaseKey={phaseKey}><Spectator game={game} eliminated /></PhaseFader>;
   }
   const phase = game.round.phase;
   const myCommit = game.round.commits[me.id];
@@ -57,13 +80,15 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
 
   if (phase === "commit") {
     return (
-      <CommitPicker
-        me={me}
-        opponents={opponents}
-        myCommit={myCommit}
-        onSubmit={submitCommit}
-        handSlots={handSlots}
-      />
+      <PhaseFader phaseKey={phaseKey}>
+        <CommitPicker
+          me={me}
+          opponents={opponents}
+          myCommit={myCommit}
+          onSubmit={submitCommit}
+          handSlots={handSlots}
+        />
+      </PhaseFader>
     );
   }
 
@@ -74,23 +99,33 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
     // the big-screen StandoffStamp behaviour) and the barrel just shows the
     // locked target's jolly roger.
     return (
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "1.1rem",
-          padding: "1rem",
-        }}
-      >
-        <AimBarrel
-          colorOrAvatar={target?.colorOrAvatar ?? null}
-          size={240}
-          count={phase === "standoff" ? standoffCount : null}
-        />
-        <Box sx={{ textAlign: "center" }}>
+      <PhaseFader phaseKey={phaseKey}>
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "1.1rem",
+            // Top padding chosen so the disc lands at the same vertical
+            // position as the commit picker's disc (which sits below the
+            // "PICK YER MARK" prompt + TargetList top padding). Keeps the
+            // crosshair pinned on screen across commit / standoff /
+            // standoff_hold so the transition reads as a lock-in, not a jump.
+            padding: "3.3rem 1rem 1rem",
+          }}
+        >
+          <AimBarrel
+            colorOrAvatar={target?.colorOrAvatar ?? null}
+            size={240}
+            count={phase === "standoff" ? standoffCount : null}
+          />
+          <Box
+            sx={{
+              textAlign: "center",
+              animation: `${slideUpIn} 400ms ease-out 120ms both`,
+            }}
+          >
           <Box
             sx={{
               fontFamily: fonts.displayCaps,
@@ -115,7 +150,8 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
             {target?.displayName ?? "?"}
           </Box>
         </Box>
-      </Box>
+        </Box>
+      </PhaseFader>
     );
   }
 
@@ -125,52 +161,54 @@ export function PhaseView({ game, me, submitCommit, submitDuck }: PhaseViewProps
       .map(([sid]) => game.players.find(p => p.id === sid))
       .filter((p): p is Player => !!p);
     return (
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          gap: "1.2rem",
-          padding: "0.8rem 1rem 1rem",
-        }}
-      >
-        <ThreatPanel attackers={attackers} />
-        <YieldRibbon
-          yielded={!!myCommit?.withdrew}
-          onToggle={() => submitDuck(me.id, !myCommit?.withdrew)}
-        />
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              fontFamily: fonts.displayCaps,
-              fontFeatureSettings: '"smcp"',
-              fontSize: "0.65rem",
-              letterSpacing: "0.32em",
-              color: palette.paperDim,
-            }}
-          >
-            {t("phase.withdraw.cost")}
-          </Box>
-          <Box
-            sx={{
-              fontFamily: fonts.body,
-              fontStyle: "italic",
-              fontSize: "0.78rem",
-              letterSpacing: "0.04em",
-              color: palette.paper,
-              marginTop: "0.2rem",
-            }}
-          >
-            {t("phase.withdraw.costSub", { amount: SHAME_PENALTY.toLocaleString() })}
+      <PhaseFader phaseKey={phaseKey}>
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            gap: "1.2rem",
+            padding: "0.8rem 1rem 1rem",
+          }}
+        >
+          <ThreatPanel attackers={attackers} />
+          <YieldRibbon
+            yielded={!!myCommit?.withdrew}
+            onToggle={() => submitDuck(me.id, !myCommit?.withdrew)}
+          />
+          <Box sx={{ textAlign: "center" }}>
+            <Box
+              sx={{
+                fontFamily: fonts.displayCaps,
+                fontFeatureSettings: '"smcp"',
+                fontSize: "0.65rem",
+                letterSpacing: "0.32em",
+                color: palette.paperDim,
+              }}
+            >
+              {t("phase.withdraw.cost")}
+            </Box>
+            <Box
+              sx={{
+                fontFamily: fonts.body,
+                fontStyle: "italic",
+                fontSize: "0.78rem",
+                letterSpacing: "0.04em",
+                color: palette.paper,
+                marginTop: "0.2rem",
+              }}
+            >
+              {t("phase.withdraw.costSub", { amount: SHAME_PENALTY.toLocaleString() })}
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </PhaseFader>
     );
   }
 
   if (phase === "reveal_withdraw" || phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
-    return <Spectator game={game} />;
+    return <PhaseFader phaseKey={phaseKey}><Spectator game={game} /></PhaseFader>;
   }
 
   return null;
@@ -191,7 +229,15 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
   if (ready) {
     const targetName = opponents.find(o => o.id === myCommit?.target)?.displayName ?? myCommit?.target;
     return (
-      <Box sx={{ padding: "1.4rem", textAlign: "center", display: "flex", flexDirection: "column", gap: "0.7rem" }}>
+      <Box
+        sx={{
+          padding: "1.4rem",
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.7rem",
+        }}
+      >
         <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "1rem", letterSpacing: "0.22em", color: palette.paper }}>
           {t(`load.${myCommit.bullet!}`).toUpperCase()} → {targetName}
         </Box>
@@ -203,21 +249,23 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      <Hand
-        slots={handSlots}
-        selectedSlotIndex={pick?.slotIndex}
-        onPick={(load, slotIndex) => setPick({ load, slotIndex })}
-      />
-
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
       <Box
         sx={{
-          padding: "0.55rem 0 0.25rem",
+          padding: "0.85rem 0 0.45rem",
           textAlign: "center",
           fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "0.7rem",
-          letterSpacing: "0.32em",
+          fontWeight: 700,
+          fontSize: "1.05rem",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
           color: palette.paperDim,
         }}
       >
@@ -230,7 +278,24 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
         onPick={(id) => setTarget(id)}
       />
 
-      <Box sx={{ padding: "0.7rem 0.85rem 0.85rem" }}>
+      <Box sx={{ animation: `${slideUpIn} 450ms ease-out 80ms both` }}>
+        <Hand
+          slots={handSlots}
+          selectedSlotIndex={pick?.slotIndex}
+          onPick={(load, slotIndex) => setPick({ load, slotIndex })}
+        />
+      </Box>
+
+      {/* Push the commit button to the bottom of the available space so
+          it stays under the thumb regardless of how much room the picker +
+          hand take above. */}
+      <Box
+        sx={{
+          marginTop: "auto",
+          padding: "0.7rem 0.85rem 0.85rem",
+          animation: `${fadeIn} 400ms ease-out 200ms both`,
+        }}
+      >
         <Button
           fullWidth
           disabled={!pick || !target}
@@ -238,7 +303,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
           caption={
             pick && target
               ? `— ${t(`load.${pick.load}`).toLowerCase()} · ${opponents.find(o => o.id === target)?.displayName ?? "?"} —`
-              : undefined
+              : `— ${t("phase.commit.selectCard")} —`
           }
         >
           {t("phase.commit.ready").toUpperCase()}
@@ -359,6 +424,61 @@ function AttackerChip({ player }: { player: Player }) {
       >
         {player.displayName}
       </Box>
+    </Box>
+  );
+}
+
+// Cross-fades phase content. Holds onto the previous phase's children while
+// fading them to opacity 0, then swaps in the new phase and fades to opacity
+// 1. Without this the phase change pops instantly — CSS keyframes alone
+// can't animate an element that's already unmounted, so we delay the unmount
+// here.
+//
+// Two refs:
+//  - `latestChildren` tracks whatever the parent rendered most recently, so
+//    when the swap happens we pick up any updates that landed during the
+//    fade-out window (e.g. the standoff countdown ticked down).
+//  - `displayed` is what we actually render — frozen during the fade-out so
+//    the leaving phase stays on screen until the swap, then synced to
+//    `latestChildren` again once the new phase mounts.
+//
+// `children` is intentionally NOT in the effect deps — `useStandoffCount`
+// re-renders every 100ms during the count, so a children-keyed effect would
+// reset the timeout on every tick and the fade would never complete.
+const FADE_OUT_MS = 200;
+function PhaseFader({ phaseKey, children }: { phaseKey: string; children: React.ReactNode }) {
+  const [renderedKey, setRenderedKey] = useState(phaseKey);
+  const [opacity, setOpacity] = useState(1);
+  const latestChildren = useRef(children);
+  latestChildren.current = children;
+  const displayed = useRef(children);
+  if (phaseKey === renderedKey) {
+    displayed.current = children;
+  }
+
+  useLayoutEffect(() => {
+    if (phaseKey === renderedKey) return;
+    setOpacity(0);
+    const t = setTimeout(() => {
+      displayed.current = latestChildren.current;
+      setRenderedKey(phaseKey);
+      setOpacity(1);
+    }, FADE_OUT_MS);
+    return () => clearTimeout(t);
+  }, [phaseKey, renderedKey]);
+
+  return (
+    <Box
+      sx={{
+        opacity,
+        transition: `opacity ${opacity === 0 ? FADE_OUT_MS : 280}ms ease-out`,
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
+      {displayed.current}
     </Box>
   );
 }
