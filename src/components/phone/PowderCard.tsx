@@ -113,40 +113,81 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
 }
 
 // Vertical stack of bullet pips at the centre of the card. The pip count maps
-// directly to the load: CLICK is one hollow circle (empty chamber, hammer-
-// snap, no shot), SHOT is one filled circle (one round chambered), QUICKDRAW
-// is three filled circles (triple-loaded).
+// directly to the load: CLICK is one hollow cartridge (empty chamber, hammer-
+// snap, no shot), SHOT is one filled cartridge (one round chambered),
+// QUICKDRAW is three filled cartridges (triple-loaded).
 function BulletStack({ load }: { load: BulletCard }) {
   if (load === "clic") {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <BulletPip filled={false} />
+        <Bullet filled={false} />
       </Box>
     );
   }
   const count = load === "bang_bang_bang" ? 3 : 1;
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: "5px" }}>
       {Array.from({ length: count }).map((_, i) => (
-        <BulletPip key={i} filled />
+        <Bullet key={i} filled />
       ))}
     </Box>
   );
 }
 
-function BulletPip({ filled }: { filled: boolean }) {
+// Small cartridge silhouette — rounded top (the projectile tip), straight-
+// sided case, slightly wider rim + base at the bottom. A thin divider line
+// near the top hints at the case-vs-projectile split for the filled variant.
+// The hollow variant uses the same outline but with no fill, low opacity, so
+// CLICK reads as "empty chamber" against the filled SHOT / QUICKDRAW pips.
+function Bullet({ filled }: { filled: boolean }) {
+  const stroke = filled ? "none" : palette.paper;
+  const strokeWidth = filled ? 0 : 1.4;
+  const fill = filled ? palette.paper : "none";
+  const opacity = filled ? 1 : 0.7;
   return (
     <Box
+      component="svg"
+      viewBox="0 0 14 28"
+      width={14}
+      height={28}
       data-bullet-pip={filled ? "filled" : "hollow"}
-      sx={{
-        width: 16,
-        height: 16,
-        borderRadius: "50%",
-        background: filled ? palette.paper : "transparent",
-        border: filled ? "none" : `2px solid ${palette.paper}`,
-        opacity: filled ? 1 : 0.65,
-        boxShadow: filled ? `inset -1px -1px 0 rgba(0,0,0,0.25)` : "none",
-      }}
-    />
+      aria-hidden="true"
+      sx={{ display: "block", overflow: "visible" }}
+    >
+      {/* Cartridge body — rounded shoulder + tip up top, straight case down. */}
+      <path
+        d="M 7 1.6 C 10.5 1.6, 12.6 4, 12.6 8 L 12.6 22 L 1.4 22 L 1.4 8 C 1.4 4, 3.5 1.6, 7 1.6 Z"
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+        opacity={opacity}
+      />
+      {/* Case-shoulder divider — a faint line where the projectile meets the
+          brass. Filled-only; hollow's outline already implies the silhouette. */}
+      {filled && (
+        <line
+          x1="2"
+          y1="9"
+          x2="12"
+          y2="9"
+          stroke={palette.inkUp}
+          strokeWidth={0.7}
+          opacity={0.7}
+        />
+      )}
+      {/* Rim — slightly wider than the case, the lip the firing pin catches. */}
+      <rect
+        x="0"
+        y="22"
+        width="14"
+        height="3.5"
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+        opacity={opacity}
+      />
+    </Box>
   );
 }
