@@ -22,9 +22,10 @@ function slotsFromString(spec: string): HandSlot[] {
 }
 
 describe("Hand", () => {
-  it("renders one PowderCard per slot", () => {
+  it("always renders 8 slots (pads short hands with placeholder spent cells)", () => {
     const { container } = render(<Hand slots={slotsFromString("C C S Q")} />);
-    expect(container.querySelectorAll("[data-card-slot]")).toHaveLength(4);
+    expect(container.querySelectorAll("[data-card-slot]")).toHaveLength(8);
+    expect(container.querySelectorAll('[data-spent-placeholder="true"]')).toHaveLength(4);
   });
 
   it("renders face-up slots with their card faces visible (CLICK / SHOT / QUICK + DRAW)", () => {

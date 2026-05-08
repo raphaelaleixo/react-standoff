@@ -20,7 +20,7 @@ import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel } from "../components/dev/DevControlsPanel";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS } from "../lib/phaseDurations";
-import { FIXTURE_GAME_PHONE } from "../components/dev/mockFixtures";
+import { FIXTURE_GAME_PHONE, MOCK_PHONE_PRESPENT } from "../components/dev/mockFixtures";
 
 const PHASE_LABEL: Record<RoundPhase, string> = {
   commit: "LOAD & AIM",
@@ -102,6 +102,7 @@ export default function MockPlayerPage() {
           me={me}
           submitCommit={submitCommit}
           submitDuck={submitDuck}
+          handPrespent={MOCK_PHONE_PRESPENT[me.id] ?? []}
         />
       </PhoneShell>
       <DevControlsPanel

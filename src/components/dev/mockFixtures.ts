@@ -18,14 +18,28 @@ export const MOCK_PLAYERS: Player[] = [
   { id: "f", displayName: "Black Sam",  colorOrAvatar: "henry_avery",  bullets: [], cash: [], wounds: 0, shame: 0, status: "alive", effects: [] },
 ];
 
-// Phone-mock players carry full 4-card face-up hands so the Hand grid is
-// useful to interact with from any seat. Same colours + wounds + cash as the
-// big-screen fixture so the surfaces stay in sync.
-const FOUR_CARD_HAND: BulletCard[] = ["clic", "clic", "bang", "bang_bang_bang"];
-export const MOCK_PHONE_PLAYERS: Player[] = MOCK_PLAYERS.map(p =>
-  // Player "a" already had a hand; everyone else gets a fresh 4-card hand.
-  p.id === "a" ? p : { ...p, bullets: FOUR_CARD_HAND },
-);
+// Phone-mock players' face-up bullets — what they still hold this round.
+// Combined with MOCK_PHONE_PRESPENT (spent earlier in the game), every seat
+// renders exactly 8 hand slots, with a mix of face-up and face-with-X cards
+// so the spent-card visual treatment is visible regardless of which seat
+// you switch to.
+const PHONE_HAND_FACE_UP: BulletCard[] = ["clic", "clic", "bang", "bang", "bang_bang_bang"];
+export const MOCK_PHONE_PLAYERS: Player[] = MOCK_PLAYERS.map(p => ({
+  ...p,
+  bullets: PHONE_HAND_FACE_UP,
+}));
+
+// Bullets pre-marked as spent for each seat. Counts vary so flipping seats
+// shows different spent loadouts; each total (face-up + prespent) is 8 to
+// match the full starting hand size.
+export const MOCK_PHONE_PRESPENT: Record<string, BulletCard[]> = {
+  a: ["clic", "bang", "bang_bang_bang"],
+  b: ["clic", "bang", "bang_bang_bang"],
+  c: ["clic", "bang", "bang_bang_bang"],
+  d: ["clic", "bang", "bang_bang_bang"],
+  e: ["clic", "bang", "bang_bang_bang"],
+  f: ["clic", "bang", "bang_bang_bang"],
+};
 
 export const RESOLUTION_BROADSIDE: RoundResolution = {
   shots: [

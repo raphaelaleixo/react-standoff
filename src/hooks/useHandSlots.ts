@@ -16,12 +16,18 @@ const ORDER: Record<BulletCard, number> = { clic: 0, bang: 1, bang_bang_bang: 2 
 //
 // Behaviour:
 // - First render (or after a remount): builds a fresh layout from the
-//   sorted bullets, all face-up.
+//   sorted bullets, all face-up. If `prespent` is supplied (mock-only —
+//   used by MockPlayerPage to demo the spent visual on every seat), those
+//   bullets are added as spent slots in the same sorted layout.
 // - Bullets shrank since last render: marks whichever face-up slots no
 //   longer appear in `bullets` as spent — slot positions don't shift.
 // - Bullets grew (shouldn't happen mid-game, defensive): rebuilds from
 //   sorted bullets.
-export function useHandSlots(bullets: BulletCard[], playerId: string): HandSlot[] {
+export function useHandSlots(
+  bullets: BulletCard[],
+  playerId: string,
+  prespent: BulletCard[] = [],
+): HandSlot[] {
   const ref = useRef<{ slots: HandSlot[]; playerId: string | null }>({
     slots: [],
     playerId: null,
@@ -31,10 +37,11 @@ export function useHandSlots(bullets: BulletCard[], playerId: string): HandSlot[
   // SEAT toggle swap between seats cleanly; in production the player id
   // never changes for a given mount, so this only fires on first call.
   if (ref.current.playerId !== playerId) {
-    ref.current = {
-      playerId,
-      slots: [...bullets].sort((a, b) => ORDER[a] - ORDER[b]).map(load => ({ load, spent: false })),
-    };
+    const initial: HandSlot[] = [
+      ...bullets.map(load => ({ load, spent: false })),
+      ...prespent.map(load => ({ load, spent: true })),
+    ].sort((a, b) => ORDER[a.load] - ORDER[b.load]);
+    ref.current = { playerId, slots: initial };
     return ref.current.slots;
   }
 

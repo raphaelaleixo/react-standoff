@@ -46,18 +46,12 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
       sx={{
         position: "relative",
         aspectRatio: "2 / 3",
-        background: spent
-          ? palette.inkDeep
-          : selected
-            ? palette.blood
-            : palette.inkUp,
+        background: selected ? palette.blood : palette.inkUp,
         color: palette.paper,
-        border: `1.5px solid ${spent ? palette.paperFaint : palette.paper}`,
-        boxShadow: spent
-          ? "none"
-          : selected
-            ? `3px 3px 0 ${palette.inkDeep}, inset 0 0 0 2px ${palette.paper}`
-            : `2px 2px 0 ${palette.inkDeep}`,
+        border: `1.5px solid ${palette.paper}`,
+        boxShadow: selected
+          ? `3px 3px 0 ${palette.inkDeep}, inset 0 0 0 2px ${palette.paper}`
+          : `2px 2px 0 ${palette.inkDeep}`,
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
@@ -79,7 +73,7 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
           alignItems: "center",
           justifyContent: "center",
           padding: "0.5rem",
-          opacity: spent ? 0.35 : 1,
+          opacity: 1,
         }}
       >
         <BulletStack load={load} />
@@ -93,7 +87,7 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
           lineHeight: 1.15,
           paddingBottom: "0.45rem",
           color: palette.paper,
-          opacity: spent ? 0.35 : 1,
+          opacity: 1,
         }}
       >
         {NAME_LINES[load].map(line => (
@@ -118,8 +112,8 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
             pointerEvents: "none",
           }}
         >
-          <line x1="14" y1="14" x2="86" y2="86" stroke={palette.blood} strokeWidth="6" strokeLinecap="round" opacity={0.9} />
-          <line x1="86" y1="14" x2="14" y2="86" stroke={palette.blood} strokeWidth="6" strokeLinecap="round" opacity={0.9} />
+          <line x1="14" y1="14" x2="86" y2="86" stroke={palette.blood} strokeWidth="3.5" strokeLinecap="round" opacity={0.95} />
+          <line x1="86" y1="14" x2="14" y2="86" stroke={palette.blood} strokeWidth="3.5" strokeLinecap="round" opacity={0.95} />
         </Box>
       )}
     </Box>

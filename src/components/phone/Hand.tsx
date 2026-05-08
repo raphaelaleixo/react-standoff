@@ -1,7 +1,10 @@
 import { Box } from "@mui/material";
+import { palette } from "../../theme/colors";
 import type { BulletCard } from "../../game/types";
 import type { HandSlot } from "../../hooks/useHandSlots";
 import { PowderCard } from "./PowderCard";
+
+const FULL_HAND_SIZE = 8;
 
 interface HandProps {
   /**
@@ -17,10 +20,13 @@ interface HandProps {
   onPick?: (load: BulletCard, slotIndex: number) => void;
 }
 
-// 4×2 grid of PowderCards. Slot count and ordering are determined by the
-// caller via `slots`; spent slots render with the original face dimmed +
-// red X, face-up slots are tappable.
+// 4×2 grid of PowderCards, always rendered as 8 slots. Tracked slots come
+// first (face-up cards from `slots`, then any tracked-spent ones — both
+// rendered via PowderCard); the rest are padded with <PlaceholderSpent />,
+// a blank red-X cell used when the player has fewer cards than 8 (mid-game
+// reconnect, or the mock fixture).
 export function Hand({ slots, selectedSlotIndex, onPick }: HandProps) {
+  const padCount = Math.max(0, FULL_HAND_SIZE - slots.length);
   return (
     <Box
       sx={{
@@ -45,6 +51,51 @@ export function Hand({ slots, selectedSlotIndex, onPick }: HandProps) {
           />
         </Box>
       ))}
+      {Array.from({ length: padCount }).map((_, i) => (
+        <Box
+          key={`pad-${i}`}
+          data-card-slot
+          data-position={slots.length + i}
+          data-spent-placeholder="true"
+        >
+          <PlaceholderSpent />
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+// Placeholder cell for slots whose original face we don't know — shows a
+// faint card backing with just the red X, no glyph or label. Same visual
+// language as the spent-face PowderCard, lighter weight.
+function PlaceholderSpent() {
+  return (
+    <Box
+      sx={{
+        position: "relative",
+        aspectRatio: "2 / 3",
+        background: palette.inkUp,
+        border: `1.5px solid ${palette.paper}`,
+        boxShadow: `2px 2px 0 ${palette.inkDeep}`,
+      }}
+    >
+      <Box
+        component="svg"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        data-spent-x
+        aria-hidden="true"
+        sx={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+        }}
+      >
+        <line x1="14" y1="14" x2="86" y2="86" stroke={palette.blood} strokeWidth="3.5" strokeLinecap="round" opacity={0.7} />
+        <line x1="86" y1="14" x2="14" y2="86" stroke={palette.blood} strokeWidth="3.5" strokeLinecap="round" opacity={0.7} />
+      </Box>
     </Box>
   );
 }
