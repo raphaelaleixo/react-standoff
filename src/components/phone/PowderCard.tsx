@@ -112,32 +112,34 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
   );
 }
 
-// Vertical stack of tally crosses at the centre of the card. The cross count
-// maps directly to the load: CLICK is one faint cross (hammer-snap, no shot
-// — the cross is "void"), SHOT is one solid cross (one round notched on the
-// gunwale), QUICKDRAW is three solid crosses stacked.
+// Vertical stack of target reticles at the centre of the card — echoes the
+// AimBarrel sights (circle + crosshair lines) at small scale. CLICK is one
+// empty target (no hit), SHOT is one target with a centre bullet hole,
+// QUICKDRAW stacks three targets with bullet holes.
 function BulletStack({ load }: { load: BulletCard }) {
   if (load === "clic") {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <Cross filled={false} />
+        <Reticle filled={false} />
       </Box>
     );
   }
   const count = load === "bang_bang_bang" ? 3 : 1;
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: "5px" }}>
       {Array.from({ length: count }).map((_, i) => (
-        <Cross key={i} filled />
+        <Reticle key={i} filled />
       ))}
     </Box>
   );
 }
 
-// Tally cross — two strokes crossing at the centre. Filled = paper-colored
-// at full opacity. Hollow (CLICK) = same shape, lower opacity, hinting at
-// "the mark that wasn't" — the round that didn't fire.
-function Cross({ filled }: { filled: boolean }) {
+// Target reticle — paper-stroked circle with horizontal + vertical crosshair
+// lines, mirroring the AimBarrel sights. Filled adds a centre bullet hole
+// (the round that landed); hollow (CLICK) drops the centre and dims the
+// strokes so it reads as "an empty sight, no shot".
+function Reticle({ filled }: { filled: boolean }) {
+  const strokeOpacity = filled ? 1 : 0.5;
   return (
     <Box
       component="svg"
@@ -148,26 +150,38 @@ function Cross({ filled }: { filled: boolean }) {
       aria-hidden="true"
       sx={{ display: "block", overflow: "visible" }}
     >
-      <line
-        x1="3"
-        y1="3"
-        x2="17"
-        y2="17"
+      {/* Outer ring */}
+      <circle
+        cx="10"
+        cy="10"
+        r="8"
+        fill="none"
         stroke={palette.paper}
-        strokeWidth={2.4}
-        strokeLinecap="round"
-        opacity={filled ? 1 : 0.4}
+        strokeWidth={1.5}
+        opacity={strokeOpacity}
       />
+      {/* Horizontal crosshair */}
       <line
-        x1="17"
-        y1="3"
-        x2="3"
-        y2="17"
+        x1="0.5"
+        y1="10"
+        x2="19.5"
+        y2="10"
         stroke={palette.paper}
-        strokeWidth={2.4}
-        strokeLinecap="round"
-        opacity={filled ? 1 : 0.4}
+        strokeWidth={1.1}
+        opacity={strokeOpacity * 0.85}
       />
+      {/* Vertical crosshair */}
+      <line
+        x1="10"
+        y1="0.5"
+        x2="10"
+        y2="19.5"
+        stroke={palette.paper}
+        strokeWidth={1.1}
+        opacity={strokeOpacity * 0.85}
+      />
+      {/* Centre bullet hole — filled only */}
+      {filled && <circle cx="10" cy="10" r="2.2" fill={palette.paper} />}
     </Box>
   );
 }
