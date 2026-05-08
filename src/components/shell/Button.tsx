@@ -31,7 +31,7 @@ export function Button({
     fontFamily: fonts.displayCaps,
     fontFeatureSettings: '"smcp"',
     letterSpacing: "0.32em",
-    fontSize: "1.17rem",
+    fontSize: "1.45rem",
     textAlign: "center" as const,
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.45 : 1,
@@ -49,7 +49,8 @@ export function Button({
       ? {
           background: palette.paper,
           color: palette.ink,
-          padding: "0.85rem 1.4rem",
+          fontWeight: 700,
+          padding: "0.65rem 1.4rem",
           boxShadow: emphasis
             ? `0 0 0 4px ${palette.ink}, 5px 5px 0 ${palette.blood}`
             : `5px 5px 0 ${palette.inkDeep}`,
@@ -58,13 +59,13 @@ export function Button({
       ? {
           background: "transparent",
           color: palette.paper,
-          padding: "0.7rem 1.2rem",
+          padding: "0.5rem 1.2rem",
           border: `1.5px solid ${palette.paper}`,
         }
       : {
           background: "transparent",
           color: palette.paper,
-          padding: "0.4rem 0.6rem",
+          padding: "0.25rem 0.6rem",
           textDecoration: "underline",
           textUnderlineOffset: "4px",
         };
@@ -87,21 +88,23 @@ export function Button({
       sx={{ ...baseSx, ...variantSx }}
     >
       <Box>{children}</Box>
-      {caption && (
-        <Box
-          sx={{
-            display: "block",
-            fontFamily: fonts.body,
-            fontStyle: "italic",
-            fontSize: "0.89rem",
-            letterSpacing: "0.04em",
-            color: variant === "primary" ? palette.paperFaint : palette.paperDim,
-            marginTop: "0.15rem",
-          }}
-        >
-          {caption}
-        </Box>
-      )}
+      {/* Caption row always rendered (with a non-breaking space when no
+          caption is supplied) so the button keeps the same height whether
+          the ready caption is present or not. */}
+      <Box
+        sx={{
+          display: "block",
+          fontFamily: fonts.body,
+          fontStyle: "italic",
+          fontSize: "1.05rem",
+          lineHeight: 1.05,
+          letterSpacing: "0.04em",
+          color: variant === "primary" ? palette.paperFaint : palette.paperDim,
+          marginTop: "-0.35rem",
+        }}
+      >
+        {caption ?? " "}
+      </Box>
     </Box>
   );
 }

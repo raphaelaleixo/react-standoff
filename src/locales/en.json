@@ -60,6 +60,7 @@
   "phase": {
     "commit": {
       "pickTarget": "Pick yer mark",
+      "selectCard": "select a card",
       "ready": "Ready",
       "waiting": "Waiting for the others…"
     },
