@@ -3,20 +3,23 @@ import { describe, it, expect, vi } from "vitest";
 import { PowderCard } from "./PowderCard";
 
 describe("PowderCard", () => {
-  it("renders the click face", () => {
-    render(<PowderCard load="clic" onClick={() => {}} />);
+  it("renders the click face with one hollow bullet pip", () => {
+    const { container } = render(<PowderCard load="clic" onClick={() => {}} />);
     expect(screen.getByText("CLICK")).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-bullet-pip="hollow"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-bullet-pip="filled"]')).toHaveLength(0);
   });
 
-  it("renders the shot face", () => {
-    render(<PowderCard load="bang" onClick={() => {}} />);
+  it("renders the shot face with one filled bullet pip", () => {
+    const { container } = render(<PowderCard load="bang" onClick={() => {}} />);
     expect(screen.getByText("SHOT")).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-bullet-pip="filled"]')).toHaveLength(1);
   });
 
-  it("renders the quickdraw face and marks itself as special", () => {
-    render(<PowderCard load="bang_bang_bang" onClick={() => {}} data-testid="qd" />);
+  it("renders the quickdraw face with three filled bullet pips", () => {
+    const { container } = render(<PowderCard load="bang_bang_bang" onClick={() => {}} />);
     expect(screen.getByText("QUICKDRAW")).toBeInTheDocument();
-    expect(screen.getByTestId("qd").dataset.special).toBe("true");
+    expect(container.querySelectorAll('[data-bullet-pip="filled"]')).toHaveLength(3);
   });
 
   it("flips face-down when spent", () => {
