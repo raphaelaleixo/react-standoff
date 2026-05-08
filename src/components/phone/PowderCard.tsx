@@ -112,81 +112,61 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
   );
 }
 
-// Vertical stack of bullet pips at the centre of the card. The pip count maps
-// directly to the load: CLICK is one hollow cartridge (empty chamber, hammer-
-// snap, no shot), SHOT is one filled cartridge (one round chambered),
-// QUICKDRAW is three filled cartridges (triple-loaded).
+// Vertical stack of tally crosses at the centre of the card. The cross count
+// maps directly to the load: CLICK is one faint cross (hammer-snap, no shot
+// — the cross is "void"), SHOT is one solid cross (one round notched on the
+// gunwale), QUICKDRAW is three solid crosses stacked.
 function BulletStack({ load }: { load: BulletCard }) {
   if (load === "clic") {
     return (
       <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <Bullet filled={false} />
+        <Cross filled={false} />
       </Box>
     );
   }
   const count = load === "bang_bang_bang" ? 3 : 1;
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: "4px" }}>
       {Array.from({ length: count }).map((_, i) => (
-        <Bullet key={i} filled />
+        <Cross key={i} filled />
       ))}
     </Box>
   );
 }
 
-// Small cartridge silhouette — rounded top (the projectile tip), straight-
-// sided case, slightly wider rim + base at the bottom. A thin divider line
-// near the top hints at the case-vs-projectile split for the filled variant.
-// The hollow variant uses the same outline but with no fill, low opacity, so
-// CLICK reads as "empty chamber" against the filled SHOT / QUICKDRAW pips.
-function Bullet({ filled }: { filled: boolean }) {
-  const stroke = filled ? "none" : palette.paper;
-  const strokeWidth = filled ? 0 : 1.4;
-  const fill = filled ? palette.paper : "none";
-  const opacity = filled ? 1 : 0.7;
+// Tally cross — two strokes crossing at the centre. Filled = paper-colored
+// at full opacity. Hollow (CLICK) = same shape, lower opacity, hinting at
+// "the mark that wasn't" — the round that didn't fire.
+function Cross({ filled }: { filled: boolean }) {
   return (
     <Box
       component="svg"
-      viewBox="0 0 14 28"
-      width={14}
-      height={28}
+      viewBox="0 0 20 20"
+      width={20}
+      height={20}
       data-bullet-pip={filled ? "filled" : "hollow"}
       aria-hidden="true"
       sx={{ display: "block", overflow: "visible" }}
     >
-      {/* Cartridge body — rounded shoulder + tip up top, straight case down. */}
-      <path
-        d="M 7 1.6 C 10.5 1.6, 12.6 4, 12.6 8 L 12.6 22 L 1.4 22 L 1.4 8 C 1.4 4, 3.5 1.6, 7 1.6 Z"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        strokeLinejoin="round"
-        opacity={opacity}
+      <line
+        x1="3"
+        y1="3"
+        x2="17"
+        y2="17"
+        stroke={palette.paper}
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        opacity={filled ? 1 : 0.4}
       />
-      {/* Case-shoulder divider — a faint line where the projectile meets the
-          brass. Filled-only; hollow's outline already implies the silhouette. */}
-      {filled && (
-        <line
-          x1="2"
-          y1="9"
-          x2="12"
-          y2="9"
-          stroke={palette.inkUp}
-          strokeWidth={0.7}
-          opacity={0.7}
-        />
-      )}
-      {/* Rim — slightly wider than the case, the lip the firing pin catches. */}
-      <rect
-        x="0"
-        y="22"
-        width="14"
-        height="3.5"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        strokeLinejoin="round"
-        opacity={opacity}
+      <line
+        x1="17"
+        y1="3"
+        x2="3"
+        y2="17"
+        stroke={palette.paper}
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        opacity={filled ? 1 : 0.4}
       />
     </Box>
   );
