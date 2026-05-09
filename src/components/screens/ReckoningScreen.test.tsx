@@ -81,7 +81,7 @@ describe("ReckoningScreen", () => {
     expect(screen.getByText("VIII of VIII")).toBeInTheDocument();
     expect(screen.getByText("ROOM")).toBeInTheDocument();
     expect(screen.getByText("QSPY")).toBeInTheDocument();
-    expect(screen.getByText("The Standoff")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /standoff/i })).toBeInTheDocument();
   });
 
   it("invokes the play-again and return callbacks via the foot buttons", () => {

@@ -9,9 +9,9 @@ describe("Masthead", () => {
     expect(screen.getByText("PHASE standoff")).toBeInTheDocument();
   });
 
-  it("falls back to default centre when center omitted", () => {
+  it("falls back to the Standoff logo when center is omitted", () => {
     render(<Masthead left="x" right="y" />);
-    expect(screen.getByText("The Standoff")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /standoff/i })).toBeInTheDocument();
   });
 
   it("renders the centerSub line under the title when provided", () => {

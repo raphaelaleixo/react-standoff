@@ -1,16 +1,22 @@
 import { Box } from "@mui/material";
 import { palette } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
+import { StandoffLogo } from "./StandoffLogo";
 
 interface MastheadProps {
   left?: React.ReactNode;
+  /**
+   * Centre slot. When omitted, the StandoffLogo wordmark renders in its
+   * place — that's the default in-game header. Pass a string / node to
+   * override (e.g. "The Reckoning" on the end-game screen).
+   */
   center?: React.ReactNode;
   /** Optional small-caps subtitle stacked under `center`. */
   centerSub?: React.ReactNode;
   right?: React.ReactNode;
 }
 
-export function Masthead({ left, center = "The Standoff", centerSub, right }: MastheadProps) {
+export function Masthead({ left, center, centerSub, right }: MastheadProps) {
   return (
     <Box
       component="header"
@@ -35,20 +41,26 @@ export function Masthead({ left, center = "The Standoff", centerSub, right }: Ma
       >
         {left}
       </Box>
-      <Box sx={{ textAlign: "center" }}>
-        <Box
-          sx={{
-            fontFamily: fonts.blackletter,
-            fontSize: "2.1rem",
-            fontWeight: 700,
-            lineHeight: 0.9,
-            letterSpacing: "0.02em",
-            color: palette.paper,
-            textShadow: "0 0 12px rgba(255, 195, 120, 0.15)",
-          }}
-        >
-          {center}
-        </Box>
+      <Box sx={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        {center == null ? (
+          <Box sx={{ color: palette.paper, filter: "drop-shadow(0 0 12px rgba(255, 195, 120, 0.15))" }}>
+            <StandoffLogo width={115} />
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              fontFamily: fonts.blackletter,
+              fontSize: "2.1rem",
+              fontWeight: 700,
+              lineHeight: 0.9,
+              letterSpacing: "0.02em",
+              color: palette.paper,
+              textShadow: "0 0 12px rgba(255, 195, 120, 0.15)",
+            }}
+          >
+            {center}
+          </Box>
+        )}
         {centerSub && (
           <Box
             sx={{

@@ -5,7 +5,7 @@ import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Button } from "../components/shell/Button";
-import { GenericFlag } from "../components/flags/GenericFlag";
+import { StandoffLogo } from "../components/shell/StandoffLogo";
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -32,21 +32,13 @@ export default function HomePage() {
             padding: "1rem",
           }}
         >
-          <Box sx={{ color: palette.paper }}>
-            <GenericFlag size={96} />
-          </Box>
           <Box
             sx={{
-              fontFamily: fonts.blackletter,
-              fontWeight: 700,
-              fontSize: "4rem",
-              lineHeight: 0.9,
               color: palette.paper,
-              textShadow: "0 0 12px rgba(255, 195, 120, 0.18)",
-              textAlign: "center",
+              filter: "drop-shadow(0 0 16px rgba(255, 195, 120, 0.18))",
             }}
           >
-            {t("home.title")}
+            <StandoffLogo width={300} />
           </Box>
           <Box
             sx={{
@@ -54,7 +46,8 @@ export default function HomePage() {
               fontStyle: "italic",
               textAlign: "center",
               color: palette.paperDim,
-              fontSize: "1rem",
+              fontSize: "1.125em",
+              lineHeight: 1.3,
             }}
           >
             {t("home.subtitle")}

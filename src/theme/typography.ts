@@ -3,7 +3,7 @@
 //   - displayCaps:    UI labels, button text, headings, status pills, column heads
 //   - body:           italic captions, nicknames, flavor lines, hints
 //
-// EB Garamond is a single family on Google Fonts — small caps come from the
+// Crimson Pro is a single family on Google Fonts — small caps come from the
 // OpenType `smcp` feature. Pair `displayCaps` with `fontFeatureSettings:
 // '"smcp"'` at the call site (or via the theme variant) to get true small caps.
 //
@@ -11,6 +11,6 @@
 
 export const fonts = {
   blackletter: '"Grenze Gotisch", Georgia, serif',
-  displayCaps: '"EB Garamond", Georgia, serif',
-  body: '"EB Garamond", Georgia, serif',
+  displayCaps: '"Crimson Pro", Georgia, serif',
+  body: '"Crimson Pro", Georgia, serif',
 } as const;
