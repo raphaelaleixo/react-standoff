@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { palette } from "../../theme/colors";
+import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { FlagFor, jollyRogerForColor } from "../flags";
 
@@ -31,6 +31,10 @@ export function AimBarrel({ colorOrAvatar, size = 160, count }: AimBarrelProps) 
   const flagSize = Math.round(size * 0.55);
   const insetGlow = Math.round(size * 0.14);
   const showCount = count != null && count > 0;
+  // Crosshair + silhouette tint in the locked target's signature flag colour
+  // so the standoff disc reads as "aimed at this specific pirate". Falls back
+  // to blood when no target is set yet (commit-phase pre-pick).
+  const accent = colorOrAvatar ? flagColor(colorOrAvatar) : palette.blood;
   return (
     <Box
       sx={{
@@ -48,12 +52,12 @@ export function AimBarrel({ colorOrAvatar, size = 160, count }: AimBarrelProps) 
       {colorOrAvatar ? (
         <Box
           sx={{
-            color: palette.blood,
+            color: accent,
             // The flag dims to ~40% during the standoff count so the giant
             // numeral on top reads cleanly without being overpowered by the
             // silhouette beneath.
             opacity: showCount ? 0.4 : 1,
-            transition: "opacity 0.2s ease",
+            transition: "opacity 0.2s ease, color 0.2s ease",
           }}
         >
           <FlagFor id={jollyRogerForColor(colorOrAvatar)} size={flagSize} />
@@ -81,8 +85,9 @@ export function AimBarrel({ colorOrAvatar, size = 160, count }: AimBarrelProps) 
           left: "8%",
           right: "8%",
           height: 1.5,
-          bgcolor: palette.blood,
-          opacity: 0.55,
+          bgcolor: accent,
+          opacity: 0.7,
+          transition: "background-color 0.2s ease",
           transform: "translateY(-50%)",
         }}
       />
@@ -94,46 +99,31 @@ export function AimBarrel({ colorOrAvatar, size = 160, count }: AimBarrelProps) 
           top: "8%",
           bottom: "8%",
           width: 1.5,
-          bgcolor: palette.blood,
-          opacity: 0.55,
+          bgcolor: accent,
+          opacity: 0.7,
+          transition: "background-color 0.2s ease",
           transform: "translateX(-50%)",
         }}
       />
-      {/* Standoff overlay: giant blackletter numeral + STAND label. */}
+      {/* Standoff overlay: giant blackletter numeral floating in the upper
+          third of the disc. Pushed well above centre so the dimmed flag
+          silhouette below has room to read; UnifrakturCook digits sit low in
+          the em box, so the explicit translateY also corrects that. */}
       {showCount && (
-        <>
-          <Box
-            sx={{
-              position: "absolute",
-              fontFamily: fonts.blackletter,
-              fontSize: Math.round(size * 0.62),
-              lineHeight: 1,
-              color: palette.ink,
-              textShadow: `0 0 ${Math.round(size * 0.08)}px rgba(255, 195, 120, 0.55)`,
-              zIndex: 2,
-              // Slight upward nudge — UnifrakturCook digits sit low in the em
-              // box; same correction used by the big-screen StandoffStamp.
-              transform: "translateY(-0.06em)",
-            }}
-          >
-            {count}
-          </Box>
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: `${Math.round(size * 0.13)}px`,
-              fontFamily: fonts.displayCaps,
-              fontFeatureSettings: '"smcp"',
-              fontSize: Math.round(size * 0.07),
-              letterSpacing: "0.4em",
-              color: palette.ink,
-              opacity: 0.8,
-              zIndex: 2,
-            }}
-          >
-            STAND
-          </Box>
-        </>
+        <Box
+          sx={{
+            position: "absolute",
+            fontFamily: fonts.blackletter,
+            fontSize: Math.round(size * 0.62),
+            lineHeight: 1,
+            color: palette.ink,
+            textShadow: `0 0 ${Math.round(size * 0.08)}px rgba(255, 195, 120, 0.55)`,
+            zIndex: 2,
+            transform: "translateY(-0.12em)",
+          }}
+        >
+          {count}
+        </Box>
       )}
     </Box>
   );
