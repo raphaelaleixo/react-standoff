@@ -19,6 +19,7 @@ export const palette = {
 
   // Accents — calibrated for dark backgrounds
   blood: "#c93a30",
+  bloodDeep: "#8a2018",
   gold: "#d4a85a",
   goldDeep: "#a8842c",
   yellow: "#e6c440",
