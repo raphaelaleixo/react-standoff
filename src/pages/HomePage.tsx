@@ -1,15 +1,33 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Box } from "@mui/material";
+import { Alert, Box } from "@mui/material";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Button } from "../components/shell/Button";
 import { StandoffLogo } from "../components/shell/StandoffLogo";
+import { createRoom } from "../lib/createRoom";
 
 export default function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onNewGame = async () => {
+    if (creating) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const id = await createRoom();
+      navigate(`/room/${id}`);
+    } catch (e) {
+      console.error("createRoom failed:", e);
+      setError((e as Error).message);
+      setCreating(false);
+    }
+  };
   return (
     <Box
       sx={{
@@ -61,10 +79,11 @@ export default function HomePage() {
               marginTop: "1rem",
             }}
           >
-            <Button fullWidth onClick={() => navigate("/join")}>
-              {t("home.newGame").toUpperCase()}
+            <Button fullWidth onClick={onNewGame} disabled={creating}>
+              {(creating ? t("home.newGameSubmitting") : t("home.newGame")).toUpperCase()}
             </Button>
-            <Button variant="ghost" fullWidth onClick={() => navigate("/join")}>
+            {error && <Alert severity="error">{error}</Alert>}
+            <Button variant="ghost" fullWidth onClick={() => navigate("/join")} disabled={creating}>
               {t("home.resumeGame").toUpperCase()}
             </Button>
             <Button variant="text" fullWidth onClick={() => navigate("/how-to-play")}>

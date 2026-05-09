@@ -2,24 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Alert, Box, Divider } from "@mui/material";
-import { createInitialRoom, generateRoomId } from "react-gameroom";
-import { ref, set } from "firebase/database";
-import { database } from "../firebase";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Button } from "../components/shell/Button";
 import { roomExists } from "../hooks/useFirebaseRoom";
-import type { Player } from "../game/types";
-
-const ROOM_CONFIG = { minPlayers: 4, maxPlayers: 6, requireFull: false };
-
-async function createRoom(): Promise<string> {
-  const roomId = generateRoomId();
-  const initial = { ...createInitialRoom<Player>(ROOM_CONFIG), roomId };
-  await set(ref(database, `rooms/${roomId}/state`), initial);
-  return roomId;
-}
+import { createRoom } from "../lib/createRoom";
 
 export default function JoinPage() {
   const { t } = useTranslation();
