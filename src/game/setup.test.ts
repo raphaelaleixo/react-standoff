@@ -55,7 +55,7 @@ describe('initGame', () => {
       cash: [{ id: 'leftover', value: 5000 }],
       shame: 1,
       status: 'dead',
-      effects: [{ kind: 'leftover' }],
+      effects: [{ kind: 'tough', revealed: true, used: true }],
     };
     const game = initGame([dirtyPlayer], 'seed', 0);
     const p = game.players[0];
@@ -87,5 +87,55 @@ describe('initGame', () => {
     const game = initGame([lobbyPlayer('A')], 'my-seed', 0);
     expect(game.discardedBullets).toEqual([]);
     expect(game.seed).toBe('my-seed');
+  });
+});
+
+describe('initGame variants', () => {
+  const samplePlayer = (id: string): Player => ({
+    id,
+    displayName: id,
+    colorOrAvatar: 'calico_jack',
+    bullets: [],
+    cash: [],
+    wounds: 0,
+    shame: 0,
+    status: 'alive',
+    effects: [],
+  });
+
+  test('variant off: every player has empty effects (regression)', () => {
+    const game = initGame(
+      [samplePlayer('p1'), samplePlayer('p2'), samplePlayer('p3'), samplePlayer('p4')],
+      'seed-off',
+      0,
+      { superPowers: false },
+    );
+    for (const p of game.players) expect(p.effects).toEqual([]);
+    expect(game.variants.superPowers).toBe(false);
+  });
+
+  test('variant on: every player has exactly one PowerEffect, none revealed', () => {
+    const game = initGame(
+      [samplePlayer('p1'), samplePlayer('p2'), samplePlayer('p3'), samplePlayer('p4')],
+      'seed-on',
+      0,
+      { superPowers: true },
+    );
+    for (const p of game.players) {
+      expect(p.effects).toHaveLength(1);
+      expect(p.effects[0].revealed).toBe(false);
+      expect(p.effects[0].used).toBe(false);
+    }
+    expect(game.variants.superPowers).toBe(true);
+  });
+
+  test('Round.activations starts as empty record', () => {
+    const game = initGame(
+      [samplePlayer('p1'), samplePlayer('p2'), samplePlayer('p3'), samplePlayer('p4')],
+      'seed-act',
+      0,
+      { superPowers: true },
+    );
+    expect(game.round.activations).toEqual({});
   });
 });
