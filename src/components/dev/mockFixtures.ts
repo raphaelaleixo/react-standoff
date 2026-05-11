@@ -61,6 +61,19 @@ export const RESOLUTION_KILL: RoundResolution = {
   ...RESOLUTION_BROADSIDE,
   // d had 2 wounds going in; c's bang tips them over and they walk the plank.
   eliminated: ["d"],
+  // c (20k + 10k) and e (5k) get the take; the 10k + 5k carry over.
+  // Loot ids match FIXTURE_GAME below.
+  awards: {
+    c: [
+      { id: "loot-1", value: 20000 },
+      { id: "loot-3", value: 10000 },
+    ],
+    e: [{ id: "loot-4", value: 5000 }],
+  },
+  carryover: [
+    { id: "loot-2", value: 10000 },
+    { id: "loot-5", value: 5000 },
+  ],
 };
 
 // Muster fixture: 4 of 6 seats taken (mix of ready / joining), 2 empty.

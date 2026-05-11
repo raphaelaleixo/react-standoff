@@ -4,12 +4,12 @@ import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { PageCanvas } from "../shell/PageCanvas";
 import { Masthead } from "../shell/Masthead";
+import { FullscreenButton } from "../shell/FullscreenButton";
 import { Button } from "../shell/Button";
 import { FlagFor, jollyRogerForColor } from "../flags";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
 import { netScore } from "../../lib/score";
-import { toRoman } from "../../lib/navyHours";
 import { popIn, fadeIn } from "../../theme/animations";
 import type { Game, Player } from "../../game/types";
 
@@ -60,11 +60,11 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
   const buttonsDelayMs = winnerDelayMs + WINNER_DURATION_MS + BUTTONS_AFTER_WINNER_MS - 200;
 
   return (
-    <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
+    <Box sx={{ width: "100vw", height: "100vh" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(game.round.number) })}</em></>}
-          right={<>{t("shell.room")} <em>{roomId}</em></>}
+          left={<>{t("shell.room")} <em>{roomId}</em></>}
+          right={<FullscreenButton />}
         />
 
         <Box
@@ -73,8 +73,6 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
             padding: "0.6rem 2rem",
             display: "flex",
             flexDirection: "column",
-            borderTop: `4px double ${palette.ruleStrong}`,
-            borderBottom: `4px double ${palette.ruleStrong}`,
             minHeight: 0,
           }}
         >
@@ -95,7 +93,7 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
 
         <Box
           sx={{
-            padding: "0.7rem 1.5rem 0.8rem",
+            padding: "0.7rem 1.5rem 1.6rem",
             display: "flex",
             justifyContent: "center",
             gap: "1.5rem",
@@ -138,7 +136,6 @@ function WinnerEnthronement({
       sx={{
         textAlign: "center",
         padding: "0.8rem 0 0.6rem",
-        borderBottom: `1px solid ${palette.rule}`,
         marginBottom: "0.6rem",
       }}
     >

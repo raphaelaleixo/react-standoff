@@ -14,7 +14,11 @@ const WITHDRAW_MS = WITHDRAW_DURATION_MS;
 const REVEAL_WITHDRAW_MS = 2500;
 const REVEAL_BBB_MS = 5000;
 const REVEAL_OTHERS_MS = 5000;
-const SPLIT_MS = 5000;
+// Split-phase budget: notes-leave-table fade (~300ms) → small beat → cash
+// tickers (~700ms) → small beat → next round draws in. GameBoard runs the
+// orchestration off `phaseStartedAt`; this is the timer that finally writes
+// the resolved players + opens the next round.
+const SPLIT_MS = 1800;
 
 function alivePlayers(game: Game): Player[] {
   return game.players.filter(p => p.status === "alive");

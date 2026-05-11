@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Fade } from "@mui/material";
 import type { Game } from "../game/types";
 import { HoardList } from "./hoard/HoardList";
@@ -22,7 +22,44 @@ const REVEAL_LABEL: Partial<Record<Game["round"]["phase"], string>> = {
   reveal_others: "Shots",
 };
 
-export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
+// Split-phase choreography. The state machine doesn't apply awards until the
+// split → next-round transition fires; here we run a purely-visual transform
+// so the screen reads as a sequence: notes leave the table first, then a beat
+// later the standing players' cash ticks up. The next round's draw lands when
+// the real transition fires (HoardList's dropIn handles those new IDs).
+const SPLIT_AWARDS_REVEAL_DELAY_MS = 250;
+
+function useSplitDisplayGame(game: Game): Game {
+  const inSplit = game.round.phase === "split" && !!game.round.resolution;
+  const [awardsRevealed, setAwardsRevealed] = useState(false);
+
+  useEffect(() => {
+    if (!inSplit) {
+      setAwardsRevealed(false);
+      return;
+    }
+    const t = setTimeout(() => setAwardsRevealed(true), SPLIT_AWARDS_REVEAL_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [inSplit, game.round.phaseStartedAt]);
+
+  if (!inSplit) return game;
+  const resolution = game.round.resolution!;
+  const players = awardsRevealed
+    ? game.players.map(p => {
+        const won = resolution.awards[p.id];
+        if (!won || won.length === 0) return p;
+        return { ...p, cash: [...p.cash, ...won] };
+      })
+    : game.players;
+  return {
+    ...game,
+    players,
+    round: { ...game.round, loot: resolution.carryover },
+  };
+}
+
+export function GameBoard({ game: rawGame, freshlyStruck }: GameBoardProps) {
+  const game = useSplitDisplayGame(rawGame);
   const inStandoff = game.round.phase === "standoff";
   const count = useStandoffCount({
     active: inStandoff,

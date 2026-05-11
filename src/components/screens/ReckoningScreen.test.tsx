@@ -67,7 +67,7 @@ describe("ReckoningScreen", () => {
     expect(screen.getByText("DEAD")).toBeInTheDocument();
   });
 
-  it("renders the in-game-style masthead with round + room", () => {
+  it("renders the in-game-style masthead with room + fullscreen control", () => {
     render(
       <ReckoningScreen
         game={makeGame()}
@@ -77,8 +77,6 @@ describe("ReckoningScreen", () => {
         onReturn={() => {}}
       />,
     );
-    expect(screen.getByText("ROUND")).toBeInTheDocument();
-    expect(screen.getByText("VIII of VIII")).toBeInTheDocument();
     expect(screen.getByText("ROOM")).toBeInTheDocument();
     expect(screen.getByText("QSPY")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /standoff/i })).toBeInTheDocument();
