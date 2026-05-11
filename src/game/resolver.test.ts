@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'vitest';
-import type { Banknote, BulletCard, Commit, Player } from './types';
+import { describe, expect, it, test } from 'vitest';
+import type { Banknote, BulletCard, Commit, Player, PowerKind } from './types';
 import { resolveRound } from './resolver';
 
 let nextNoteId = 0;
@@ -277,5 +277,62 @@ describe('resolveRound — end-of-round bookkeeping', () => {
       [],
     );
     expect(result.discardedBullets.sort()).toEqual(['bang', 'bang_bang_bang', 'clic']);
+  });
+});
+
+describe('resolveRound — Dragon Skin', () => {
+  function pl(id: string, opts: { wounds?: 0|1|2|3|4; powers?: PowerKind[] } = {}): Player {
+    return {
+      id,
+      displayName: id,
+      colorOrAvatar: 'calico_jack',
+      bullets: ['clic','clic','clic','clic','clic','bang','bang','bang_bang_bang'],
+      cash: [],
+      wounds: opts.wounds ?? 0,
+      shame: 0,
+      status: 'alive',
+      effects: (opts.powers ?? []).map(k => ({ kind: k, revealed: false, used: false })),
+    };
+  }
+
+  it('clamps multi-wound to 1 and pushes activation', () => {
+    const players = [
+      pl('p1', { powers: ['dragon_skin'] }),
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.woundedThisRound.p1).toBe(1);
+    const act = resolution.powerActivations.find(a => a.kind === 'dragon_skin');
+    expect(act?.playerId).toBe('p1');
+  });
+
+  it('1 wound: no clamp, no activation (power stays hidden)', () => {
+    const players = [pl('p1', { powers: ['dragon_skin'] }), pl('p2'), pl('p3')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.woundedThisRound.p1).toBe(1);
+    expect(resolution.powerActivations).toEqual([]);
+  });
+
+  it('no Dragon Skin in hand: multi-wound unchanged (regression)', () => {
+    const players = [pl('p1'), pl('p2'), pl('p3')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.woundedThisRound.p1).toBe(2);
+    expect(resolution.powerActivations).toEqual([]);
   });
 });
