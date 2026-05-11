@@ -389,3 +389,48 @@ describe('resolveRound — Unbreakable', () => {
     expect(resolution.eliminated).toContain('p1');
   });
 });
+
+describe('resolveRound — Tough', () => {
+  it('wounded holder activated: re-added to standing, gets share', () => {
+    const players = [
+      pl('p1', { powers: ['tough'] }),
+      pl('p2'), pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const loot = [note('n1', 10000), note('n2', 10000), note('n3', 10000)];
+    const { resolution } = resolveRound(commits, players, loot, { tough: ['p1'] });
+    expect(resolution.standing).toContain('p1');
+    expect(resolution.awards.p1).toBeDefined();
+    expect(resolution.powerActivations.some(a => a.kind === 'tough' && a.playerId === 'p1')).toBe(true);
+  });
+
+  it('no activation: wounded holder is not in standing (regression)', () => {
+    const players = [pl('p1', { powers: ['tough'] }), pl('p2'), pl('p3')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const { resolution } = resolveRound(commits, players, [], {});
+    expect(resolution.standing).not.toContain('p1');
+  });
+
+  it('dead holder cannot use Tough', () => {
+    const players = [
+      pl('p1', { wounds: 2, powers: ['tough'] }),
+      pl('p2'), pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const { resolution } = resolveRound(commits, players, [], { tough: ['p1'] });
+    expect(resolution.standing).not.toContain('p1');
+    expect(resolution.eliminated).toContain('p1');
+  });
+});
