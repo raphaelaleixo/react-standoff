@@ -9,6 +9,8 @@ interface ButtonProps {
   children: React.ReactNode;
   caption?: string;
   emphasis?: boolean;       // primary only — swaps the lift's drop-shadow to gold
+  /** Optional override for the primary/ghost key background colour (e.g. tint to player flag). */
+  color?: string;
   onClick?: () => void;
   disabled?: boolean;
   fullWidth?: boolean;
@@ -26,6 +28,7 @@ export function Button({
   children,
   caption,
   emphasis,
+  color,
   onClick,
   disabled,
   fullWidth,
@@ -47,7 +50,7 @@ export function Button({
   // shouts for attention); ghost is ink (the same paper/ink chrome but
   // visually quieter, for secondary actions).
   if (variant === "primary" || variant === "ghost") {
-    const keyBg = variant === "primary" ? palette.bloodDeep : palette.ink;
+    const keyBg = color ?? (variant === "primary" ? palette.bloodDeep : palette.ink);
     const liftShadow = emphasis ? palette.gold : palette.paper;
     return (
       <Box

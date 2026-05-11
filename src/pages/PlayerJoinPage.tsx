@@ -3,9 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Alert, Box, CircularProgress } from "@mui/material";
 import { joinPlayer } from "react-gameroom";
-import { palette } from "../theme/colors";
+import { palette, flagColor } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PageCanvas } from "../components/shell/PageCanvas";
+import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { Button } from "../components/shell/Button";
 import { FlagPickerGrid } from "../components/flags/FlagPickerGrid";
 import { takenFlags } from "../game/playerFlags";
@@ -57,6 +58,7 @@ export default function PlayerJoinPage() {
           borderRadius={28}
           sx={{ width: "100%", maxWidth: "440px", height: "100%" }}
         >
+          <PhoneHeader roomId={roomState.roomId} />
           <Box sx={{ flex: 1, padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
             <Box
               sx={{
@@ -138,44 +140,7 @@ export default function PlayerJoinPage() {
         borderRadius={28}
         sx={{ width: "100%", maxWidth: "440px", height: "100%" }}
       >
-        {/* Room code header — small displayCaps eyebrow with a body-italic
-            "The Standoff" subtitle, mirrors the in-game shell's masthead in
-            spirit but compressed for phone width. */}
-        <Box sx={{ textAlign: "center", padding: "0.9rem 0 0.4rem" }}>
-          <Box
-            sx={{
-              fontFamily: fonts.displayCaps,
-              fontFeatureSettings: '"smcp"',
-              fontSize: "0.7rem",
-              letterSpacing: "0.4em",
-              color: palette.paperDim,
-            }}
-          >
-            {t("shell.room")}{" "}
-            <Box
-              component="em"
-              sx={{
-                fontFamily: fonts.body,
-                fontStyle: "italic",
-                letterSpacing: "0.1em",
-                color: palette.paper,
-              }}
-            >
-              {roomState.roomId}
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              fontFamily: fonts.body,
-              fontStyle: "italic",
-              fontSize: "0.85rem",
-              color: palette.paperDim,
-              marginTop: "0.15rem",
-            }}
-          >
-            The Standoff
-          </Box>
-        </Box>
+        <PhoneHeader roomId={roomState.roomId} flagId={flag ?? undefined} />
 
         <Box
           sx={{
@@ -192,18 +157,16 @@ export default function PlayerJoinPage() {
           {t("playerJoin.raiseYerFlag")}
         </Box>
 
-        <FlagPickerGrid taken={taken} value={flag} onChange={(id) => setFlag(id)} />
-
-        <Box sx={{ padding: "0.7rem 0.85rem 0.4rem" }}>
+        <Box sx={{ padding: "0.7rem 0.85rem 1.8rem" }}>
           <Box
             sx={{
               fontFamily: fonts.displayCaps,
               fontFeatureSettings: '"smcp"',
-              fontSize: "0.6rem",
-              letterSpacing: "0.36em",
+              fontSize: "0.9rem",
+              letterSpacing: "0.32em",
               color: palette.paperDim,
               textAlign: "center",
-              marginBottom: "0.35rem",
+              marginBottom: "-0.2rem",
             }}
           >
             {t("playerJoin.nicknameEyebrow")}
@@ -217,12 +180,12 @@ export default function PlayerJoinPage() {
             sx={{
               background: "transparent",
               border: "none",
-              borderBottom: `2px solid ${palette.paper}`,
+              borderBottom: `1px solid ${palette.paperFaint}`,
               textAlign: "center",
               width: "100%",
               fontFamily: fonts.body,
               fontStyle: "italic",
-              fontSize: "1.2rem",
+              fontSize: "1.6rem",
               letterSpacing: "0.04em",
               color: palette.paper,
               padding: "0.4rem 0.4rem 0.3rem",
@@ -230,19 +193,9 @@ export default function PlayerJoinPage() {
               "&:focus": { outline: "none", borderColor: palette.blood },
             }}
           />
-          <Box
-            sx={{
-              fontFamily: fonts.body,
-              fontStyle: "italic",
-              fontSize: "0.7rem",
-              color: palette.paperFaint,
-              textAlign: "center",
-              marginTop: "0.3rem",
-            }}
-          >
-            {t("playerJoin.nameHint")}
-          </Box>
         </Box>
+
+        <FlagPickerGrid taken={taken} value={flag} onChange={(id) => setFlag(id)} />
 
         {submitError && (
           <Box sx={{ padding: "0 0.85rem" }}>
@@ -256,6 +209,7 @@ export default function PlayerJoinPage() {
             disabled={!name.trim() || !flag || submitting}
             onClick={onSubmit}
             caption={t("playerJoin.submitCaption")}
+            color={flag ? `color-mix(in srgb, ${flagColor(flag)} 55%, ${palette.ink})` : palette.ink}
           >
             {t("playerJoin.submit")}
           </Button>
