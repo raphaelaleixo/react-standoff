@@ -36,7 +36,6 @@ export function Masthead({ left, center, centerSub, right, onLogoClick }: Masthe
     <Box
       component="header"
       sx={{
-        borderBottom: `4px double ${palette.ruleStrong}`,
         padding: "1.2rem 1.5rem",
         display: "grid",
         gridTemplateColumns: "1fr auto 1fr",
@@ -82,7 +81,7 @@ export function Masthead({ left, center, centerSub, right, onLogoClick }: Masthe
               }),
             }}
           >
-            <StandoffLogo width={115} />
+            <StandoffLogo width="7.2rem" />
           </Box>
         ) : (
           <Box

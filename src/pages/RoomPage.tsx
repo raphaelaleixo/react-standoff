@@ -16,12 +16,13 @@ import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
+import { useBigScreenZoom } from "../hooks/useBigScreenZoom";
 import { database } from "../firebase";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Masthead } from "../components/shell/Masthead";
 import { Foot } from "../components/shell/Foot";
-import { navyHoursLabel, toRoman } from "../lib/navyHours";
-import { countAlive, countDead, countYielded } from "../lib/playerCounts";
+import { FullscreenButton } from "../components/shell/FullscreenButton";
+import { toRoman } from "../lib/navyHours";
 
 const EMPTY_ROOM: RoomState<Player> = {
   roomId: "",
@@ -86,6 +87,7 @@ export default function RoomPage() {
 function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["game"]; roomId: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  useBigScreenZoom();
   if (!game) {
     return (
       <Container sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -111,17 +113,15 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
 
   const round = game.round;
   return (
-    <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
+    <Box sx={{ width: "100vw", height: "100vh" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(round.number) })}</em></>}
-          right={<>{t("shell.room")} <em>{roomId}</em></>}
+          left={<>{t("shell.room")} <em>{roomId}</em></>}
+          right={<FullscreenButton />}
         />
         <GameBoard game={game} />
         <Foot
-          left={`${countAlive(game)} ${t("shell.alive")} · ${countYielded(game)} ${t("shell.yielded")} · ${countDead(game)} ${t("shell.dead")}`}
-          cry={navyHoursLabel(round.number, t)}
-          right={t("shell.next")}
+          cry={<>{t("shell.round")} {t("shell.ofTotal", { n: toRoman(round.number) })}</>}
         />
       </PageCanvas>
     </Box>

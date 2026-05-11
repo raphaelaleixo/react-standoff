@@ -1,4 +1,4 @@
-export function BlackBartFlag({ size = 64 }: { size?: number }) {
+export function BlackBartFlag({ size = 64 }: { size?: number | string }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} role="img" aria-label="Black Bart flag">
       <g fill="currentColor">

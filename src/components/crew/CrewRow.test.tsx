@@ -36,9 +36,9 @@ describe("CrewRow", () => {
     expect(shamePips).toHaveLength(2);
   });
 
-  it("renders $0k when the player has no cash (instead of flavor text)", () => {
+  it("renders $0 when the player has no cash (instead of flavor text)", () => {
     render(<CrewRow player={p()} status="ready" />);
-    expect(screen.getByText("$0k")).toBeInTheDocument();
+    expect(screen.getByText("$0")).toBeInTheDocument();
   });
 
   it("renders distinct text styles per status (e.g. yielded vs choosing)", () => {

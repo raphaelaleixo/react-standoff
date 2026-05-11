@@ -98,7 +98,7 @@ export function Button({
             alignItems: "center",
             justifyContent: "center",
             width: "100%",
-            padding: "0.75rem 1.4rem 1.2rem",
+            padding: "0.75rem 2.6rem 1.2rem",
             background: keyBg,
             border: `1.5px solid ${palette.paper}`,
             borderRadius: "4px",

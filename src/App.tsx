@@ -10,6 +10,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import theme from "./theme/theme";
+import { ParchmentBackground } from "./components/shell/ParchmentBackground";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 const HowToPlayPage = lazy(() => import("./pages/HowToPlayPage"));
@@ -51,6 +52,7 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <ParchmentBackground />
       <Suspense fallback={<RouteFallback />}>
         <RouterProvider router={router} />
       </Suspense>

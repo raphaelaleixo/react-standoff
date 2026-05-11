@@ -7,9 +7,8 @@ describe("StandoffStamp", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
   });
 
-  it("renders the eyebrow and the cry", () => {
+  it("renders the eyebrow", () => {
     render(<StandoffStamp count={2} />);
-    expect(screen.getByText(/AT THE COUNT OF/)).toBeInTheDocument();
-    expect(screen.getByText(/STAND\./)).toBeInTheDocument();
+    expect(screen.getByText(/AIM TO YOUR TARGET IN/)).toBeInTheDocument();
   });
 });

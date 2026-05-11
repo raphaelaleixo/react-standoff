@@ -6,19 +6,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { FullscreenButton } from "../components/shell/FullscreenButton";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Masthead } from "../components/shell/Masthead";
 import { Foot } from "../components/shell/Foot";
 import { GameBoard } from "../components/GameBoard";
 import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
-import { navyHoursLabel, toRoman } from "../lib/navyHours";
-import { countAlive, countDead, countYielded } from "../lib/playerCounts";
+import { toRoman } from "../lib/navyHours";
 import type { Game } from "../game/types";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel, type DevScreen } from "../components/dev/DevControlsPanel";
 import { useStandoffCount } from "../hooks/useStandoffCount";
+import { useBigScreenZoom } from "../hooks/useBigScreenZoom";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS } from "../lib/phaseDurations";
 import {
   FIXTURE_GAME,
@@ -31,6 +32,7 @@ import {
 
 export default function MockBigScreen() {
   const { t } = useTranslation();
+  useBigScreenZoom();
   const { game, actions } = useMockGameState(FIXTURE_GAME);
   const { open, setOpen } = useDevPanelToggle(true);
   const [screen, setScreen] = useState<DevScreen>("game");
@@ -112,17 +114,15 @@ export default function MockBigScreen() {
     );
   } else {
     surface = (
-      <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
+      <Box sx={{ width: "100vw", height: "100vh" }}>
         <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
           <Masthead
-            left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(displayGame.round.number) })}</em></>}
-            right={<>{t("shell.room")} <em>MOCK</em></>}
+            left={<>{t("shell.room")} <em>MOCK</em></>}
+            right={<FullscreenButton />}
           />
           <GameBoard game={displayGame} />
           <Foot
-            left={`${countAlive(displayGame)} ${t("shell.alive")} · ${countYielded(displayGame)} ${t("shell.yielded")} · ${countDead(displayGame)} ${t("shell.dead")}`}
-            cry={navyHoursLabel(displayGame.round.number, t)}
-            right={t("shell.next")}
+            cry={<>{t("shell.round")} {t("shell.ofTotal", { n: toRoman(displayGame.round.number) })}</>}
           />
         </PageCanvas>
       </Box>

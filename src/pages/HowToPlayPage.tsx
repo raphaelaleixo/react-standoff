@@ -179,34 +179,24 @@ function Ornament({ children }: { children: string }) {
       role="presentation"
       sx={{
         display: "flex",
+        justifyContent: "center",
         alignItems: "center",
-        gap: "1.1rem",
-        margin: "2.4rem 0 1.4rem",
+        gap: "0.8rem",
+        margin: "2.6rem 0 1.4rem",
+        fontFamily: fonts.displayCaps,
+        fontFeatureSettings: '"smcp"',
+        fontSize: "0.95rem",
+        letterSpacing: "0.32em",
+        color: palette.paperDim,
       }}
     >
-      <Box sx={{ flex: 1, height: "1px", background: palette.rule }} />
-      <Box
-        sx={{
-          fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "0.95rem",
-          letterSpacing: "0.32em",
-          color: palette.paperDim,
-          whiteSpace: "nowrap",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.7rem",
-        }}
-      >
-        <Box component="span" sx={{ color: palette.blood, fontSize: "1.05em" }}>
-          ❦
-        </Box>
-        {children}
-        <Box component="span" sx={{ color: palette.blood, fontSize: "1.05em" }}>
-          ❦
-        </Box>
+      <Box component="span" sx={{ color: palette.blood, fontSize: "1.05em" }}>
+        ❦
       </Box>
-      <Box sx={{ flex: 1, height: "1px", background: palette.rule }} />
+      {children}
+      <Box component="span" sx={{ color: palette.blood, fontSize: "1.05em" }}>
+        ❦
+      </Box>
     </Box>
   );
 }
@@ -536,8 +526,6 @@ function ItemRow({ glyph, count, name, flavor }: ItemRowProps) {
           fontStyle: "italic",
           fontSize: "0.98rem",
           color: palette.paperDim,
-          paddingLeft: { xs: "0", sm: "0.4rem" },
-          borderLeft: { xs: "none", sm: `1px solid ${palette.rule}` },
         }}
       >
         — {flavor}

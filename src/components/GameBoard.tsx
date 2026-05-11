@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { Box, Fade } from "@mui/material";
 import type { Game } from "../game/types";
-import { palette } from "../theme/colors";
 import { HoardList } from "./hoard/HoardList";
 import { TargetingMap } from "./standoff/TargetingMap";
 import { StandoffStamp } from "./standoff/StandoffStamp";
@@ -68,8 +67,6 @@ export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
           flex: 1,
           display: "grid",
           gridTemplateColumns: "25% 50% 25%",
-          borderTop: `4px double ${palette.ruleStrong}`,
-          borderBottom: `4px double ${palette.ruleStrong}`,
           minHeight: 0,
         }}
       >
