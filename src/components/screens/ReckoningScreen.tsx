@@ -6,10 +6,11 @@ import { PageCanvas } from "../shell/PageCanvas";
 import { Masthead } from "../shell/Masthead";
 import { FullscreenButton } from "../shell/FullscreenButton";
 import { Button } from "../shell/Button";
-import { FlagFor, jollyRogerForColor } from "../flags";
+import { FlagFor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
-import { netScore } from "../../lib/score";
+import { netScore, compareForRanking } from "../../lib/score";
 import { popIn, fadeIn } from "../../theme/animations";
 import type { Game, Player } from "../../game/types";
 
@@ -30,20 +31,6 @@ interface ReckoningScreenProps {
   eliminatedByRound: Record<string, number>;
   onPlayAgain: () => void;
   onReturn: () => void;
-}
-
-// Dead players sort to the bottom regardless of cash, then by score, then by
-// fewer-shame (cleaner mutiny wins ties), then by more-wounds (the bloodied
-// underdog over the unscarred).
-function compareForRanking(a: Player, b: Player): number {
-  const aDead = a.status !== "alive";
-  const bDead = b.status !== "alive";
-  if (aDead !== bDead) return aDead ? 1 : -1;
-  const ds = netScore(b) - netScore(a);
-  if (ds !== 0) return ds;
-  const dShame = a.shame - b.shame;
-  if (dShame !== 0) return dShame;
-  return b.wounds - a.wounds;
 }
 
 export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, onReturn }: ReckoningScreenProps) {

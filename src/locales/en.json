@@ -74,7 +74,8 @@
       "cost": "COST: ONE YELLOW STREAK",
       "costSub": "—${{amount}} at the end of the day"
     },
-    "ended": "Game over"
+    "ended": "Game over",
+    "endedPhoneWaiting": "Waiting for the captain to call another round…"
   },
   "load": {
     "clic": "Click",

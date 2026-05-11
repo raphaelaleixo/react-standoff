@@ -1,11 +1,12 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import type { BulletCard, Game, Player } from "../../game/types";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { fadeIn, slideUpIn } from "../../theme/animations";
-import { FlagFor, jollyRogerForColor } from "../flags";
+import { FlagFor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { Button } from "../shell/Button";
 // Spelled-out small counts for headline copy (e.g. "TWO BARRELS ON YE").
 // Falls back to the numeral string for anything we don't have a word for.
@@ -25,6 +26,7 @@ import { STANDOFF_DURATION_MS } from "../../lib/phaseDurations";
 import { SHAME_PENALTY } from "../../lib/score";
 import { AimBarrel } from "./AimBarrel";
 import { Hand } from "./Hand";
+import { PhoneReckoning } from "./PhoneReckoning";
 import { Spectator } from "./Spectator";
 import { TargetList } from "./TargetList";
 import { YieldRibbon } from "./YieldRibbon";
@@ -72,15 +74,12 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handPrespent }: 
     : game.round.phase === "withdraw" ? "withdraw"
     : "reveal";
 
-  let content: React.ReactNode = null;
-
   if (game.phase === "ended") {
-    content = (
-      <Box sx={{ padding: "1.4rem", textAlign: "center" }}>
-        <Typography variant="h5">{t("phase.ended")}</Typography>
-      </Box>
+    return (
+      <PhaseFader phaseKey={phaseKey}>
+        <PhoneReckoning game={game} me={me} />
+      </PhaseFader>
     );
-    return <PhaseFader phaseKey={phaseKey}>{content}</PhaseFader>;
   }
   if (me.status === "dead") {
     return <PhaseFader phaseKey={phaseKey}><Spectator game={game} eliminated /></PhaseFader>;
@@ -486,19 +485,32 @@ function AttackerChip({ player }: { player: Player }) {
 // `children` is intentionally NOT in the effect deps — `useStandoffCount`
 // re-renders every 100ms during the count, so a children-keyed effect would
 // reset the timeout on every tick and the fade would never complete.
+//
+// The refs in this component are intentionally mutated during render: that
+// is the cross-fade's whole mechanism (freeze `displayed` during the fade
+// window, keep `latestChildren` flowing). Both the latest-value mirror and
+// the gated freeze are canonical render-cache patterns, so we suppress the
+// new react-hooks/refs error at the call sites below.
 const FADE_OUT_MS = 200;
 function PhaseFader({ phaseKey, children }: { phaseKey: string; children: React.ReactNode }) {
   const [renderedKey, setRenderedKey] = useState(phaseKey);
   const [opacity, setOpacity] = useState(1);
   const latestChildren = useRef(children);
+  // eslint-disable-next-line react-hooks/refs
   latestChildren.current = children;
   const displayed = useRef(children);
   if (phaseKey === renderedKey) {
+    // eslint-disable-next-line react-hooks/refs
     displayed.current = children;
   }
 
   useLayoutEffect(() => {
     if (phaseKey === renderedKey) return;
+    // Drive the fade choreography: snap to opacity 0, hold for FADE_OUT_MS
+    // while the leaving phase is still mounted, then swap the displayed
+    // tree and snap back to opacity 1. The synchronous setState here is
+    // the fade's trigger — deferring it would race the CSS transition.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpacity(0);
     const t = setTimeout(() => {
       displayed.current = latestChildren.current;
@@ -519,6 +531,7 @@ function PhaseFader({ phaseKey, children }: { phaseKey: string; children: React.
         minHeight: 0,
       }}
     >
+      {/* eslint-disable-next-line react-hooks/refs */}
       {displayed.current}
     </Box>
   );
