@@ -434,3 +434,41 @@ describe('resolveRound — Tough', () => {
     expect(resolution.eliminated).toContain('p1');
   });
 });
+
+describe('resolveRound — Specialist', () => {
+  it('played B!B!B! + activation: B!B!B! stays in bullets, chosen kind discarded', () => {
+    const players = [
+      pl('p1', { powers: ['specialist'] }),
+      pl('p2'), pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'bang_bang_bang', target: 'p2' },
+      p2: { bullet: 'clic', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p1' },
+    };
+    const { players: out, discardedBullets } = resolveRound(
+      commits, players, [], { specialist: { playerId: 'p1', discardedBulletKind: 'clic' } },
+    );
+    const p1Out = out.find(p => p.id === 'p1')!;
+    expect(p1Out.bullets.filter(b => b === 'bang_bang_bang')).toHaveLength(1);
+    expect(p1Out.bullets.filter(b => b === 'clic')).toHaveLength(4); // started with 5 clics, -1 chosen
+    expect(discardedBullets).toContain('clic');
+    expect(discardedBullets).not.toContain('bang_bang_bang');
+    expect(p1Out.effects.find(e => e.kind === 'specialist')?.used).toBe(true);
+    expect(p1Out.effects.find(e => e.kind === 'specialist')?.revealed).toBe(true);
+  });
+
+  it('no activation: B!B!B! is discarded normally (regression)', () => {
+    const players = [pl('p1', { powers: ['specialist'] }), pl('p2'), pl('p3')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'bang_bang_bang', target: 'p2' },
+      p2: { bullet: 'clic', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p1' },
+    };
+    const { players: out, discardedBullets } = resolveRound(commits, players, [], {});
+    const p1Out = out.find(p => p.id === 'p1')!;
+    expect(p1Out.bullets.filter(b => b === 'bang_bang_bang')).toHaveLength(0);
+    expect(discardedBullets).toContain('bang_bang_bang');
+    expect(p1Out.effects.find(e => e.kind === 'specialist')?.used).toBeFalsy();
+  });
+});
