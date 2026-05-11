@@ -5,14 +5,16 @@ import {
   Box,
   CircularProgress,
   Container,
-  Stack,
-  Typography,
 } from "@mui/material";
 import type { RoundPhase } from "../game/types";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
-import { FlagFor } from "../components/flags";
-import { flagColor } from "../theme/colors";
+import { FlagFor, jollyRogerForColor } from "../components/flags";
+import { flagColor, palette } from "../theme/colors";
+import { fonts } from "../theme/typography";
+import { breath } from "../theme/animations";
+import { PageCanvas } from "../components/shell/PageCanvas";
+import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 
@@ -65,18 +67,74 @@ export default function PlayerPage() {
   if (roomState.status === "lobby" || !game) {
     const flagId = slot.data?.colorOrAvatar ?? "generic";
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Stack spacing={3} sx={{ alignItems: "center" }}>
-          <Box sx={{ color: flagColor(flagId) }}>
-            <FlagFor id={flagId} size={96} />
+      <Box
+        sx={{
+          width: "100vw",
+          height: "100vh",
+          padding: "8px",
+          boxSizing: "border-box",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <PageCanvas
+          borderRadius={28}
+          sx={{ width: "100%", maxWidth: "440px", height: "100%" }}
+        >
+          <PhoneHeader roomId={roomState.roomId} flagId={flagId} />
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "1.4rem",
+              padding: "1.5rem",
+              textAlign: "center",
+            }}
+          >
+            <Box
+              sx={{
+                width: "10rem",
+                height: "6.9rem",
+                background: flagColor(flagId),
+                color: palette.paper,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: `4px 4px 0 ${palette.inkDeep}`,
+              }}
+            >
+              <FlagFor id={jollyRogerForColor(flagId)} size="4.5rem" />
+            </Box>
+            <Box
+              sx={{
+                fontFamily: fonts.displayCaps,
+                fontSize: "1.7rem",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: palette.paper,
+              }}
+            >
+              {slot.name}
+            </Box>
+            <Box
+              sx={{
+                fontFamily: fonts.body,
+                fontStyle: "italic",
+                fontSize: "1.05rem",
+                color: palette.paperDim,
+                marginTop: "-1rem",
+                animation: `${breath} 2.4s ease-in-out infinite`,
+              }}
+            >
+              {t("player.lobbyWaiting")}
+            </Box>
           </Box>
-          <Typography variant="h5">{slot.name}</Typography>
-          <Box sx={{ textAlign: "center", py: 4 }}>
-            <CircularProgress size={32} sx={{ mb: 2 }} />
-            <Typography color="text.secondary">{t("player.lobbyWaiting")}</Typography>
-          </Box>
-        </Stack>
-      </Container>
+        </PageCanvas>
+      </Box>
     );
   }
 
