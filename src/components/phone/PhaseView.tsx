@@ -7,7 +7,18 @@ import { fonts } from "../../theme/typography";
 import { fadeIn, slideUpIn } from "../../theme/animations";
 import { FlagFor, jollyRogerForColor } from "../flags";
 import { Button } from "../shell/Button";
-import { toRoman } from "../../lib/navyHours";
+// Spelled-out small counts for headline copy (e.g. "TWO BARRELS ON YE").
+// Falls back to the numeral string for anything we don't have a word for.
+const COUNT_WORDS: Record<number, string> = {
+  2: "TWO",
+  3: "THREE",
+  4: "FOUR",
+  5: "FIVE",
+  6: "SIX",
+};
+function spellCount(n: number): string {
+  return COUNT_WORDS[n] ?? String(n);
+}
 import { useStandoffCount } from "../../hooks/useStandoffCount";
 import { useHandSlots, type HandSlot } from "../../hooks/useHandSlots";
 import { STANDOFF_DURATION_MS } from "../../lib/phaseDurations";
@@ -109,15 +120,16 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handPrespent }: 
             gap: "1.1rem",
             // Top padding chosen so the disc lands at the same vertical
             // position as the commit picker's disc (which sits below the
-            // "PICK YER MARK" prompt + TargetList top padding). Keeps the
-            // crosshair pinned on screen across commit / standoff /
-            // standoff_hold so the transition reads as a lock-in, not a jump.
-            padding: "3.3rem 1rem 1rem",
+            // "Aimin' at" heading + selected-target stat row). Keeps the
+            // crosshair pinned on screen across commit / committed /
+            // standoff / standoff_hold so the transition reads as a lock-
+            // in, not a jump.
+            padding: "5rem 1rem 1rem",
           }}
         >
           <AimBarrel
             colorOrAvatar={target?.colorOrAvatar ?? null}
-            size={240}
+            size={200}
             count={phase === "standoff" ? standoffCount : null}
           />
           <Box
@@ -227,22 +239,47 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
   const ready = myCommit?.bullet && myCommit.target;
 
   if (ready) {
-    const targetName = opponents.find(o => o.id === myCommit?.target)?.displayName ?? myCommit?.target;
+    const target = opponents.find(o => o.id === myCommit?.target);
+    const targetName = target?.displayName ?? myCommit?.target;
     return (
       <Box
         sx={{
-          padding: "1.4rem",
-          textAlign: "center",
+          flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "0.7rem",
+          alignItems: "center",
+          gap: "1.1rem",
+          padding: "5rem 1rem 1rem",
         }}
       >
-        <Box sx={{ fontFamily: fonts.displayCaps, fontFeatureSettings: '"smcp"', fontSize: "1rem", letterSpacing: "0.22em", color: palette.paper }}>
-          {t(`load.${myCommit.bullet!}`).toUpperCase()} → {targetName}
-        </Box>
-        <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", color: palette.paperDim }}>
-          {t("phase.commit.waiting")}
+        <AimBarrel colorOrAvatar={target?.colorOrAvatar ?? null} size={200} />
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            sx={{
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: "0.75rem",
+              letterSpacing: "0.4em",
+              color: palette.paperDim,
+            }}
+          >
+            AIMING AT
+          </Box>
+          <Box
+            sx={{
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: "1.2rem",
+              letterSpacing: "0.22em",
+              color: palette.paper,
+              marginTop: "0.25rem",
+            }}
+          >
+            {targetName}
+          </Box>
+          <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.85rem", color: palette.paperDim, marginTop: "0.5rem" }}>
+            {t("phase.commit.waiting")}
+          </Box>
         </Box>
       </Box>
     );
@@ -259,14 +296,14 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
     >
       <Box
         sx={{
-          padding: "0.85rem 0 0.45rem",
+          padding: "0.85rem 0 0.1rem",
           textAlign: "center",
-          fontFamily: fonts.displayCaps,
+          fontFamily: fonts.blackletter,
           fontWeight: 700,
-          fontSize: "1.05rem",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: palette.paperDim,
+          fontSize: "1.6rem",
+          lineHeight: 1,
+          letterSpacing: "0.02em",
+          color: palette.paper,
         }}
       >
         {t("phase.commit.pickTarget")}
@@ -291,8 +328,10 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
           hand take above. */}
       <Box
         sx={{
-          marginTop: "auto",
-          padding: "0.7rem 0.85rem 0.85rem",
+          padding: "1.1rem 0 0.85rem",
+          width: "calc(4 * 75px + 3 * 0.45rem)",
+          maxWidth: "100%",
+          marginInline: "auto",
           animation: `${fadeIn} 400ms ease-out 200ms both`,
         }}
       >
@@ -302,11 +341,13 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
           onClick={() => pick && target && onSubmit(me.id, pick.load, target)}
           caption={
             pick && target
-              ? `— ${t(`load.${pick.load}`).toLowerCase()} · ${opponents.find(o => o.id === target)?.displayName ?? "?"} —`
-              : `— ${t("phase.commit.selectCard")} —`
+              ? `${t(`load.${pick.load}`)} → ${opponents.find(o => o.id === target)?.displayName ?? "?"}`
+              : t("phase.commit.selectCard")
           }
         >
-          {t("phase.commit.ready").toUpperCase()}
+          {pick && target
+            ? t("phase.commit.lockIn").toUpperCase()
+            : t("phase.commit.ready").toUpperCase()}
         </Button>
       </Box>
     </Box>
@@ -366,7 +407,7 @@ function ThreatPanel({ attackers }: { attackers: Player[] }) {
           textShadow: `0 0 12px rgba(201,58,48,0.35)`,
         }}
       >
-        {t("phase.withdraw.marks", { count: attackers.length, n: toRoman(attackers.length) })}
+        {t("phase.withdraw.marks", { count: attackers.length, n: spellCount(attackers.length) })}
       </Box>
       <Box
         sx={{

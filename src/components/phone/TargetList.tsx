@@ -13,7 +13,7 @@ interface TargetListProps {
   onPick?: (id: string) => void;
 }
 
-const SIZE = 240;
+const SIZE = 200;
 const ARROW_BUTTON = 36;
 
 // Commit-phase target picker. The flintlock barrel is the viewport: opponents'
@@ -110,9 +110,53 @@ export function TargetList({ opponents, selectedId, onPick }: TargetListProps) {
         flexDirection: "column",
         alignItems: "center",
         gap: "0.45rem",
-        padding: "0.4rem 0.5rem 1.4rem",
+        padding: "0 0.5rem 1.4rem",
       }}
     >
+      {selected ? (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.6rem",
+            marginBottom: "0.35rem",
+          }}
+        >
+          <Box
+            sx={{
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: "1rem",
+              letterSpacing: "0.02em",
+              color: palette.paper,
+            }}
+          >
+            {selected.displayName}
+          </Box>
+          <ColumnRule />
+          <WoundPips count={selected.wounds} size={11} />
+          <ColumnRule />
+          <Box
+            sx={{
+              fontFamily: fonts.blackletter,
+              fontWeight: 700,
+              fontSize: "1.1rem",
+              lineHeight: 1,
+              color: palette.paper,
+            }}
+          >
+            ${cashTotal(selected).toLocaleString()}
+          </Box>
+          {selected.shame > 0 ? (
+            <>
+              <ColumnRule />
+              <ShamePips count={selected.shame} size={9} />
+            </>
+          ) : null}
+        </Box>
+      ) : null}
+
       {/* Disc + flanking arrows. The arrows sit on the crosshair's horizontal
           line so they read as continuations of it, like sights extending out
           past the barrel. */}
@@ -230,49 +274,6 @@ export function TargetList({ opponents, selectedId, onPick }: TargetListProps) {
           between them. Lets the player size up the mark at a glance:
           fewer wounds means a single shot won't kill, more wounds means
           they're one bullet from the plank. */}
-      {selected ? (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.6rem",
-            marginTop: "0.1rem",
-          }}
-        >
-          <Box
-            sx={{
-              fontFamily: fonts.displayCaps,
-              fontFeatureSettings: '"smcp"',
-              fontSize: "1rem",
-              letterSpacing: "0.14em",
-              color: palette.paper,
-            }}
-          >
-            {selected.displayName}
-          </Box>
-          <ColumnRule />
-          <WoundPips count={selected.wounds} size={11} />
-          <ColumnRule />
-          <Box
-            sx={{
-              fontFamily: fonts.blackletter,
-              fontWeight: 700,
-              fontSize: "1.1rem",
-              lineHeight: 1,
-              color: palette.paper,
-            }}
-          >
-            ${cashTotal(selected).toLocaleString()}
-          </Box>
-          {selected.shame > 0 ? (
-            <>
-              <ColumnRule />
-              <ShamePips count={selected.shame} size={9} />
-            </>
-          ) : null}
-        </Box>
-      ) : null}
     </Box>
   );
 }

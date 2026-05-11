@@ -47,7 +47,7 @@ export default function PlayerJoinPage() {
       <Box
         sx={{
           width: "100vw",
-          height: "100vh",
+          height: "100dvh",
           padding: "8px",
           boxSizing: "border-box",
           display: "flex",

@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import type { BulletCard, Game, RoundPhase } from "../game/types";
+import type { BulletCard, Game } from "../game/types";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PhoneShell } from "../components/shell/PhoneShell";
@@ -21,17 +21,6 @@ import { DevControlsPanel } from "../components/dev/DevControlsPanel";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS } from "../lib/phaseDurations";
 import { FIXTURE_GAME_PHONE, MOCK_PHONE_PRESPENT } from "../components/dev/mockFixtures";
-
-const PHASE_LABEL: Record<RoundPhase, string> = {
-  commit: "LOAD & AIM",
-  standoff: "STANDOFF",
-  standoff_hold: "STANDOFF",
-  withdraw: "YIELD?",
-  reveal_withdraw: "REVEAL",
-  reveal_bbb: "REVEAL",
-  reveal_others: "REVEAL",
-  split: "SPLIT",
-};
 
 export default function MockPlayerPage() {
   const { game, actions } = useMockGameState(FIXTURE_GAME_PHONE);
@@ -92,11 +81,8 @@ export default function MockPlayerPage() {
         selectedId={selectedPlayerId}
         onSelect={setSelectedPlayerId}
       />
-      <PhoneShell
-        me={me}
-        round={game.round.number}
-        phaseLabel={PHASE_LABEL[game.round.phase]}
-      >
+      <PhoneShell me={me} roomId="MOCK">
+
         <PhaseView
           game={phoneGame}
           me={me}

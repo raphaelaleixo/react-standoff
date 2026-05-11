@@ -60,16 +60,17 @@
   },
   "phase": {
     "commit": {
-      "pickTarget": "Pick yer mark",
+      "pickTarget": "Aimin' at",
       "selectCard": "select a card",
+      "lockIn": "lock it in",
       "ready": "Ready",
       "waiting": "Waiting for the others…"
     },
     "withdraw": {
       "atEase": "AT EASE",
       "atEaseSub": "the field be quiet",
-      "marks_one": "MARK ON YE",
-      "marks_other": "{{n}} MARKS ON YE",
+      "marks_one": "AIMED AT YE",
+      "marks_other": "{{n}} BARRELS ON YE",
       "cost": "COST: ONE YELLOW STREAK",
       "costSub": "—${{amount}} at the end of the day"
     },

@@ -6,7 +6,6 @@ import {
   CircularProgress,
   Container,
 } from "@mui/material";
-import type { RoundPhase } from "../game/types";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
 import { FlagFor, jollyRogerForColor } from "../components/flags";
@@ -17,20 +16,6 @@ import { PageCanvas } from "../components/shell/PageCanvas";
 import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
-
-// Concise phase labels for the PhoneShell's round/phase strip. The four
-// reveal sub-phases collapse to "REVEAL" — the player has nothing to do
-// during them anyway; the big screen is the show.
-const PHASE_LABEL: Record<RoundPhase, string> = {
-  commit: "LOAD & AIM",
-  standoff: "STANDOFF",
-  standoff_hold: "STANDOFF",
-  withdraw: "YIELD?",
-  reveal_withdraw: "REVEAL",
-  reveal_bbb: "REVEAL",
-  reveal_others: "REVEAL",
-  split: "SPLIT",
-};
 
 export default function PlayerPage() {
   const { t } = useTranslation();
@@ -70,7 +55,7 @@ export default function PlayerPage() {
       <Box
         sx={{
           width: "100vw",
-          height: "100vh",
+          height: "100dvh",
           padding: "8px",
           boxSizing: "border-box",
           display: "flex",
@@ -148,11 +133,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <PhoneShell
-      me={me}
-      round={game.round.number}
-      phaseLabel={PHASE_LABEL[game.round.phase]}
-    >
+    <PhoneShell me={me} roomId={roomState.roomId}>
       <PhaseView
         game={game}
         me={me}

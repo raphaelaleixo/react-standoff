@@ -45,7 +45,7 @@ export function PowderCard({ load, selected, spent, onClick, "data-testid": test
       }}
       sx={{
         position: "relative",
-        aspectRatio: "2 / 3",
+        aspectRatio: "3 / 4",
         background: selected ? palette.blood : palette.inkUp,
         color: palette.paper,
         border: `1.5px solid ${palette.paper}`,
