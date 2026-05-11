@@ -10,12 +10,14 @@ export function startNextRound(game: Game, now: number): Game {
   const { drawn, remaining } = drawLoot(game.bankDeck, 5);
   const next: Game = {
     ...game,
+    variants: game.variants,
     round: {
       number: game.round.number + 1,
       phase: 'commit',
       phaseStartedAt: now,
       loot: [...drawn, ...carryover],
       commits: {},
+      activations: {},
     },
     bankDeck: remaining,
   };
