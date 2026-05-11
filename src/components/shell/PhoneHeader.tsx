@@ -5,17 +5,19 @@ import { fonts } from "../../theme/typography";
 import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { SkullLogo } from "./SkullLogo";
+import { StandoffLogo } from "./StandoffLogo";
 
 interface PhoneHeaderProps {
-  roomId: string;
+  /** Room code for the centre slot. When omitted, the wordmark renders instead — same default Masthead uses for off-game contexts (the join code-entry page). */
+  roomId?: string;
   /** Player's chosen flag colour. Renders the flag tile on the right when set. */
   flagId?: string;
 }
 
 // Compact header for phone screens — skull glyph on the left, ROOM CODE in
-// the middle, optional player flag tile on the right. The flag slot stays
-// empty (with a placeholder width) until the player has chosen one, so the
-// room code doesn't shift between states.
+// the middle (or the wordmark when no room is in play yet), optional player
+// flag tile on the right. The flag slot stays a fixed width even when empty
+// so the centre doesn't shift between states.
 export function PhoneHeader({ roomId, flagId }: PhoneHeaderProps) {
   const { t } = useTranslation();
   const FLAG_TILE_W = "2.8rem";
@@ -33,32 +35,38 @@ export function PhoneHeader({ roomId, flagId }: PhoneHeaderProps) {
       }}
     >
       <SkullLogo height="1.8rem" />
-      <Box
-        sx={{
-          textAlign: "center",
-          fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "0.95rem",
-          letterSpacing: "0.28em",
-          color: palette.paperDim,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
-        {t("shell.room")}{" "}
+      {roomId ? (
         <Box
-          component="em"
           sx={{
-            fontFamily: fonts.body,
-            fontStyle: "italic",
-            letterSpacing: "0.06em",
-            color: palette.paper,
+            textAlign: "center",
+            fontFamily: fonts.displayCaps,
+            fontFeatureSettings: '"smcp"',
+            fontSize: "0.95rem",
+            letterSpacing: "0.28em",
+            color: palette.paperDim,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
-          {roomId}
+          {t("shell.room")}{" "}
+          <Box
+            component="em"
+            sx={{
+              fontFamily: fonts.body,
+              fontStyle: "italic",
+              letterSpacing: "0.06em",
+              color: palette.paper,
+            }}
+          >
+            {roomId}
+          </Box>
         </Box>
-      </Box>
+      ) : (
+        <Box sx={{ display: "flex", justifyContent: "center", color: palette.paper }}>
+          <StandoffLogo width="6rem" />
+        </Box>
+      )}
       <Box
         sx={{
           width: FLAG_TILE_W,

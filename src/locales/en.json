@@ -7,16 +7,23 @@
     "resumeGame": "Resume Game",
     "howToPlay": "How to Play"
   },
+  "footer": {
+    "madeByPrefix": "Made by ",
+    "madeByLink": "Raphael Aleixo / Ludoratory",
+    "madeBySuffix": ".",
+    "licensePrefix": "Licensed under ",
+    "licenseLink": "CC BY-NC-SA 4.0",
+    "licenseSuffix": "."
+  },
   "howToPlay": {
     "back": "Back"
   },
   "join": {
-    "title": "New voyage or join a crew",
-    "createNew": "Create new game",
-    "or": "or",
+    "title": "Hail a ship",
     "codeLabel": "Room code",
     "codePlaceholder": "Enter room code",
-    "joinSubmit": "Board",
+    "joinAsHost": "Take the helm",
+    "joinAsPlayer": "Join the crew",
     "joinSubmitting": "Boarding…",
     "notFound": "Ship not found"
   },
