@@ -5,7 +5,7 @@ import type { Game, RoundPhase } from "../../game/types";
 import { Roundel } from "./Roundel";
 import { seatPositions, pairGeometry } from "./geometry";
 import { durations } from "../../theme/animations";
-import { jollyRogerForColor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 
 const CANVAS = 480;
 const RADIUS = 180;

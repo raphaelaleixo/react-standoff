@@ -6,18 +6,23 @@ interface Args {
   durationMs: number;
 }
 
+// `now` lives in state and is resynced at the head of the activation effect
+// (so the first render after `active` flips back on doesn't compute against
+// a stale, deactivation-era timestamp) and again on every 100ms tick.
 export function useStandoffCount({ active, startedAt, durationMs }: Args): number | null {
-  // Read time fresh from Date.now() in the render body so the first frame
-  // after `active` flips on doesn't compute against a stale, mount-time
-  // timestamp. The interval is only used to schedule re-renders.
-  const [, setTick] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!active) return;
-    const id = setInterval(() => setTick(n => n + 1), 100);
+    // Sync once on activation so the first frame after `active` flips on
+    // doesn't compute elapsed against a deactivation-era timestamp. The
+    // single cascading render this triggers is intentional and one-shot.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 100);
     return () => clearInterval(id);
   }, [active]);
   if (!active) return null;
-  const elapsed = Date.now() - startedAt;
+  const elapsed = now - startedAt;
   const remaining = Math.max(0, durationMs - elapsed);
   const stepMs = durationMs / 3;
   // Bucket remaining time into 3 / 2 / 1 / 0. Once it lands on 0 the

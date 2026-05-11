@@ -8,7 +8,8 @@ import {
 } from "@mui/material";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
-import { FlagFor, jollyRogerForColor } from "../components/flags";
+import { FlagFor } from "../components/flags";
+import { jollyRogerForColor } from "../components/flags/jollyRogerForColor";
 import { flagColor, palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { breath } from "../theme/animations";

@@ -15,12 +15,6 @@ import { JollyRoger4Flag } from "./JollyRoger4Flag";
 import { JollyRoger5Flag } from "./JollyRoger5Flag";
 import type { JollyRogerId } from "./jollyRogerForColor";
 
-// Re-export the jolly-roger helper so existing import sites that grab it from
-// `../flags` keep working without churn — but the function lives in its own
-// file (jollyRogerForColor.ts) so this index file is exclusively components,
-// satisfying react-refresh's only-export-components rule.
-export { jollyRogerForColor } from "./jollyRogerForColor";
-
 // Module-local registry — kept private so the file's only public component
 // export is `FlagFor`, the entry point for the rest of the app.
 const FLAG_COMPONENTS: Record<string, ComponentType<{ size?: number | string }>> = {

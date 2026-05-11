@@ -60,8 +60,12 @@ export function HoardList({ loot }: HoardListProps) {
   // Resync only when loot CONTENT changes — `normalizeGame` rebuilds the array
   // on every firebase update, so a reference-based dep would trigger spurious
   // syncs (and risk re-firing entrance animations) on every phase change.
+  // The lootRef.current = loot write is the standard "latest-value mirror"
+  // pattern: the id-keyed effect needs the latest reference but must not
+  // run on every change, so we stash it here and read inside the effect.
   const lootKey = loot.map(n => n.id).join(",");
   const lootRef = useRef(loot);
+  // eslint-disable-next-line react-hooks/refs
   lootRef.current = loot;
   useEffect(() => {
     setTracked(prev => syncTracked(prev, lootRef.current));

@@ -1,7 +1,8 @@
 import { Box } from "@mui/material";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
-import { FlagFor, jollyRogerForColor } from ".";
+import { FlagFor } from ".";
+import { jollyRogerForColor } from "./jollyRogerForColor";
 import { FLAG_IDS } from "../../game/playerFlags";
 
 interface FlagPickerGridProps {

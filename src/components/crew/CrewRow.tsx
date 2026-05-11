@@ -1,7 +1,8 @@
 import { Box } from "@mui/material";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
-import { FlagFor, jollyRogerForColor } from "../flags";
+import { FlagFor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import type { Player } from "../../game/types";
 import { durations, popIn } from "../../theme/animations";

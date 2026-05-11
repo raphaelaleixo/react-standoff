@@ -1,3 +1,10 @@
+/* eslint-disable react-hooks/refs */
+// The whole hook is a render-time memoization layer built on a useRef cache:
+// slot positions must persist across renders without re-deriving on every
+// commit, and useMemo can't express "preserve identity until a specific
+// transition" (bullets shrank → mark slot spent). Render-time ref writes
+// are the canonical implementation; the lint rule is suppressed file-wide.
+
 import { useRef } from "react";
 import type { BulletCard } from "../game/types";
 

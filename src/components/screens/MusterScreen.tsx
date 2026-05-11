@@ -10,7 +10,8 @@ import { FullscreenButton } from "../shell/FullscreenButton";
 import { SectionHeader } from "../shell/SectionHeader";
 import { Button } from "../shell/Button";
 import { InvertedQR } from "./InvertedQR";
-import { FlagFor, jollyRogerForColor } from "../flags";
+import { FlagFor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { toRoman } from "../../lib/navyHours";
 import { useBigScreenZoom } from "../../hooks/useBigScreenZoom";
 
