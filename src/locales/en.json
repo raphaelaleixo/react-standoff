@@ -58,6 +58,52 @@
     "emptySeat": "EMPTY SEAT",
     "emptySeatHint": "awaiting crew"
   },
+  "powers": {
+    "variantLabel": "Super Powers",
+    "variantHint": "Each crewmate draws a hidden power.",
+    "lobbyBannerOn": "Variant: Super Powers ⚓",
+    "tapToStart": "Tap to start",
+    "yourPower": "Your power",
+    "used": "Used",
+    "specialistPrompt": {
+      "title": "Use Quartermaster's Reload?",
+      "body": "Reveal your power to take back your Broadside. Choose a powder to discard in its place.",
+      "useAndReveal": "Use & Reveal",
+      "skip": "Skip"
+    },
+    "toughPrompt": {
+      "title": "Use Phantom Pain?",
+      "body": "Reveal your power to take a share this round, despite being struck or yielding.",
+      "useAndReveal": "Use & Reveal",
+      "skip": "Skip"
+    },
+    "cards": {
+      "six_feet_under": {
+        "name": "Davy Jones's Cut",
+        "description": "Shareholder of the undertakers. Earn $10,000 for each crewmate killed during the voyage."
+      },
+      "unbreakable": {
+        "name": "Ironhide",
+        "description": "You're only killed when you take a fourth wound."
+      },
+      "dragon_skin": {
+        "name": "Krakenscale",
+        "description": "You can only be wounded once per round, no matter how many shots land."
+      },
+      "super_coward": {
+        "name": "Yellow-Belly's Purse",
+        "description": "Each shame marker grants you $5,000 instead of costing it."
+      },
+      "specialist": {
+        "name": "Quartermaster's Reload",
+        "description": "After playing your Broadside, take it back and discard an unused powder instead. One use."
+      },
+      "tough": {
+        "name": "Phantom Pain",
+        "description": "Take a split share even if you were struck or yielded this round. One use."
+      }
+    }
+  },
   "player": {
     "lobbyWaiting": "Waiting for the captain to call it…",
     "watchScreen": "Watch the big screen…",
