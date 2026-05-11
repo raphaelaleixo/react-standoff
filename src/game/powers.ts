@@ -1,6 +1,6 @@
 import { shuffle } from './random';
 import type { Game, Player, PowerEffect, PowerKind } from './types';
-import { POWER_KINDS } from '../components/powers/registry';
+import { POWER_KINDS } from './powerKinds';
 
 export function dealPowers(players: Player[], rng: () => number): Player[] {
   const shuffled = shuffle([...POWER_KINDS], rng);

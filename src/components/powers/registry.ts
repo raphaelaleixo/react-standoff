@@ -6,14 +6,7 @@ export interface PowerCardDef {
   descriptionKey: string;
 }
 
-export const POWER_KINDS: PowerKind[] = [
-  'six_feet_under',
-  'unbreakable',
-  'dragon_skin',
-  'super_coward',
-  'specialist',
-  'tough',
-];
+export { POWER_KINDS } from '../../game/powerKinds';
 
 export const POWER_REGISTRY: Record<PowerKind, PowerCardDef> = {
   six_feet_under: {

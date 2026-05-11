@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { dealPowers, eligibleForSpecialist, eligibleForTough } from './powers';
+import { POWER_KINDS } from './powerKinds';
 import { makeRng } from './random';
 import type { Game, Player } from './types';
 
@@ -61,6 +62,12 @@ describe('dealPowers', () => {
     const a = dealPowers(players, makeRng('seed-c')).map(p => p.effects[0].kind);
     const b = dealPowers(players, makeRng('seed-c')).map(p => p.effects[0].kind);
     expect(a).toEqual(b);
+  });
+
+  it('does not mutate POWER_KINDS', () => {
+    const before = [...POWER_KINDS];
+    dealPowers([makePlayer('p1'), makePlayer('p2')], makeRng('seed-mut'));
+    expect(POWER_KINDS).toEqual(before);
   });
 });
 
