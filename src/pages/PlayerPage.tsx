@@ -181,13 +181,15 @@ export default function PlayerPage() {
     const playedBullet = game.round.commits[me.id]?.bullet;
     if (playedBullet) {
       return (
-        <SpecialistPromptScreen
-          me={me}
-          playedBullet={playedBullet}
-          onUse={(kind) => submitSpecialist(me.id, kind)}
-          onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
-          expiresAtMs={game.round.phaseStartedAt + 10000}
-        />
+        <PhoneShell me={me} roomId={roomState.roomId}>
+          <SpecialistPromptScreen
+            me={me}
+            playedBullet={playedBullet}
+            onUse={(kind) => submitSpecialist(me.id, kind)}
+            onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
+            expiresAtMs={game.round.phaseStartedAt + 10000}
+          />
+        </PhoneShell>
       );
     }
   }
@@ -198,11 +200,13 @@ export default function PlayerPage() {
     eligibleForTough(game, me.id)
   ) {
     return (
-      <ToughPromptScreen
-        onUse={() => submitTough(me.id)}
-        onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
-        expiresAtMs={game.round.phaseStartedAt + 10000}
-      />
+      <PhoneShell me={me} roomId={roomState.roomId}>
+        <ToughPromptScreen
+          onUse={() => submitTough(me.id)}
+          onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
+          expiresAtMs={game.round.phaseStartedAt + 10000}
+        />
+      </PhoneShell>
     );
   }
 

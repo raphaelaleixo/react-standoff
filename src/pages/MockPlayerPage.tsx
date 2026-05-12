@@ -143,21 +143,25 @@ export default function MockPlayerPage() {
   let surface: React.ReactNode;
   if (showSpecialistPrompt && playedBullet) {
     surface = (
-      <SpecialistPromptScreen
-        me={me}
-        playedBullet={playedBullet}
-        onUse={() => { /* mock: no-op, dev advances phase manually */ }}
-        onSkip={() => { /* mock: no-op */ }}
-        expiresAtMs={promptExpiresAtMs}
-      />
+      <PhoneShell me={me} roomId="MOCK">
+        <SpecialistPromptScreen
+          me={me}
+          playedBullet={playedBullet}
+          onUse={() => { /* mock: no-op, dev advances phase manually */ }}
+          onSkip={() => { /* mock: no-op */ }}
+          expiresAtMs={promptExpiresAtMs}
+        />
+      </PhoneShell>
     );
   } else if (showToughPrompt) {
     surface = (
-      <ToughPromptScreen
-        onUse={() => { /* mock: no-op, dev advances phase manually */ }}
-        onSkip={() => { /* mock: no-op */ }}
-        expiresAtMs={promptExpiresAtMs}
-      />
+      <PhoneShell me={me} roomId="MOCK">
+        <ToughPromptScreen
+          onUse={() => { /* mock: no-op, dev advances phase manually */ }}
+          onSkip={() => { /* mock: no-op */ }}
+          expiresAtMs={promptExpiresAtMs}
+        />
+      </PhoneShell>
     );
   } else {
     surface = (
