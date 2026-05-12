@@ -80,6 +80,8 @@ interface DevControlsPanelProps {
   /** Optional per-seat power injector (phone mock only). */
   myPower?: PowerKind | null;
   onMyPowerChange?(power: PowerKind | null): void;
+  /** Synthesize a grenade explosion for previewing the overlay + termination. */
+  onForceGrenadeExplosion?(): void;
 }
 
 export function DevControlsPanel({
@@ -97,6 +99,7 @@ export function DevControlsPanel({
   onRevealAllBadgesChange,
   myPower,
   onMyPowerChange,
+  onForceGrenadeExplosion,
 }: DevControlsPanelProps) {
   const [playing, setPlaying] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -262,6 +265,19 @@ export function DevControlsPanel({
                     <MenuItem key={k} value={k}>{k}</MenuItem>
                   ))}
                 </Select>
+              </Box>
+            )}
+            {onForceGrenadeExplosion && (
+              <Box sx={{ mt: 1.5 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  onClick={onForceGrenadeExplosion}
+                  sx={{ textTransform: "none" }}
+                >
+                  Force grenade explosion
+                </Button>
               </Box>
             )}
           </Section>

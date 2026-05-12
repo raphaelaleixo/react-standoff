@@ -94,6 +94,7 @@ export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
   // with our commits-based derivation so the STRUCK pill works for both live
   // games and the mock board (where freshlyStruck isn't simulated).
   const struck = new Set<string>([...computeStruck(game), ...fresh]);
+  const armedInsaneHolderId = game.round.activations.insane?.playerId;
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "visible" }}>
       <SectionHeader title="The Crew" subtitle="six souls, one prize" />
@@ -107,6 +108,7 @@ export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
               player={{ ...p, wounds, shame }}
               status={deriveStatus(game, p, struck)}
               freshWoundIndex={fresh.has(p.id) ? wounds - 1 : undefined}
+              armedInsane={armedInsaneHolderId === p.id}
             />
           );
         })}

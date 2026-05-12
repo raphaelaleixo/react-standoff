@@ -77,6 +77,14 @@
       "useAndReveal": "Use & Reveal",
       "skip": "Skip"
     },
+    "insaneReveal": {
+      "button": "REVEAL GRENADE",
+      "armed": "GRENADE ARMED",
+      "confirmTitle": "Reveal the grenade now?",
+      "confirmBody": "You can't un-reveal. If anyone wounds you this round, every still-standing crewmate goes down with you.",
+      "confirm": "Reveal",
+      "cancel": "Hold"
+    },
     "cards": {
       "six_feet_under": {
         "name": "Davy Jones's Cut",
@@ -101,6 +109,10 @@
       "tough": {
         "name": "Phantom Pain",
         "description": "Take a split share even if you were struck or yielded this round. One use."
+      },
+      "insane": {
+        "name": "Pocket Inferno",
+        "description": "Reveal early to brandish your grenade. If any wound lands on you this round, it explodes — every still-standing crewmate takes a wound and the round ends. One use."
       }
     }
   },

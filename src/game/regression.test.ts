@@ -28,3 +28,22 @@ describe('variant-off parity (no effects, no activations)', () => {
     expect(Object.keys(resolution.awards).sort()).toEqual(['p1', 'p3']);
   });
 });
+
+describe('variant-off parity: stray Insane activation', () => {
+  it('activations.insane present on a player without the effect: no grenade math', () => {
+    const players = [pl('p1'), pl('p2'), pl('p3'), pl('p4')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p4' },
+      p4: { bullet: 'clic', target: 'p3' },
+    };
+    const { resolution } = resolveRound(commits, players, [], { insane: { playerId: 'p1' } });
+    expect(resolution.roundTerminated).toBeUndefined();
+    expect(resolution.powerActivations.some(a => a.kind === 'insane')).toBe(false);
+    // Only the bang's wound should land — no grenade pile-on.
+    expect(resolution.woundedThisRound.p1).toBe(1);
+    expect(resolution.woundedThisRound.p3).toBeUndefined();
+    expect(resolution.woundedThisRound.p4).toBeUndefined();
+  });
+});

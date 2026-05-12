@@ -3,7 +3,7 @@ import { ref, onValue, set, update, remove, serverTimestamp } from "firebase/dat
 import { database } from "../firebase";
 import type { BulletCard, Commit, Game, Player } from "../game/types";
 import { normalizeGame } from "../game/deserialize";
-import { resolveRound } from "../game/resolver";
+import { resolveRound, type ResolveRoundResult } from "../game/resolver";
 import { startNextRound, endGameStatus } from "../game/transitions";
 import { eligibleForSpecialist, eligibleForTough } from "../game/powers";
 import { useServerTime } from "./useServerTime";
@@ -17,6 +17,7 @@ const REVEAL_BBB_MS = 5000;
 const REVEAL_OTHERS_MS = 5000;
 const SPECIALIST_PROMPT_MS = 10000;
 const TOUGH_PROMPT_MS = 10000;
+const GRENADE_EXPLOSION_MS = 2800;
 // Split-phase budget: notes-leave-table fade (~300ms) → small beat → cash
 // tickers (~700ms) → small beat → next round draws in. GameBoard runs the
 // orchestration off `phaseStartedAt`; this is the timer that finally writes
@@ -25,6 +26,28 @@ const SPLIT_MS = 1800;
 
 function alivePlayers(game: Game): Player[] {
   return game.players.filter(p => p.status === "alive");
+}
+
+// Ends a round early when the resolver flags roundTerminated. Mirrors the
+// split→next-round transition but is kicked off from any of the three
+// re-resolve beats, after a 2.8s linger so the explosion overlay can play.
+function endRoundFromGrenade(
+  roomId: string,
+  game: Game,
+  result: ResolveRoundResult,
+  serverNowMs: number,
+): void {
+  const resolved = { ...game, players: result.players };
+  const status = endGameStatus(resolved);
+  if (status.ended) {
+    update(ref(database, `rooms/${roomId}/game`), {
+      phase: "ended",
+      players: result.players,
+    });
+    return;
+  }
+  const nextGame = startNextRound(resolved, serverNowMs);
+  set(ref(database, `rooms/${roomId}/game`), nextGame);
 }
 
 function allAliveCommitted(game: Game): boolean {
@@ -114,6 +137,21 @@ export function useGameState(roomId: string | undefined) {
         game.round.loot,
         game.round.activations,
       );
+      if (result.resolution.roundTerminated) {
+        // Insane grenade fired. Write the resolution + advance phase so the
+        // PowerRevealOverlay can play, then end the round after the linger.
+        update(ref(database, `rooms/${roomId}/game`), {
+          "round/phase": "reveal_withdraw",
+          "round/phaseStartedAt": serverTimestamp(),
+          "round/resolution": result.resolution,
+          discardedBullets: [...game.discardedBullets, ...result.discardedBullets],
+        });
+        setTimeout(
+          () => endRoundFromGrenade(roomId, game, result, serverNow()),
+          GRENADE_EXPLOSION_MS,
+        );
+        return;
+      }
       update(ref(database, `rooms/${roomId}/game`), {
         "round/phase": "reveal_withdraw",
         "round/phaseStartedAt": serverTimestamp(),
@@ -170,6 +208,16 @@ export function useGameState(roomId: string | undefined) {
       const result = resolveRound(
         game.round.commits, game.players, game.round.loot, game.round.activations,
       );
+      if (result.resolution.roundTerminated) {
+        update(ref(database, `rooms/${roomId}/game/round`), {
+          resolution: result.resolution,
+        });
+        setTimeout(
+          () => endRoundFromGrenade(roomId, game, result, serverNow()),
+          GRENADE_EXPLOSION_MS,
+        );
+        return;
+      }
       update(ref(database, `rooms/${roomId}/game`), {
         "round/phase": "reveal_others",
         "round/phaseStartedAt": serverTimestamp(),
@@ -217,6 +265,16 @@ export function useGameState(roomId: string | undefined) {
       const result = resolveRound(
         game.round.commits, game.players, game.round.loot, game.round.activations,
       );
+      if (result.resolution.roundTerminated) {
+        update(ref(database, `rooms/${roomId}/game/round`), {
+          resolution: result.resolution,
+        });
+        setTimeout(
+          () => endRoundFromGrenade(roomId, game, result, serverNow()),
+          GRENADE_EXPLOSION_MS,
+        );
+        return;
+      }
       update(ref(database, `rooms/${roomId}/game`), {
         "round/phase": "split",
         "round/phaseStartedAt": serverTimestamp(),
@@ -308,7 +366,17 @@ export function useGameState(roomId: string | undefined) {
     [roomId],
   );
 
+  const submitInsane = useCallback(
+    async (playerId: string) => {
+      if (!roomId) return;
+      await update(ref(database, `rooms/${roomId}/game/round/activations`), {
+        insane: { playerId },
+      });
+    },
+    [roomId],
+  );
+
   const loading = roomId !== undefined && loadedFor !== roomId;
 
-  return { game, loading, submitCommit, submitDuck, submitSpecialist, submitTough };
+  return { game, loading, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane };
 }

@@ -22,13 +22,14 @@ import { PhaseView } from "../components/phone/PhaseView";
 import { PowerCard } from "../components/powers/PowerCard";
 import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptScreen";
 import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
-import { eligibleForSpecialist, eligibleForTough } from "../game/powers";
+import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
+import { eligibleForInsane, eligibleForSpecialist, eligibleForTough } from "../game/powers";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
-  const { game, submitCommit, submitDuck, submitSpecialist, submitTough } = useGameState(id);
+  const { game, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane } = useGameState(id);
   const [introDismissed, setIntroDismissed] = useState(false);
 
   if (loading) {
@@ -205,14 +206,31 @@ export default function PlayerPage() {
     );
   }
 
+  // Insane holder context: the reveal pill should appear for the holder when
+  // the window is open OR while the grenade is armed (between reveal and
+  // resolution).
+  const insaneHolder = game.players.find(p =>
+    p.effects.some(e => e.kind === "insane"),
+  );
+  const insaneIsMe = insaneHolder?.id === me.id;
+  const grenadeArmed = !!game.round.activations.insane;
+
   return (
-    <PhoneShell me={me} roomId={roomState.roomId}>
-      <PhaseView
-        game={game}
-        me={me}
-        submitCommit={submitCommit}
-        submitDuck={submitDuck}
-      />
-    </PhoneShell>
+    <>
+      <PhoneShell me={me} roomId={roomState.roomId}>
+        <PhaseView
+          game={game}
+          me={me}
+          submitCommit={submitCommit}
+          submitDuck={submitDuck}
+        />
+      </PhoneShell>
+      {insaneIsMe && (eligibleForInsane(game, me.id) || grenadeArmed) && (
+        <InsaneRevealButton
+          armed={grenadeArmed}
+          onReveal={() => submitInsane(me.id)}
+        />
+      )}
+    </>
   );
 }

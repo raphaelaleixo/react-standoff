@@ -42,12 +42,16 @@ function normalizeActivations(raw: Raw): RoundActivations {
       discardedBulletKind: (s.discardedBulletKind ?? 'clic') as BulletCard,
     };
   }
+  if (r.insane && typeof r.insane === 'object') {
+    const i = r.insane as Record<string, unknown>;
+    out.insane = { playerId: String(i.playerId ?? '') };
+  }
   return out;
 }
 
 function normalizeResolution(raw: Raw): RoundResolution {
   const r = (raw ?? {}) as Record<string, unknown>;
-  return {
+  const base: RoundResolution = {
     shots: asArray<RoundShot>(r.shots),
     ducks: asArray<string>(r.ducks),
     standing: asArray<string>(r.standing),
@@ -59,6 +63,13 @@ function normalizeResolution(raw: Raw): RoundResolution {
     carryover: asArray<Banknote>(r.carryover),
     powerActivations: asArray<PowerActivation>(r.powerActivations),
   };
+  if (r.roundTerminated && typeof r.roundTerminated === 'object') {
+    const t = r.roundTerminated as Record<string, unknown>;
+    if (t.reason === 'grenade' && typeof t.playerId === 'string') {
+      base.roundTerminated = { reason: 'grenade', playerId: t.playerId };
+    }
+  }
+  return base;
 }
 
 function normalizeRound(raw: Raw): Round {

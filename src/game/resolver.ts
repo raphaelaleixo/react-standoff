@@ -192,8 +192,66 @@ export function resolveRound(
 
   const { awards, carryover } = splitLoot(loot, standing);
 
+  // Insane: if the holder revealed the grenade this round, the card is
+  // consumed regardless of whether it fires. If the holder is wounded,
+  // the grenade detonates — every still-standing player takes +1 wound,
+  // the round terminates, and split is skipped.
+  let grenadeFired = false;
+  const grenadeVictims: string[] = [];
+  if (activations.insane) {
+    const holderId = activations.insane.playerId;
+    const holder = newPlayers.find(p => p.id === holderId);
+    // Guard against a stray activation slot pointing at a player without
+    // the effect (variant-off or malformed write). Mirrors how Tough and
+    // Specialist gate on hasUnusedPower before firing.
+    if (holder && hasUnusedPower(holder, 'insane')) {
+      // Mark the holder's insane effect used + revealed regardless.
+      const idx = newPlayers.findIndex(p => p.id === holderId);
+      newPlayers[idx] = {
+        ...holder,
+        effects: holder.effects.map(e =>
+          e.kind === 'insane' ? { ...e, revealed: true, used: true } : e,
+        ),
+      };
+      // Did the holder take a wound this round? If so, fire the grenade.
+      if ((woundedThisRound[holderId] ?? 0) > 0) {
+        grenadeFired = true;
+        for (const victim of newPlayers) {
+          if (victim.id === holderId) continue;
+          if (victim.status !== 'alive') continue;
+          if (ducks.has(victim.id)) continue;
+          if ((woundedThisRound[victim.id] ?? 0) > 0) continue;
+          // Apply grenade wound — respect Unbreakable threshold.
+          woundedThisRound[victim.id] = 1;
+          const newWounds = (victim.wounds + 1) as Player['wounds'];
+          const threshold = deathThreshold[victim.id] ?? 3;
+          const willDie = newWounds >= threshold && victim.status === 'alive';
+          const vIdx = newPlayers.findIndex(p => p.id === victim.id);
+          newPlayers[vIdx] = {
+            ...victim,
+            wounds: willDie ? (threshold as Player['wounds']) : newWounds,
+            status: willDie ? 'dead' : victim.status,
+            cash: willDie ? [] : victim.cash,
+          };
+          if (willDie && !eliminated.includes(victim.id)) eliminated.push(victim.id);
+          grenadeVictims.push(victim.id);
+        }
+        powerActivations.push({
+          playerId: holderId,
+          kind: 'insane',
+          context: { woundedTargets: grenadeVictims },
+        });
+      }
+    }
+  }
+
+  // If grenade fired, the round terminated before split — wipe awards
+  // and dump everything into carryover.
+  const finalAwards = grenadeFired ? {} : awards;
+  const finalCarryover = grenadeFired ? [...loot] : carryover;
+
   const playersWithCash = newPlayers.map(pl => {
-    const won = awards[pl.id];
+    const won = finalAwards[pl.id];
     if (!won || won.length === 0) return pl;
     return { ...pl, cash: [...pl.cash, ...won] };
   });
@@ -217,9 +275,12 @@ export function resolveRound(
     standing,
     woundedThisRound,
     eliminated,
-    awards,
-    carryover,
+    awards: finalAwards,
+    carryover: finalCarryover,
     powerActivations,
+    ...(grenadeFired
+      ? { roundTerminated: { reason: 'grenade' as const, playerId: activations.insane!.playerId } }
+      : {}),
   };
 
   return { resolution, players: playersWithCash, discardedBullets };

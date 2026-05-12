@@ -13,7 +13,8 @@ export type PowerKind =
   | 'dragon_skin'
   | 'super_coward'
   | 'specialist'
-  | 'tough';
+  | 'tough'
+  | 'insane';
 
 export interface PowerEffect {
   kind: PowerKind;
@@ -75,6 +76,7 @@ export interface PowerActivation {
 export interface RoundActivations {
   specialist?: { playerId: string; discardedBulletKind: BulletCard };
   tough?: string[];
+  insane?: { playerId: string };
 }
 
 export interface RoundResolution {
@@ -86,6 +88,7 @@ export interface RoundResolution {
   awards: Record<string, Banknote[]>;
   carryover: Banknote[];
   powerActivations: PowerActivation[];
+  roundTerminated?: { reason: 'grenade'; playerId: string };
 }
 
 export interface Round {

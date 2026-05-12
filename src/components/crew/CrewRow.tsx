@@ -28,16 +28,23 @@ interface CrewRowProps {
   player: Player;
   status?: CrewStatus;
   freshWoundIndex?: number; // index of the just-applied wound (0..2) for pulse
+  // Synthesizes an Insane badge for the holder during the reveal window —
+  // the activations slot is set but the resolver hasn't flipped the effect
+  // to revealed yet.
+  armedInsane?: boolean;
   "data-testid"?: string;
 }
 
-export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid }: CrewRowProps) {
+export function CrewRow({ player, status, freshWoundIndex, armedInsane, "data-testid": testid }: CrewRowProps) {
   const cash = player.cash.reduce((s, n) => s + n.value, 0);
   const tickingCash = useTickingNumber(cash, CASH_TICK_DURATION_MS);
   const dead = player.status === "dead" || status === "dead";
   const struck = status === "struck";
   const yielded = status === "yielded";
   const revealedEffects = player.effects.filter(e => e.revealed);
+  const badgeKinds = armedInsane && !revealedEffects.some(e => e.kind === "insane")
+    ? [...revealedEffects.map(e => e.kind), "insane" as const]
+    : revealedEffects.map(e => e.kind);
   return (
     <Box
       data-testid={testid}
@@ -69,7 +76,7 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
         }}
       >
         <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size="1.5rem" />
-        {revealedEffects.length > 0 && (
+        {badgeKinds.length > 0 && (
           <Box
             sx={{
               position: "absolute",
@@ -79,8 +86,8 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
               gap: "0.18rem",
             }}
           >
-            {revealedEffects.map(e => (
-              <PowerBadge key={e.kind} kind={e.kind} size={26} />
+            {badgeKinds.map(kind => (
+              <PowerBadge key={kind} kind={kind} size={26} />
             ))}
           </Box>
         )}
