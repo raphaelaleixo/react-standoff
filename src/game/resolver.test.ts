@@ -472,3 +472,167 @@ describe('resolveRound — Specialist', () => {
     expect(p1Out.effects.find(e => e.kind === 'specialist')?.used).toBeFalsy();
   });
 });
+
+describe('resolveRound — Insane (grenade)', () => {
+  it('activated + holder wounded: standing players take +1 wound, round terminates', () => {
+    const players = [
+      pl('p1', { powers: ['insane'] }),
+      pl('p2'),
+      pl('p3'),
+      pl('p4'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },     // wounds p1 → triggers grenade
+      p3: { bullet: 'clic', target: 'p4' },     // p3 still standing
+      p4: { bullet: 'clic', target: 'p3' },     // p4 still standing
+    };
+    const loot = [note('a', 10000), note('b', 10000), note('c', 5000)];
+    const { resolution, players: out } = resolveRound(
+      commits, players, loot, { insane: { playerId: 'p1' } },
+    );
+    expect(resolution.roundTerminated).toEqual({ reason: 'grenade', playerId: 'p1' });
+    expect(resolution.woundedThisRound.p1).toBe(1);
+    expect(resolution.woundedThisRound.p3).toBe(1);
+    expect(resolution.woundedThisRound.p4).toBe(1);
+    expect(resolution.awards).toEqual({});
+    expect(resolution.carryover).toEqual(loot);
+    const p1Out = out.find(p => p.id === 'p1')!;
+    expect(p1Out.effects.find(e => e.kind === 'insane')?.used).toBe(true);
+    expect(p1Out.effects.find(e => e.kind === 'insane')?.revealed).toBe(true);
+  });
+
+  it('activated + holder NOT wounded: card consumed, no explosion, awards run normally', () => {
+    const players = [
+      pl('p1', { powers: ['insane'] }),
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'clic', target: 'p1' },     // clic — no wound on p1
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const loot = [note('a', 10000), note('b', 10000), note('c', 10000)];
+    const { resolution, players: out } = resolveRound(
+      commits, players, loot, { insane: { playerId: 'p1' } },
+    );
+    expect(resolution.roundTerminated).toBeUndefined();
+    expect(resolution.woundedThisRound).toEqual({});
+    expect(resolution.awards).toBeDefined();
+    expect(Object.keys(resolution.awards).length).toBeGreaterThan(0);
+    const p1Out = out.find(p => p.id === 'p1')!;
+    expect(p1Out.effects.find(e => e.kind === 'insane')?.used).toBe(true);
+    expect(p1Out.effects.find(e => e.kind === 'insane')?.revealed).toBe(true);
+  });
+
+  it('no activation: insane holder takes a wound but grenade does not fire (regression)', () => {
+    const players = [
+      pl('p1', { powers: ['insane'] }),
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const { resolution } = resolveRound(commits, players, [], {});
+    expect(resolution.roundTerminated).toBeUndefined();
+    expect(resolution.woundedThisRound.p3).toBeUndefined();
+  });
+
+  it('standing-set: bang-wounded player NOT in grenade pool', () => {
+    const players = [
+      pl('p1', { powers: ['insane'] }),
+      pl('p2'),
+      pl('p3'),
+      pl('p4'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },     // wounds p1 → grenade
+      p3: { bullet: 'bang', target: 'p4' },     // wounds p4 → p4 excluded from grenade
+      p4: { bullet: 'clic', target: 'p3' },
+    };
+    const { resolution } = resolveRound(
+      commits, players, [], { insane: { playerId: 'p1' } },
+    );
+    expect(resolution.woundedThisRound.p4).toBe(1);  // only from the bang, not grenade
+    expect(resolution.woundedThisRound.p3).toBe(1);  // only from grenade
+  });
+
+  it('standing-set: ducked player NOT in grenade pool', () => {
+    const players = [
+      pl('p1', { powers: ['insane'] }),
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { withdrew: true },
+    };
+    const { resolution } = resolveRound(
+      commits, players, [], { insane: { playerId: 'p1' } },
+    );
+    expect(resolution.woundedThisRound.p3).toBeUndefined();
+    expect(resolution.ducks).toContain('p3');
+  });
+
+  it('holder dies from triggering wound: grenade still fires', () => {
+    const players = [
+      pl('p1', { wounds: 2, powers: ['insane'] }),
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },     // 3rd wound → death
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const { resolution } = resolveRound(
+      commits, players, [], { insane: { playerId: 'p1' } },
+    );
+    expect(resolution.eliminated).toContain('p1');
+    expect(resolution.roundTerminated).toEqual({ reason: 'grenade', playerId: 'p1' });
+    expect(resolution.woundedThisRound.p3).toBe(1);
+  });
+
+  it('holder reveals then ducks: card consumed, no explosion', () => {
+    const players = [
+      pl('p1', { powers: ['insane'] }),
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { withdrew: true },                   // holder withdraws — no wound
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution, players: out } = resolveRound(
+      commits, players, [], { insane: { playerId: 'p1' } },
+    );
+    expect(resolution.roundTerminated).toBeUndefined();
+    expect(resolution.ducks).toContain('p1');
+    const p1Out = out.find(p => p.id === 'p1')!;
+    expect(p1Out.effects.find(e => e.kind === 'insane')?.used).toBe(true);
+  });
+
+  it('powerActivations contains kind:insane when grenade fires', () => {
+    const players = [
+      pl('p1', { powers: ['insane'] }),
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const { resolution } = resolveRound(
+      commits, players, [], { insane: { playerId: 'p1' } },
+    );
+    expect(resolution.powerActivations.some(a => a.kind === 'insane' && a.playerId === 'p1')).toBe(true);
+  });
+});
