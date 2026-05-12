@@ -78,3 +78,61 @@ describe('normalizeGame variant fields', () => {
     expect(g?.round.resolution?.powerActivations).toEqual([{ playerId: 'p1', kind: 'dragon_skin' }]);
   });
 });
+
+describe('normalizeGame Insane fields', () => {
+  it('round-trips Round.activations.insane', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: {
+        number: 1, phase: 'standoff', phaseStartedAt: 100, loot: [],
+        commits: {},
+        activations: { insane: { playerId: 'p1' } },
+      },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: true },
+    };
+    const g = normalizeGame(raw);
+    expect(g?.round.activations.insane).toEqual({ playerId: 'p1' });
+  });
+
+  it('round-trips RoundResolution.roundTerminated', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: {
+        number: 2, phase: 'commit', phaseStartedAt: 0, loot: [],
+        commits: {}, activations: {},
+        resolution: {
+          shots: [], ducks: [], standing: [], woundedThisRound: {},
+          eliminated: [], awards: {}, carryover: [],
+          powerActivations: [],
+          roundTerminated: { reason: 'grenade', playerId: 'p1' },
+        },
+      },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: true },
+    };
+    const g = normalizeGame(raw);
+    expect(g?.round.resolution?.roundTerminated).toEqual({ reason: 'grenade', playerId: 'p1' });
+  });
+
+  it('omits roundTerminated when not present', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: {
+        number: 1, phase: 'commit', phaseStartedAt: 0, loot: [],
+        commits: {}, activations: {},
+        resolution: {
+          shots: [], ducks: [], standing: [], woundedThisRound: {},
+          eliminated: [], awards: {}, carryover: [], powerActivations: [],
+        },
+      },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false },
+    };
+    const g = normalizeGame(raw);
+    expect(g?.round.resolution?.roundTerminated).toBeUndefined();
+  });
+});
