@@ -71,8 +71,6 @@ export function MusterScreen({ roomState, joinUrl, canStart, onStart, variantSlo
                 letterSpacing: "0.36em",
                 lineHeight: 1,
                 color: palette.paper,
-                borderTop: `2px solid ${palette.ruleStrong}`,
-                borderBottom: `2px solid ${palette.ruleStrong}`,
                 padding: "0.4rem 1rem 0.4rem 1.36rem", // extra right pad for the wide letter-spacing
               }}
             >

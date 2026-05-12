@@ -115,7 +115,7 @@ export function GameBoard({ game: rawGame, freshlyStruck }: GameBoardProps) {
         sx={{
           flex: 1,
           display: "grid",
-          gridTemplateColumns: "25% 50% 25%",
+          gridTemplateColumns: "30% 40% 30%",
           minHeight: 0,
         }}
       >
