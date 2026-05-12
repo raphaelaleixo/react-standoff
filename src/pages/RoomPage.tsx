@@ -6,10 +6,9 @@ import {
   Box,
   CircularProgress,
   Container,
-  FormControlLabel,
-  Switch,
-  Typography,
 } from "@mui/material";
+import { palette } from "../theme/colors";
+import { fonts } from "../theme/typography";
 import { get, onValue, ref, set, update } from "firebase/database";
 import { buildJoinUrl, startGame, useRoomState } from "react-gameroom";
 import type { RoomState } from "react-gameroom";
@@ -96,18 +95,87 @@ export default function RoomPage() {
 
   const variantSlot = (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={variantSuperPowers}
-            onChange={(_, v) => onVariantToggle(v)}
-          />
-        }
-        label={t("powers.variantLabel")}
-      />
-      <Typography variant="caption" sx={{ opacity: 0.7 }}>
+      <Box
+        role="checkbox"
+        aria-checked={variantSuperPowers}
+        aria-label={t("powers.variantLabel")}
+        tabIndex={0}
+        onClick={() => onVariantToggle(!variantSuperPowers)}
+        onKeyDown={e => {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            onVariantToggle(!variantSuperPowers);
+          }
+        }}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.7rem",
+          cursor: "pointer",
+          userSelect: "none",
+          "&:focus-visible": {
+            outline: `2px solid ${palette.paper}`,
+            outlineOffset: "4px",
+          },
+        }}
+      >
+        {/* X-marks-the-spot box: paper-stroked ink chip with a chunky paper
+            X when the variant is on. Same visual language as the spent
+            overlay on PowderCard, scaled down. */}
+        <Box
+          sx={{
+            position: "relative",
+            width: 30,
+            height: 30,
+            border: `1.5px solid ${palette.paper}`,
+            background: palette.inkUp,
+            boxShadow: `2px 2px 0 ${palette.inkDeep}`,
+            flexShrink: 0,
+          }}
+        >
+          {variantSuperPowers && (
+            <Box
+              component="svg"
+              viewBox="0 0 100 100"
+              aria-hidden="true"
+              sx={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+            >
+              <line
+                x1="20" y1="20" x2="80" y2="80"
+                stroke={palette.paper} strokeWidth="11" strokeLinecap="round"
+              />
+              <line
+                x1="80" y1="20" x2="20" y2="80"
+                stroke={palette.paper} strokeWidth="11" strokeLinecap="round"
+              />
+            </Box>
+          )}
+        </Box>
+        <Box
+          sx={{
+            fontFamily: fonts.displayCaps,
+            fontFeatureSettings: '"smcp"',
+            fontSize: "1.1rem",
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: palette.paper,
+          }}
+        >
+          {t("powers.variantLabel")}
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          marginTop: "0.4rem",
+          marginLeft: "calc(30px + 0.7rem)",
+          fontFamily: fonts.body,
+          fontStyle: "italic",
+          fontSize: "0.9rem",
+          color: palette.paperDim,
+        }}
+      >
         {t("powers.variantHint")}
-      </Typography>
+      </Box>
     </Box>
   );
 
