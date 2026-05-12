@@ -143,6 +143,9 @@ export default function MockPlayerPage() {
         <InsaneRevealButton
           armed={grenadeArmed}
           onReveal={() => setGrenadeArmed(true)}
+          // Dev drawer is 360px at the right edge; shift the pill clear of it
+          // so the dev can actually see + tap the reveal button.
+          rightOffsetPx={open ? 380 : undefined}
         />
       )}
       <DevControlsPanel

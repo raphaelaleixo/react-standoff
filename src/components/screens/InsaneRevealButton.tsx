@@ -15,15 +15,19 @@ import { fonts } from "../../theme/typography";
 interface Props {
   armed: boolean;
   onReveal: () => void | Promise<void>;
+  // Optional pixel offset from the right edge. Lets dev pages shift the
+  // pill out from under a persistent right-side drawer.
+  rightOffsetPx?: number;
 }
 
 // Floating pill above the phone footer. When `armed` is false, shows a
 // tappable REVEAL GRENADE button that opens a confirmation dialog. When
 // `armed` is true, shows a non-interactive ARMED badge so the holder knows
 // the grenade is live and waiting for a wound.
-export function InsaneRevealButton({ armed, onReveal }: Props) {
+export function InsaneRevealButton({ armed, onReveal, rightOffsetPx }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const rightCss = rightOffsetPx !== undefined ? `${rightOffsetPx}px` : "1.2rem";
 
   if (armed) {
     return (
@@ -31,7 +35,7 @@ export function InsaneRevealButton({ armed, onReveal }: Props) {
         sx={{
           position: "fixed",
           bottom: "calc(0.95rem + 80px)",
-          right: "1.2rem",
+          right: rightCss,
           padding: "0.45rem 0.85rem",
           background: palette.blood,
           color: palette.paper,
@@ -57,7 +61,7 @@ export function InsaneRevealButton({ armed, onReveal }: Props) {
         sx={{
           position: "fixed",
           bottom: "calc(0.95rem + 80px)",
-          right: "1.2rem",
+          right: rightCss,
           padding: "0.5rem 0.9rem",
           background: palette.blood,
           color: palette.paper,
