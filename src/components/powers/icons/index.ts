@@ -6,6 +6,7 @@ import { ShoulderArmor } from "./ShoulderArmor";
 import { PrayingHands } from "./PrayingHands";
 import { FourWounds } from "./FourWounds";
 import { Quickdraw } from "./Quickdraw";
+import { Grenade } from "./Grenade";
 
 // Per-power sigil registry. PowerKinds with no entry fall back to the
 // default anchor mark inside PowerCard. Icons must render via `currentColor`
@@ -17,4 +18,5 @@ export const POWER_ICONS: Partial<Record<PowerKind, ComponentType<{ size?: numbe
   super_coward: PrayingHands,
   unbreakable: FourWounds,
   specialist: Quickdraw,
+  insane: Grenade,
 };
