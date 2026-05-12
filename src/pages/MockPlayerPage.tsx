@@ -129,8 +129,19 @@ export default function MockPlayerPage() {
         selectedId={me.id}
         onSelect={setSelectedPlayerId}
       />
-      <PhoneShell me={me} roomId="MOCK">
-
+      <PhoneShell
+        me={me}
+        roomId="MOCK"
+        aboveFooter={
+          myPower === "insane" && !isReckoning &&
+          (eligibleForInsane(renderGame, me.id) || grenadeArmed) ? (
+            <InsaneRevealButton
+              armed={grenadeArmed}
+              onReveal={() => setGrenadeArmed(true)}
+            />
+          ) : undefined
+        }
+      >
         <PhaseView
           game={phoneGame}
           me={me}
@@ -139,15 +150,6 @@ export default function MockPlayerPage() {
           handPrespent={isReckoning ? [] : MOCK_PHONE_PRESPENT[me.id] ?? []}
         />
       </PhoneShell>
-      {myPower === "insane" && !isReckoning && (eligibleForInsane(renderGame, me.id) || grenadeArmed) && (
-        <InsaneRevealButton
-          armed={grenadeArmed}
-          onReveal={() => setGrenadeArmed(true)}
-          // Dev drawer is 360px at the right edge; shift the pill clear of it
-          // so the dev can actually see + tap the reveal button.
-          rightOffsetPx={open ? 380 : undefined}
-        />
-      )}
       <DevControlsPanel
         open={open}
         game={game}

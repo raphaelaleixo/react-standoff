@@ -14,13 +14,17 @@ interface PhoneShellProps {
   /** Room code for the header. */
   roomId: string;
   children: React.ReactNode;
+  /** Optional content floated just above the footer (e.g. the Insane reveal
+   *  pill). Anchored to the footer's top edge so the body content underneath
+   *  isn't pushed up. */
+  aboveFooter?: React.ReactNode;
 }
 
 // Phone-shaped page canvas. PhoneHeader at top (skull + ROOM code + chosen
 // flag tile), the phase body in the middle, and a footer strip showing
 // cash, wounds, and shame markers — the stash bookkeeping that used to sit
 // inline with the header.
-export function PhoneShell({ me, roomId, children }: PhoneShellProps) {
+export function PhoneShell({ me, roomId, children, aboveFooter }: PhoneShellProps) {
   const cash = cashTotal(me);
   const myPower = me.effects[0];
   const [powerOpen, setPowerOpen] = useState(false);
@@ -59,6 +63,19 @@ export function PhoneShell({ me, roomId, children }: PhoneShellProps) {
             flexShrink: 0,
           }}
         >
+          {aboveFooter && (
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: "100%",
+                right: "0.95rem",
+                paddingBottom: "0.5rem",
+                zIndex: 4,
+              }}
+            >
+              {aboveFooter}
+            </Box>
+          )}
           <Box
             sx={{
               fontFamily: fonts.blackletter,

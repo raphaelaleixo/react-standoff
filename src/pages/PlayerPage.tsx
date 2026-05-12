@@ -215,22 +215,27 @@ export default function PlayerPage() {
   const insaneIsMe = insaneHolder?.id === me.id;
   const grenadeArmed = !!game.round.activations.insane;
 
+  const showInsaneReveal = insaneIsMe && (eligibleForInsane(game, me.id) || grenadeArmed);
+
   return (
-    <>
-      <PhoneShell me={me} roomId={roomState.roomId}>
-        <PhaseView
-          game={game}
-          me={me}
-          submitCommit={submitCommit}
-          submitDuck={submitDuck}
-        />
-      </PhoneShell>
-      {insaneIsMe && (eligibleForInsane(game, me.id) || grenadeArmed) && (
-        <InsaneRevealButton
-          armed={grenadeArmed}
-          onReveal={() => submitInsane(me.id)}
-        />
-      )}
-    </>
+    <PhoneShell
+      me={me}
+      roomId={roomState.roomId}
+      aboveFooter={
+        showInsaneReveal ? (
+          <InsaneRevealButton
+            armed={grenadeArmed}
+            onReveal={() => submitInsane(me.id)}
+          />
+        ) : undefined
+      }
+    >
+      <PhaseView
+        game={game}
+        me={me}
+        submitCommit={submitCommit}
+        submitDuck={submitDuck}
+      />
+    </PhoneShell>
   );
 }
