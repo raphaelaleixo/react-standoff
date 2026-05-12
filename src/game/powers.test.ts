@@ -51,10 +51,10 @@ describe('dealPowers', () => {
   });
 
   it('deals unique powers (no duplicates across players)', () => {
-    const players = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].map(id => makePlayer(id));
+    const players = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7'].map(id => makePlayer(id));
     const dealt = dealPowers(players, makeRng('seed-b'));
     const kinds = dealt.map(p => p.effects[0].kind);
-    expect(new Set(kinds).size).toBe(6);
+    expect(new Set(kinds).size).toBe(7);
   });
 
   it('is deterministic given the same RNG seed', () => {
