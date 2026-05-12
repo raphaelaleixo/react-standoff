@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dealPowers, eligibleForSpecialist, eligibleForTough } from './powers';
+import { dealPowers, eligibleForInsane, eligibleForSpecialist, eligibleForTough } from './powers';
 import { POWER_KINDS } from './powerKinds';
 import { makeRng } from './random';
 import type { Game, Player } from './types';
@@ -204,5 +204,64 @@ describe('eligibleForTough', () => {
       },
     });
     expect(eligibleForTough(game, 'p1')).toBe(false);
+  });
+});
+
+describe('eligibleForInsane', () => {
+  const baseInsaneGame = (overrides: Partial<Game> = {}) => makeGame({
+    players: [makePlayer('p1', {
+      effects: [{ kind: 'insane', revealed: false, used: false }],
+    })],
+    round: {
+      number: 1, phase: 'commit', phaseStartedAt: 0, loot: [],
+      commits: {}, activations: {},
+    },
+    ...overrides,
+  });
+
+  it('true: holder alive + unused + phase=commit', () => {
+    expect(eligibleForInsane(baseInsaneGame(), 'p1')).toBe(true);
+  });
+
+  it('true: phase=standoff', () => {
+    const g = baseInsaneGame();
+    g.round = { ...g.round, phase: 'standoff' };
+    expect(eligibleForInsane(g, 'p1')).toBe(true);
+  });
+
+  it('true: phase=standoff_hold', () => {
+    const g = baseInsaneGame();
+    g.round = { ...g.round, phase: 'standoff_hold' };
+    expect(eligibleForInsane(g, 'p1')).toBe(true);
+  });
+
+  it('false: phase=withdraw (window closed)', () => {
+    const g = baseInsaneGame();
+    g.round = { ...g.round, phase: 'withdraw' };
+    expect(eligibleForInsane(g, 'p1')).toBe(false);
+  });
+
+  it('false: phase=reveal_bbb (way past window)', () => {
+    const g = baseInsaneGame();
+    g.round = { ...g.round, phase: 'reveal_bbb' };
+    expect(eligibleForInsane(g, 'p1')).toBe(false);
+  });
+
+  it('false: already used', () => {
+    const g = baseInsaneGame();
+    g.players[0].effects = [{ kind: 'insane', revealed: true, used: true }];
+    expect(eligibleForInsane(g, 'p1')).toBe(false);
+  });
+
+  it('false: holder is dead', () => {
+    const g = baseInsaneGame();
+    g.players[0].status = 'dead';
+    expect(eligibleForInsane(g, 'p1')).toBe(false);
+  });
+
+  it('false: holder does not have insane', () => {
+    const g = baseInsaneGame();
+    g.players[0].effects = [];
+    expect(eligibleForInsane(g, 'p1')).toBe(false);
   });
 });

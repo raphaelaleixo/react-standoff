@@ -41,3 +41,11 @@ export function eligibleForTough(game: Game, playerId: string): boolean {
   const wounded = (resolution.woundedThisRound[playerId] ?? 0) > 0;
   return ducked || wounded;
 }
+
+export function eligibleForInsane(game: Game, playerId: string): boolean {
+  const player = game.players.find(p => p.id === playerId);
+  if (!player || player.status !== 'alive') return false;
+  if (!hasUnusedPower(player, 'insane')) return false;
+  const phase = game.round.phase;
+  return phase === 'commit' || phase === 'standoff' || phase === 'standoff_hold';
+}
