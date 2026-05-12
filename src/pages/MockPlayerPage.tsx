@@ -15,6 +15,8 @@ import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
+import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
+import { eligibleForInsane } from "../game/powers";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel, type DevScreen } from "../components/dev/DevControlsPanel";
@@ -44,6 +46,13 @@ export default function MockPlayerPage() {
   // without having to actually deal the game.
   const [variantOn, setVariantOn] = useState(false);
   const [myPower, setMyPower] = useState<PowerKind | null>(null);
+  // Local armed state for Pocket Inferno — the production page reads this
+  // from `round.activations.insane`, but the mock state machine has no
+  // resolver/submitInsane to drive that slot, so we track it client-side
+  // and synthesize the activation into renderGame for downstream reads.
+  const [grenadeArmed, setGrenadeArmed] = useState(false);
+  // Reset armed when the active power changes (clearing or swapping powers).
+  useEffect(() => { setGrenadeArmed(false); }, [myPower, selectedPlayerId]);
   const baseRenderGame: Game = isReckoning ? RECKONING_GAME : game;
   // Apply variant + power injection to whatever game we're rendering. We
   // only ever push the power into the active seat — other seats stay clean.
@@ -55,6 +64,12 @@ export default function MockPlayerPage() {
         ? { ...p, effects: myPower ? [{ kind: myPower, revealed: false, used: false }] : p.effects }
         : p,
     ),
+    round: {
+      ...baseRenderGame.round,
+      activations: grenadeArmed && myPower === "insane"
+        ? { ...baseRenderGame.round.activations, insane: { playerId: selectedPlayerId } }
+        : baseRenderGame.round.activations,
+    },
   };
 
   // Mock-only auto-advance through standoff → standoff_hold → withdraw, same
@@ -124,6 +139,12 @@ export default function MockPlayerPage() {
           handPrespent={isReckoning ? [] : MOCK_PHONE_PRESPENT[me.id] ?? []}
         />
       </PhoneShell>
+      {myPower === "insane" && !isReckoning && (eligibleForInsane(renderGame, me.id) || grenadeArmed) && (
+        <InsaneRevealButton
+          armed={grenadeArmed}
+          onReveal={() => setGrenadeArmed(true)}
+        />
+      )}
       <DevControlsPanel
         open={open}
         game={game}
