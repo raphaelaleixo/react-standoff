@@ -45,6 +45,9 @@ export default function MockBigScreen() {
   const [variantOn, setVariantOn] = useState(false);
   const [forcedActivations, setForcedActivations] = useState<PowerKind[]>([]);
   const [revealAllBadges, setRevealAllBadges] = useState(false);
+  // Toggle that synthesizes a grenade-terminated resolution so the dev can
+  // eyeball the explosion overlay + roundTerminated state without a live game.
+  const [grenadeOverride, setGrenadeOverride] = useState(false);
 
   // Overlay a phase-appropriate resolution onto the mock game so the reveal
   // banners have data to render. The dev hook only tracks phase + commits;
@@ -69,6 +72,16 @@ export default function MockBigScreen() {
         eliminated: [], awards: {}, carryover: [], powerActivations: injected,
       };
     }
+    if (grenadeOverride) {
+      const firstAlive = game.players.find(p => p.status === "alive");
+      const holderId = firstAlive?.id ?? firstPlayerId;
+      resolution = {
+        shots: [], ducks: [], standing: [], woundedThisRound: {},
+        eliminated: [], awards: {}, carryover: [],
+        powerActivations: [{ playerId: holderId, kind: "insane" }],
+        roundTerminated: { reason: "grenade", playerId: holderId },
+      };
+    }
     // When the dev wants every badge visible, hand each player a different
     // PowerKind (cycling) and mark it revealed so CrewRow renders the
     // PowerBadge in the rail.
@@ -89,7 +102,7 @@ export default function MockBigScreen() {
       variants: { superPowers: variantOn },
       round: { ...game.round, resolution },
     };
-  }, [game, variantOn, forcedActivations, revealAllBadges]);
+  }, [game, variantOn, forcedActivations, revealAllBadges, grenadeOverride]);
 
   // Mock-only auto-advance: in production the server transitions the round
   // out of standoff. Here, watch the StandoffStamp's count and advance to
@@ -188,6 +201,7 @@ export default function MockBigScreen() {
         onForcedActivationsChange={setForcedActivations}
         revealAllBadges={revealAllBadges}
         onRevealAllBadgesChange={setRevealAllBadges}
+        onForceGrenadeExplosion={() => setGrenadeOverride(prev => !prev)}
       />
     </>
   );
