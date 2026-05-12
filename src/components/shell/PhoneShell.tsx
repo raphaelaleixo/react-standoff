@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Box } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { palette } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
+import { breath } from "../../theme/animations";
 import { PageCanvas } from "./PageCanvas";
 import { PhoneHeader } from "./PhoneHeader";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
@@ -18,16 +20,36 @@ interface PhoneShellProps {
    *  pill). Anchored to the footer's top edge so the body content underneath
    *  isn't pushed up. */
   aboveFooter?: React.ReactNode;
+  /** Open the power card face-up on mount and show the "Tap to start" hint
+   *  below it. When the player taps to dismiss, the card flips + shrinks
+   *  into its footer corner — one element animating, not a separate intro
+   *  screen handing off to a footer widget. */
+  introOpen?: boolean;
 }
 
 // Phone-shaped page canvas. PhoneHeader at top (skull + ROOM code + chosen
 // flag tile), the phase body in the middle, and a footer strip showing
 // cash, wounds, and shame markers — the stash bookkeeping that used to sit
 // inline with the header.
-export function PhoneShell({ me, roomId, children, aboveFooter }: PhoneShellProps) {
+export function PhoneShell({ me, roomId, children, aboveFooter, introOpen }: PhoneShellProps) {
+  const { t } = useTranslation();
   const cash = cashTotal(me);
   const myPower = me.effects[0];
-  const [powerOpen, setPowerOpen] = useState(false);
+  const [powerOpen, setPowerOpen] = useState(!!introOpen);
+  // `introActive` flips false the first time the card closes. After that
+  // taps just toggle, and the hint stays gone for the rest of the session.
+  const [introActive, setIntroActive] = useState(!!introOpen);
+  const closeCard = () => {
+    setPowerOpen(false);
+    setIntroActive(false);
+  };
+  const handleCardTap = () => {
+    if (introActive) {
+      closeCard();
+      return;
+    }
+    setPowerOpen(o => !o);
+  };
   return (
     <Box
       sx={{
@@ -97,7 +119,7 @@ export function PhoneShell({ me, roomId, children, aboveFooter }: PhoneShellProp
           <>
             {/* Backdrop — fades in/out behind the open card. */}
             <Box
-              onClick={() => setPowerOpen(false)}
+              onClick={closeCard}
               sx={{
                 position: "absolute",
                 inset: 0,
@@ -108,6 +130,29 @@ export function PhoneShell({ me, roomId, children, aboveFooter }: PhoneShellProp
                 transition: "opacity 0.32s ease-out",
               }}
             />
+            {/* Intro hint — only rendered while the card has never been
+                closed. Positioned just below the centred card so it stays
+                in view while the card itself sits at full size. */}
+            {introActive && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: "calc(50% - 230px)",
+                  left: 0,
+                  right: 0,
+                  textAlign: "center",
+                  fontFamily: fonts.body,
+                  fontStyle: "italic",
+                  fontSize: "1rem",
+                  color: palette.paperDim,
+                  animation: `${breath} 2.4s ease-in-out infinite`,
+                  zIndex: 6,
+                  pointerEvents: "none",
+                }}
+              >
+                {t("powers.tapToStart")}
+              </Box>
+            )}
             {/* Outer wrapper handles position + scale. Closed state: tucked
                 at the footer's bottom-right corner with scale(0.24). Open:
                 centred in the canvas at full size. transformOrigin sits at
@@ -115,7 +160,7 @@ export function PhoneShell({ me, roomId, children, aboveFooter }: PhoneShellProp
             <Box
               role="button"
               aria-label="Your power"
-              onClick={() => setPowerOpen(open => !open)}
+              onClick={handleCardTap}
               sx={{
                 position: "absolute",
                 cursor: "pointer",

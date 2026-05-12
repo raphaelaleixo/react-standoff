@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -6,7 +5,6 @@ import {
   Box,
   CircularProgress,
   Container,
-  Typography,
 } from "@mui/material";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
@@ -19,7 +17,6 @@ import { PageCanvas } from "../components/shell/PageCanvas";
 import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
-import { PowerCard } from "../components/powers/PowerCard";
 import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptScreen";
 import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
 import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
@@ -30,7 +27,6 @@ export default function PlayerPage() {
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
   const { game, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane } = useGameState(id);
-  const [introDismissed, setIntroDismissed] = useState(false);
 
   if (loading) {
     return (
@@ -142,36 +138,15 @@ export default function PlayerPage() {
   }
 
   const myPower = me.effects[0];
-  const showIntro =
+  // First-mount intro: PhoneShell opens the power card face-up + shows the
+  // "tap to start" hint. The user's tap closes it via the same widget,
+  // morphing into the footer card — one element, one animation.
+  const introOpen =
     game.variants.superPowers &&
     !!myPower &&
-    !introDismissed &&
     game.phase === "in_progress" &&
     game.round.number === 1 &&
     game.round.phase === "commit";
-
-  if (showIntro && myPower) {
-    return (
-      <Box
-        onClick={() => setIntroDismissed(true)}
-        sx={{
-          position: "fixed",
-          inset: 0,
-          bgcolor: "background.default",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 2,
-          zIndex: 1400,
-          cursor: "pointer",
-        }}
-      >
-        <PowerCard kind={myPower.kind} variant="faceUp" size="lg" />
-        <Typography variant="caption">{t("powers.tapToStart")}</Typography>
-      </Box>
-    );
-  }
 
   if (
     game.variants.superPowers &&
@@ -225,6 +200,7 @@ export default function PlayerPage() {
     <PhoneShell
       me={me}
       roomId={roomState.roomId}
+      introOpen={introOpen}
       aboveFooter={
         showInsaneReveal ? (
           <InsaneRevealButton
