@@ -1,14 +1,14 @@
-// Maps the raw Firebase snapshot of our /game doc back into a Game that
-// matches the type contracts. Game-specific shape mapping; the generic
-// RTDB-quirk handling lives in src/lib/rtdbCoerce.
-
 import type {
   Banknote,
   BulletCard,
   Commit,
+  Effect,
   Game,
+  GameVariants,
   Player,
+  PowerActivation,
   Round,
+  RoundActivations,
   RoundResolution,
   RoundShot,
 } from './types';
@@ -27,8 +27,22 @@ function normalizePlayer(raw: Raw): Player {
     wounds: (r.wounds ?? 0) as Player['wounds'],
     shame: (r.shame ?? 0) as number,
     status: (r.status ?? 'alive') as Player['status'],
-    effects: asArray(r.effects),
+    effects: asArray<Effect>(r.effects),
   };
+}
+
+function normalizeActivations(raw: Raw): RoundActivations {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const out: RoundActivations = {};
+  if (r.tough) out.tough = asArray<string>(r.tough);
+  if (r.specialist && typeof r.specialist === 'object') {
+    const s = r.specialist as Record<string, unknown>;
+    out.specialist = {
+      playerId: String(s.playerId ?? ''),
+      discardedBulletKind: (s.discardedBulletKind ?? 'clic') as BulletCard,
+    };
+  }
+  return out;
 }
 
 function normalizeResolution(raw: Raw): RoundResolution {
@@ -43,6 +57,7 @@ function normalizeResolution(raw: Raw): RoundResolution {
       Object.entries(asRecord<unknown>(r.awards)).map(([k, v]) => [k, asArray<Banknote>(v)]),
     ),
     carryover: asArray<Banknote>(r.carryover),
+    powerActivations: asArray<PowerActivation>(r.powerActivations),
   };
 }
 
@@ -54,8 +69,14 @@ function normalizeRound(raw: Raw): Round {
     phaseStartedAt: Number(r.phaseStartedAt ?? 0),
     loot: asArray<Banknote>(r.loot),
     commits: asRecord<Commit>(r.commits),
+    activations: normalizeActivations(r.activations as Raw),
     resolution: r.resolution ? normalizeResolution(r.resolution as Raw) : undefined,
   };
+}
+
+function normalizeVariants(raw: Raw): GameVariants {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  return { superPowers: !!r.superPowers };
 }
 
 export function normalizeGame(raw: Raw): Game | null {
@@ -68,6 +89,7 @@ export function normalizeGame(raw: Raw): Game | null {
     bankDeck: asArray<Banknote>(r.bankDeck),
     discardedBullets: asArray<BulletCard>(r.discardedBullets),
     seed: String(r.seed ?? ''),
+    variants: normalizeVariants(r.variants as Raw),
   };
   const prev = r.previousRoundSummary as Raw;
   if (prev && typeof prev === 'object') {
