@@ -10,7 +10,7 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
-import { PowerCard } from "../powers/PowerCard";
+import { PowerBadge } from "../powers/PowerBadge";
 import { finalScore, rankPlayers } from "../../game/scoring";
 import { popIn, fadeIn } from "../../theme/animations";
 import type { Game, Player } from "../../game/types";
@@ -174,9 +174,12 @@ function WinnerEnthronement({
           I
         </Box>
         {/* Flag-aspect medallion — same proportions as the row chips and
-            the in-game crew flag, scaled up for the reckoning's prominence. */}
+            the in-game crew flag, scaled up for the reckoning's prominence.
+            Power badges (if any) tack onto the top-left corner, mirroring
+            the in-game crew rail placement. */}
         <Box
           sx={{
+            position: "relative",
             width: 156,
             height: 108,
             border: `4px solid ${palette.paper}`,
@@ -189,6 +192,22 @@ function WinnerEnthronement({
           }}
         >
           <FlagFor id={jollyRogerForColor(winner.colorOrAvatar)} size={84} />
+          {winner.effects.length > 0 && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: -18,
+                left: -18,
+                display: "flex",
+                gap: "0.3rem",
+                animation: `${fadeIn} 500ms ease-out ${medallionDelayMs + 160}ms both`,
+              }}
+            >
+              {winner.effects.map((e) => (
+                <PowerBadge key={e.kind} kind={e.kind} size={48} />
+              ))}
+            </Box>
+          )}
         </Box>
         <Box sx={{ textAlign: "left" }}>
           <Box
@@ -217,20 +236,6 @@ function WinnerEnthronement({
           >
             ${score.toLocaleString()}
           </Box>
-          {winner.effects.length > 0 && (
-            <Box
-              sx={{
-                display: "flex",
-                gap: "0.5rem",
-                marginTop: "0.6rem",
-                animation: `${fadeIn} 500ms ease-out ${medallionDelayMs + 160}ms both`,
-              }}
-            >
-              {winner.effects.map((e) => (
-                <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
-              ))}
-            </Box>
-          )}
         </Box>
       </Box>
       <Box

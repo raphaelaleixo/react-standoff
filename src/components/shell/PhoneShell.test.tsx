@@ -17,15 +17,16 @@ const me: Player = {
 };
 
 describe("PhoneShell", () => {
-  it("renders the room code and a footer with cash + wound chip", () => {
-    render(
+  it("renders the room code and a footer with cash + wound pips", () => {
+    const { container } = render(
       <PhoneShell me={me} roomId="QSPY">
         <div>body</div>
       </PhoneShell>,
     );
     expect(screen.getByText("QSPY")).toBeInTheDocument();
     expect(screen.getByText("$15,000")).toBeInTheDocument();
-    expect(screen.getByText(/wounds I\/III/i)).toBeInTheDocument();
+    // Wound pips render with data-pip="filled" or "empty"; verify presence.
+    expect(container.querySelectorAll('[data-pip="filled"], [data-pip="empty"]').length).toBeGreaterThan(0);
   });
 
   it("renders body children inside the canvas", () => {

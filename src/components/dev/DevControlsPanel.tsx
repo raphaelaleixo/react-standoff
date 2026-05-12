@@ -73,6 +73,10 @@ interface DevControlsPanelProps {
   onVariantSuperPowersChange?(on: boolean): void;
   forcedActivations?: PowerKind[];
   onForcedActivationsChange?(next: PowerKind[]): void;
+  /** Optional: when on, distribute a different revealed power to each
+   *  player so PowerBadges show up in the big-screen crew rail. */
+  revealAllBadges?: boolean;
+  onRevealAllBadgesChange?(on: boolean): void;
   /** Optional per-seat power injector (phone mock only). */
   myPower?: PowerKind | null;
   onMyPowerChange?(power: PowerKind | null): void;
@@ -89,6 +93,8 @@ export function DevControlsPanel({
   onVariantSuperPowersChange,
   forcedActivations,
   onForcedActivationsChange,
+  revealAllBadges,
+  onRevealAllBadgesChange,
   myPower,
   onMyPowerChange,
 }: DevControlsPanelProps) {
@@ -217,6 +223,24 @@ export function DevControlsPanel({
                     Queued: {forcedActivations.join(", ")}
                   </Typography>
                 )}
+              </Box>
+            )}
+            {onRevealAllBadgesChange && (
+              <Box sx={{ mt: 1.5 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={!!revealAllBadges}
+                      onChange={(_, v) => onRevealAllBadgesChange(v)}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2">
+                      Reveal all powers (crew rail badges)
+                    </Typography>
+                  }
+                />
               </Box>
             )}
             {variantSuperPowers && onMyPowerChange && (

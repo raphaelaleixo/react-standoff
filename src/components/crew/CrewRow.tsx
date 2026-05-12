@@ -57,6 +57,7 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
     >
       <Box
         sx={{
+          position: "relative",
           width: "3.25rem",
           height: "2.25rem",
           border: `1.5px solid ${palette.paper}`,
@@ -68,6 +69,21 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
         }}
       >
         <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size="1.5rem" />
+        {revealedEffects.length > 0 && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: -10,
+              left: -10,
+              display: "flex",
+              gap: "0.18rem",
+            }}
+          >
+            {revealedEffects.map(e => (
+              <PowerBadge key={e.kind} kind={e.kind} size={26} />
+            ))}
+          </Box>
+        )}
       </Box>
       <Box sx={{ minWidth: 0 }}>
         <Box sx={{ fontFamily: fonts.body, fontWeight: 700, fontSize: "1.2rem", lineHeight: 1.1, letterSpacing: "0.06em", textTransform: "uppercase", color: `color-mix(in srgb, ${flagColor(player.colorOrAvatar)} 60%, ${palette.paperDim})`, textDecoration: dead ? "line-through" : "none" }}>
@@ -106,13 +122,6 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
       <Box sx={{ display: "flex", flexDirection: "column", gap: "0.18rem", alignItems: "flex-end" }}>
         <StatusPill status={status} label={status ? STATUS_LABEL[status] : ""} />
         <WoundPips count={player.wounds} freshIndex={freshWoundIndex} />
-        {revealedEffects.length > 0 && (
-          <Box sx={{ display: "flex", gap: "0.25rem", marginTop: "0.1rem" }}>
-            {revealedEffects.map(e => (
-              <PowerBadge key={e.kind} kind={e.kind} />
-            ))}
-          </Box>
-        )}
       </Box>
     </Box>
   );

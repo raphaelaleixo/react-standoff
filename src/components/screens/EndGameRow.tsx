@@ -5,7 +5,7 @@ import { fonts } from "../../theme/typography";
 import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
-import { PowerCard } from "../powers/PowerCard";
+import { PowerBadge } from "../powers/PowerBadge";
 import type { Player } from "../../game/types";
 import { cashTotal } from "../../lib/score";
 import { finalScore, hasEffect } from "../../game/scoring";
@@ -157,12 +157,13 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
       >
         {dead ? t("reckoning.dead") : `$${score!.toLocaleString()}`}
       </Box>
-      {/* Held powers — flip face-up at the reckoning so unrevealed cards get
-          their "I had X all along" moment. Empty in the base game (no effects),
-          so the column collapses naturally. */}
-      <Box sx={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end" }}>
+      {/* Held powers — surface the badge at the reckoning so unrevealed
+          powers get their "I had X all along" moment without taking up the
+          space a full card would. Empty in the base game (no effects), so
+          the column collapses naturally. */}
+      <Box sx={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
         {player.effects.map((e) => (
-          <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
+          <PowerBadge key={e.kind} kind={e.kind} size={32} />
         ))}
       </Box>
     </Box>

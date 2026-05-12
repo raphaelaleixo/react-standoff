@@ -6,8 +6,6 @@ import {
   Box,
   CircularProgress,
   Container,
-  Dialog,
-  DialogContent,
   Typography,
 } from "@mui/material";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
@@ -32,7 +30,6 @@ export default function PlayerPage() {
   const { roomState, loading, error } = useFirebaseRoom(id);
   const { game, submitCommit, submitDuck, submitSpecialist, submitTough } = useGameState(id);
   const [introDismissed, setIntroDismissed] = useState(false);
-  const [widgetOpen, setWidgetOpen] = useState(false);
 
   if (loading) {
     return (
@@ -209,44 +206,13 @@ export default function PlayerPage() {
   }
 
   return (
-    <>
-      <PhoneShell me={me} roomId={roomState.roomId}>
-        <PhaseView
-          game={game}
-          me={me}
-          submitCommit={submitCommit}
-          submitDuck={submitDuck}
-        />
-      </PhoneShell>
-      {game.variants.superPowers && myPower && (
-        <>
-          <Box
-            sx={{
-              position: "fixed",
-              bottom: 12,
-              right: 12,
-              zIndex: 1200,
-              cursor: "pointer",
-            }}
-            onClick={() => setWidgetOpen(true)}
-          >
-            <PowerCard
-              kind={myPower.kind}
-              variant={myPower.used ? "used" : "faceUp"}
-              size="sm"
-            />
-          </Box>
-          <Dialog open={widgetOpen} onClose={() => setWidgetOpen(false)}>
-            <DialogContent>
-              <PowerCard
-                kind={myPower.kind}
-                variant={myPower.used ? "used" : "faceUp"}
-                size="lg"
-              />
-            </DialogContent>
-          </Dialog>
-        </>
-      )}
-    </>
+    <PhoneShell me={me} roomId={roomState.roomId}>
+      <PhaseView
+        game={game}
+        me={me}
+        submitCommit={submitCommit}
+        submitDuck={submitDuck}
+      />
+    </PhoneShell>
   );
 }

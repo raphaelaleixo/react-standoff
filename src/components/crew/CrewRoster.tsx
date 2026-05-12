@@ -95,7 +95,7 @@ export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
   // games and the mock board (where freshlyStruck isn't simulated).
   const struck = new Set<string>([...computeStruck(game), ...fresh]);
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "visible" }}>
       <SectionHeader title="The Crew" subtitle="six souls, one prize" />
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         {game.players.map(p => {

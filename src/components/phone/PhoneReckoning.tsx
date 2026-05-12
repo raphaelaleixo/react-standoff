@@ -5,7 +5,7 @@ import { fonts } from "../../theme/typography";
 import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
-import { PowerCard } from "../powers/PowerCard";
+import { PowerBadge } from "../powers/PowerBadge";
 import { finalScore, rankPlayers } from "../../game/scoring";
 import { toRoman } from "../../lib/navyHours";
 import { breath, fadeIn, popIn, slideUpIn } from "../../theme/animations";
@@ -56,7 +56,6 @@ export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
     >
       <PhoneWinnerEnthronement
         winner={winner}
-        isMe={winner.id === me.id}
         enterDelayMs={winnerDelayMs}
         durationMs={WINNER_DURATION_MS}
         totalKills={totalKills}
@@ -84,20 +83,19 @@ export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
             totalKills={totalKills}
           />
         ))}
-      </Box>
-
-      <Box
-        sx={{
-          textAlign: "center",
-          padding: "0.7rem 0 0.3rem",
-          fontFamily: fonts.body,
-          fontStyle: "italic",
-          fontSize: "0.85rem",
-          color: palette.paperDim,
-          animation: `${fadeIn} 500ms ease-out ${tagDelayMs}ms both, ${breath} 2.8s ease-in-out ${tagDelayMs + 500}ms infinite`,
-        }}
-      >
-        {t("phase.endedPhoneWaiting")}
+        <Box
+          sx={{
+            textAlign: "center",
+            padding: "0.7rem 0 0.3rem",
+            fontFamily: fonts.body,
+            fontStyle: "italic",
+            fontSize: "0.85rem",
+            color: palette.paperDim,
+            animation: `${fadeIn} 500ms ease-out ${tagDelayMs}ms both, ${breath} 2.8s ease-in-out ${tagDelayMs + 500}ms infinite`,
+          }}
+        >
+          {t("phase.endedPhoneWaiting")}
+        </Box>
       </Box>
     </Box>
   );
@@ -105,13 +103,11 @@ export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
 
 function PhoneWinnerEnthronement({
   winner,
-  isMe,
   enterDelayMs,
   durationMs,
   totalKills,
 }: {
   winner: Player;
-  isMe: boolean;
   enterDelayMs: number;
   durationMs: number;
   totalKills: number;
@@ -126,7 +122,7 @@ function PhoneWinnerEnthronement({
   const medallionDelayMs = enterDelayMs + 160;
   const cryDelayMs = enterDelayMs + durationMs - 100;
   return (
-    <Box sx={{ textAlign: "center", padding: "0.4rem 0 0.2rem" }}>
+    <Box sx={{ textAlign: "center", padding: "1.4rem 0 0.4rem" }}>
       <Box
         sx={{
           fontFamily: fonts.displayCaps,
@@ -143,14 +139,17 @@ function PhoneWinnerEnthronement({
         sx={{
           display: "flex",
           justifyContent: "center",
-          marginTop: "0.5rem",
+          marginTop: "1rem",
           animation: `${popIn} ${durationMs}ms cubic-bezier(.2,.7,.2,1.4) ${medallionDelayMs}ms both`,
         }}
       >
         {/* Flag-aspect medallion — same proportions as the big-screen's
-            reckoning medallion, scaled for the phone canvas. */}
+            reckoning medallion, scaled for the phone canvas. Power badges
+            (if any) tack onto the top-left corner, matching the in-game
+            crew rail anchor. */}
         <Box
           sx={{
+            position: "relative",
             width: 108,
             height: 75,
             border: `3px solid ${palette.paper}`,
@@ -163,6 +162,22 @@ function PhoneWinnerEnthronement({
           }}
         >
           <FlagFor id={jollyRogerForColor(winner.colorOrAvatar)} size={58} />
+          {winner.effects.length > 0 && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: -14,
+                left: -14,
+                display: "flex",
+                gap: "0.25rem",
+                animation: `${fadeIn} 400ms ease-out ${medallionDelayMs + 200}ms both`,
+              }}
+            >
+              {winner.effects.map((e) => (
+                <PowerBadge key={e.kind} kind={e.kind} size={36} />
+              ))}
+            </Box>
+          )}
         </Box>
       </Box>
       <Box
@@ -176,24 +191,6 @@ function PhoneWinnerEnthronement({
         }}
       >
         {winner.displayName}
-        {isMe && (
-          <Box
-            component="span"
-            sx={{
-              fontFamily: fonts.displayCaps,
-              fontFeatureSettings: '"smcp"',
-              fontSize: "0.55rem",
-              letterSpacing: "0.4em",
-              color: palette.blood,
-              verticalAlign: "middle",
-              marginLeft: "0.6em",
-            }}
-          >
-            {/* Tiny "that's ye" badge so the local seat sees that they won
-                without having to scan back through the ledger. */}
-            — YE —
-          </Box>
-        )}
       </Box>
       <Box
         sx={{
@@ -221,21 +218,6 @@ function PhoneWinnerEnthronement({
       >
         ${score.toLocaleString()}
       </Box>
-      {winner.effects.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "0.4rem",
-            marginTop: "0.4rem",
-            animation: `${fadeIn} 400ms ease-out ${medallionDelayMs + 200}ms both`,
-          }}
-        >
-          {winner.effects.map((e) => (
-            <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
-          ))}
-        </Box>
-      )}
       <Box
         sx={{
           fontFamily: fonts.body,
@@ -342,20 +324,6 @@ function PhoneEndRow({
         >
           {player.displayName}
         </Box>
-        {dead && (
-          <Box
-            sx={{
-              fontFamily: fonts.body,
-              fontStyle: "italic",
-              fontSize: "0.72rem",
-              letterSpacing: "0.04em",
-              color: palette.paperDim,
-              marginTop: "0.05rem",
-            }}
-          >
-            {t("reckoning.dead").toLowerCase()}
-          </Box>
-        )}
       </Box>
       <Box
         sx={{
@@ -383,7 +351,7 @@ function PhoneEndRow({
           }}
         >
           {player.effects.map((e) => (
-            <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
+            <PowerBadge key={e.kind} kind={e.kind} size={28} />
           ))}
         </Box>
       )}

@@ -13,6 +13,8 @@ import { Foot } from "../components/shell/Foot";
 import { GameBoard } from "../components/GameBoard";
 import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
+import { PowerRevealOverlay } from "../components/powers/PowerRevealOverlay";
+import { POWER_KINDS } from "../game/powerKinds";
 import { toRoman } from "../lib/navyHours";
 import type { Game, PowerKind } from "../game/types";
 import { useMockGameState } from "../components/dev/useMockGameState";
@@ -42,6 +44,7 @@ export default function MockBigScreen() {
   // screen overlay can be visually reviewed without a live game.
   const [variantOn, setVariantOn] = useState(false);
   const [forcedActivations, setForcedActivations] = useState<PowerKind[]>([]);
+  const [revealAllBadges, setRevealAllBadges] = useState(false);
 
   // Overlay a phase-appropriate resolution onto the mock game so the reveal
   // banners have data to render. The dev hook only tracks phase + commits;
@@ -66,12 +69,27 @@ export default function MockBigScreen() {
         eliminated: [], awards: {}, carryover: [], powerActivations: injected,
       };
     }
+    // When the dev wants every badge visible, hand each player a different
+    // PowerKind (cycling) and mark it revealed so CrewRow renders the
+    // PowerBadge in the rail.
+    const players = revealAllBadges
+      ? game.players.map((p, i) => ({
+          ...p,
+          effects: [{
+            kind: POWER_KINDS[i % POWER_KINDS.length],
+            revealed: true,
+            used: false,
+          }],
+        }))
+      : game.players;
+
     return {
       ...game,
+      players,
       variants: { superPowers: variantOn },
       round: { ...game.round, resolution },
     };
-  }, [game, variantOn, forcedActivations]);
+  }, [game, variantOn, forcedActivations, revealAllBadges]);
 
   // Mock-only auto-advance: in production the server transitions the round
   // out of standoff. Here, watch the StandoffStamp's count and advance to
@@ -106,9 +124,26 @@ export default function MockBigScreen() {
       />
     );
   } else if (screen === "reckoning") {
+    // Apply the same variant + power-injection overrides to the reckoning
+    // fixture so the dev can preview Davy Jones's Cut bonus, Super Coward
+    // sign-flip, and the flip-up-on-reveal cards in the leaderboard.
+    const reckoningGame: Game = {
+      ...RECKONING_GAME,
+      variants: { superPowers: variantOn },
+      players: revealAllBadges
+        ? RECKONING_GAME.players.map((p, i) => ({
+            ...p,
+            effects: [{
+              kind: POWER_KINDS[i % POWER_KINDS.length],
+              revealed: true,
+              used: false,
+            }],
+          }))
+        : RECKONING_GAME.players,
+    };
     surface = (
       <ReckoningScreen
-        game={RECKONING_GAME}
+        game={reckoningGame}
         roomId="MOCK"
         eliminatedByRound={RECKONING_ELIMINATED_BY_ROUND}
         onPlayAgain={() => {}}
@@ -116,6 +151,7 @@ export default function MockBigScreen() {
       />
     );
   } else {
+    const overlayActivations = displayGame.round.resolution?.powerActivations ?? [];
     surface = (
       <Box sx={{ width: "100vw", height: "100vh" }}>
         <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
@@ -126,6 +162,10 @@ export default function MockBigScreen() {
           <GameBoard game={displayGame} />
           <Foot
             cry={<>{t("shell.round")} {t("shell.ofTotal", { n: toRoman(displayGame.round.number) })}</>}
+          />
+          <PowerRevealOverlay
+            activations={overlayActivations}
+            players={displayGame.players}
           />
         </PageCanvas>
       </Box>
@@ -146,6 +186,8 @@ export default function MockBigScreen() {
         onVariantSuperPowersChange={setVariantOn}
         forcedActivations={forcedActivations}
         onForcedActivationsChange={setForcedActivations}
+        revealAllBadges={revealAllBadges}
+        onRevealAllBadgesChange={setRevealAllBadges}
       />
     </>
   );

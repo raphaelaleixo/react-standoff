@@ -67,7 +67,7 @@
     "used": "Used",
     "specialistPrompt": {
       "title": "Use Quartermaster's Reload?",
-      "body": "Reveal your power to take back your Broadside. Choose a powder to discard in its place.",
+      "body": "Reveal your power to take back your Quickdraw. Choose a powder to discard in its place.",
       "useAndReveal": "Use & Reveal",
       "skip": "Skip"
     },
@@ -96,7 +96,7 @@
       },
       "specialist": {
         "name": "Quartermaster's Reload",
-        "description": "After playing your Broadside, take it back and discard an unused powder instead. One use."
+        "description": "After playing your Quickdraw, take it back and discard an unused powder instead. One use."
       },
       "tough": {
         "name": "Phantom Pain",
