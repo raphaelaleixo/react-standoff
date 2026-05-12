@@ -5,6 +5,7 @@ import type { BulletCard, Commit, Game, Player } from "../game/types";
 import { normalizeGame } from "../game/deserialize";
 import { resolveRound } from "../game/resolver";
 import { startNextRound, endGameStatus } from "../game/transitions";
+import { eligibleForSpecialist, eligibleForTough } from "../game/powers";
 import { useServerTime } from "./useServerTime";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
 
@@ -14,6 +15,8 @@ const WITHDRAW_MS = WITHDRAW_DURATION_MS;
 const REVEAL_WITHDRAW_MS = 2500;
 const REVEAL_BBB_MS = 5000;
 const REVEAL_OTHERS_MS = 5000;
+const SPECIALIST_PROMPT_MS = 10000;
+const TOUGH_PROMPT_MS = 10000;
 // Split-phase budget: notes-leave-table fade (~300ms) → small beat → cash
 // tickers (~700ms) → small beat → next round draws in. GameBoard runs the
 // orchestration off `phaseStartedAt`; this is the timer that finally writes
@@ -105,7 +108,12 @@ export function useGameState(roomId: string | undefined) {
     if (game.round.phase !== "withdraw") return;
     const remaining = WITHDRAW_MS - (serverNow() - game.round.phaseStartedAt);
     const fire = () => {
-      const result = resolveRound(game.round.commits, game.players, game.round.loot);
+      const result = resolveRound(
+        game.round.commits,
+        game.players,
+        game.round.loot,
+        game.round.activations,
+      );
       update(ref(database, `rooms/${roomId}/game`), {
         "round/phase": "reveal_withdraw",
         "round/phaseStartedAt": serverTimestamp(),
@@ -130,28 +138,96 @@ export function useGameState(roomId: string | undefined) {
     return () => clearTimeout(t);
   }, [roomId, game, serverNow]);
 
-  // reveal_bbb → reveal_others (animation pace)
+  // reveal_bbb → specialist_prompt (animation pace; pure phase handoff)
   useEffect(() => {
     if (!roomId || !game) return;
     if (game.round.phase !== "reveal_bbb") return;
     const remaining = REVEAL_BBB_MS - (serverNow() - game.round.phaseStartedAt);
     const fire = () => update(ref(database, `rooms/${roomId}/game/round`), {
-      phase: "reveal_others",
+      phase: "specialist_prompt",
       phaseStartedAt: serverTimestamp(),
     });
     const t = setTimeout(fire, Math.max(0, remaining));
     return () => clearTimeout(t);
   }, [roomId, game, serverNow]);
 
-  // reveal_others → split
+  // specialist_prompt → reveal_others
+  // Auto-skips when the variant is off or no eligible player; otherwise waits
+  // up to SPECIALIST_PROMPT_MS for an activation, then re-resolves so any
+  // submitted activation lands in `round/resolution` before reveal_others.
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "specialist_prompt") return;
+    if (!game.variants.superPowers) {
+      update(ref(database, `rooms/${roomId}/game/round`), {
+        phase: "reveal_others",
+        phaseStartedAt: serverTimestamp(),
+      });
+      return;
+    }
+    const eligible = game.players.find(p => eligibleForSpecialist(game, p.id));
+    const fire = () => {
+      const result = resolveRound(
+        game.round.commits, game.players, game.round.loot, game.round.activations,
+      );
+      update(ref(database, `rooms/${roomId}/game`), {
+        "round/phase": "reveal_others",
+        "round/phaseStartedAt": serverTimestamp(),
+        "round/resolution": result.resolution,
+      });
+    };
+    if (!eligible) {
+      fire();
+      return;
+    }
+    const remaining = SPECIALIST_PROMPT_MS - (serverNow() - game.round.phaseStartedAt);
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // reveal_others → tough_prompt (animation pace; pure phase handoff)
   useEffect(() => {
     if (!roomId || !game) return;
     if (game.round.phase !== "reveal_others") return;
     const remaining = REVEAL_OTHERS_MS - (serverNow() - game.round.phaseStartedAt);
     const fire = () => update(ref(database, `rooms/${roomId}/game/round`), {
-      phase: "split",
+      phase: "tough_prompt",
       phaseStartedAt: serverTimestamp(),
     });
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [roomId, game, serverNow]);
+
+  // tough_prompt → split
+  // Auto-skips when the variant is off or no eligible player; otherwise waits
+  // up to TOUGH_PROMPT_MS for an activation, then re-resolves so any submitted
+  // activation lands in `round/resolution` before split.
+  useEffect(() => {
+    if (!roomId || !game) return;
+    if (game.round.phase !== "tough_prompt") return;
+    if (!game.variants.superPowers) {
+      update(ref(database, `rooms/${roomId}/game/round`), {
+        phase: "split",
+        phaseStartedAt: serverTimestamp(),
+      });
+      return;
+    }
+    const eligible = game.players.find(p => eligibleForTough(game, p.id));
+    const fire = () => {
+      const result = resolveRound(
+        game.round.commits, game.players, game.round.loot, game.round.activations,
+      );
+      update(ref(database, `rooms/${roomId}/game`), {
+        "round/phase": "split",
+        "round/phaseStartedAt": serverTimestamp(),
+        "round/resolution": result.resolution,
+      });
+    };
+    if (!eligible) {
+      fire();
+      return;
+    }
+    const remaining = TOUGH_PROMPT_MS - (serverNow() - game.round.phaseStartedAt);
     const t = setTimeout(fire, Math.max(0, remaining));
     return () => clearTimeout(t);
   }, [roomId, game, serverNow]);
@@ -168,7 +244,9 @@ export function useGameState(roomId: string | undefined) {
     if (game.round.phase !== "split") return;
     const remaining = SPLIT_MS - (serverNow() - game.round.phaseStartedAt);
     const fire = () => {
-      const result = resolveRound(game.round.commits, game.players, game.round.loot);
+      const result = resolveRound(
+        game.round.commits, game.players, game.round.loot, game.round.activations,
+      );
       const resolved = { ...game, players: result.players };
       const status = endGameStatus(resolved);
       if (status.ended) {
@@ -209,7 +287,28 @@ export function useGameState(roomId: string | undefined) {
     [roomId],
   );
 
+  const submitSpecialist = useCallback(
+    async (playerId: string, discardedBulletKind: BulletCard) => {
+      if (!roomId) return;
+      await update(ref(database, `rooms/${roomId}/game/round/activations`), {
+        specialist: { playerId, discardedBulletKind },
+      });
+    },
+    [roomId],
+  );
+
+  const submitTough = useCallback(
+    async (playerId: string) => {
+      if (!roomId) return;
+      await update(
+        ref(database, `rooms/${roomId}/game/round/activations`),
+        { tough: [playerId] },
+      );
+    },
+    [roomId],
+  );
+
   const loading = roomId !== undefined && loadedFor !== roomId;
 
-  return { game, loading, submitCommit, submitDuck };
+  return { game, loading, submitCommit, submitDuck, submitSpecialist, submitTough };
 }
