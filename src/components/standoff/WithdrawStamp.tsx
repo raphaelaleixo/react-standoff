@@ -37,7 +37,7 @@ export function WithdrawStamp({ count }: WithdrawStampProps) {
           animation: `${fadeIn} ${durations.base}ms ease-out both`,
         }}
       >
-        — STRIKE THE COLOURS —
+        — TEST YOUR COURAGE —
       </Box>
       <Box
         sx={{
@@ -62,23 +62,6 @@ export function WithdrawStamp({ count }: WithdrawStampProps) {
         >
           {count}
         </Box>
-      </Box>
-      <Box
-        sx={{
-          position: "absolute",
-          top: "calc(100% + 1em)",
-          left: "50%",
-          transform: "translateX(-50%)",
-          whiteSpace: "nowrap",
-          fontFamily: fonts.body,
-          fontStyle: "italic",
-          fontSize: "1.05rem",
-          letterSpacing: "0.05em",
-          color: palette.paperDim,
-          animation: `${fadeIn} ${durations.base}ms ease-out both`,
-        }}
-      >
-        yield while you can…
       </Box>
     </Box>
   );

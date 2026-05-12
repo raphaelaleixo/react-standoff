@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -5,23 +6,28 @@ import {
   Box,
   CircularProgress,
   Container,
+  FormControlLabel,
+  Switch,
+  Typography,
 } from "@mui/material";
-import { ref, update } from "firebase/database";
+import { get, onValue, ref, set, update } from "firebase/database";
 import { buildJoinUrl, startGame, useRoomState } from "react-gameroom";
 import type { RoomState } from "react-gameroom";
-import type { Player } from "../game/types";
+import type { GameVariants, Player } from "../game/types";
 import { initGame } from "../game/setup";
 import { GameBoard } from "../components/GameBoard";
+import { PowerRevealOverlay } from "../components/powers/PowerRevealOverlay";
 import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
+import { useBigScreenZoom } from "../hooks/useBigScreenZoom";
 import { database } from "../firebase";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Masthead } from "../components/shell/Masthead";
 import { Foot } from "../components/shell/Foot";
-import { navyHoursLabel, toRoman } from "../lib/navyHours";
-import { countAlive, countDead, countYielded } from "../lib/playerCounts";
+import { FullscreenButton } from "../components/shell/FullscreenButton";
+import { toRoman } from "../lib/navyHours";
 
 const EMPTY_ROOM: RoomState<Player> = {
   roomId: "",
@@ -36,6 +42,13 @@ export default function RoomPage() {
   const { roomState, loading, error } = useFirebaseRoom(id);
   const { game } = useGameState(id);
   const derived = useRoomState(roomState ?? EMPTY_ROOM);
+  const [variantSuperPowers, setVariantSuperPowers] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    const r = ref(database, `rooms/${id}/lobbyVariants/superPowers`);
+    return onValue(r, snap => setVariantSuperPowers(!!snap.val()));
+  }, [id]);
 
   if (loading) {
     return (
@@ -63,15 +76,40 @@ export default function RoomPage() {
     if (!id || !roomState) return;
     if (!derived.canStart) return;
     const startedRoom = startGame(roomState);
+    const variantsSnap = await get(ref(database, `rooms/${id}/lobbyVariants`));
+    const variants: GameVariants =
+      (variantsSnap.val() as GameVariants | null) ?? { superPowers: false };
     const players = startedRoom.players
       .filter(p => p.status !== "empty" && p.data)
       .map(p => p.data as Player);
-    const initialGame = initGame(players, id, Date.now());
+    const initialGame = initGame(players, id, Date.now(), variants);
     await update(ref(database), {
       [`rooms/${id}/state`]: startedRoom,
       [`rooms/${id}/game`]: initialGame,
     });
   };
+
+  const onVariantToggle = async (next: boolean) => {
+    if (!id) return;
+    await set(ref(database, `rooms/${id}/lobbyVariants`), { superPowers: next });
+  };
+
+  const variantSlot = (
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={variantSuperPowers}
+            onChange={(_, v) => onVariantToggle(v)}
+          />
+        }
+        label={t("powers.variantLabel")}
+      />
+      <Typography variant="caption" sx={{ opacity: 0.7 }}>
+        {t("powers.variantHint")}
+      </Typography>
+    </Box>
+  );
 
   return (
     <MusterScreen
@@ -79,6 +117,7 @@ export default function RoomPage() {
       joinUrl={joinUrl}
       canStart={derived.canStart}
       onStart={onStart}
+      variantSlot={variantSlot}
     />
   );
 }
@@ -86,6 +125,7 @@ export default function RoomPage() {
 function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["game"]; roomId: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  useBigScreenZoom();
   if (!game) {
     return (
       <Container sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -111,19 +151,37 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
 
   const round = game.round;
   return (
-    <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
+    <Box sx={{ width: "100vw", height: "100vh" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(round.number) })}</em></>}
-          right={<>{t("shell.room")} <em>{roomId}</em></>}
+          left={<>{t("shell.room")} <em>{roomId}</em></>}
+          right={<FullscreenButton />}
         />
         <GameBoard game={game} />
         <Foot
-          left={`${countAlive(game)} ${t("shell.alive")} · ${countYielded(game)} ${t("shell.yielded")} · ${countDead(game)} ${t("shell.dead")}`}
-          cry={navyHoursLabel(round.number, t)}
-          right={t("shell.next")}
+          cry={<>{t("shell.round")} {t("shell.ofTotal", { n: toRoman(round.number) })}</>}
         />
       </PageCanvas>
+      {game.round.resolution && (
+        <PowerRevealOverlay
+          activations={
+            (game.round.resolution.powerActivations ?? []).filter(
+              a => a.kind === "unbreakable" || a.kind === "dragon_skin"
+            )
+          }
+          players={game.players}
+        />
+      )}
+      {(game.round.phase === "specialist_prompt" || game.round.phase === "tough_prompt") && game.round.resolution && (
+        <PowerRevealOverlay
+          activations={
+            (game.round.resolution.powerActivations ?? []).filter(
+              a => a.kind === "specialist" || a.kind === "tough"
+            )
+          }
+          players={game.players}
+        />
+      )}
     </Box>
   );
 }

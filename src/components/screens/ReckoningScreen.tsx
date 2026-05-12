@@ -4,12 +4,14 @@ import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { PageCanvas } from "../shell/PageCanvas";
 import { Masthead } from "../shell/Masthead";
+import { FullscreenButton } from "../shell/FullscreenButton";
 import { Button } from "../shell/Button";
-import { FlagFor, jollyRogerForColor } from "../flags";
+import { FlagFor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
-import { netScore } from "../../lib/score";
-import { toRoman } from "../../lib/navyHours";
+import { PowerCard } from "../powers/PowerCard";
+import { finalScore, rankPlayers } from "../../game/scoring";
 import { popIn, fadeIn } from "../../theme/animations";
 import type { Game, Player } from "../../game/types";
 
@@ -32,23 +34,13 @@ interface ReckoningScreenProps {
   onReturn: () => void;
 }
 
-// Dead players sort to the bottom regardless of cash, then by score, then by
-// fewer-shame (cleaner mutiny wins ties), then by more-wounds (the bloodied
-// underdog over the unscarred).
-function compareForRanking(a: Player, b: Player): number {
-  const aDead = a.status !== "alive";
-  const bDead = b.status !== "alive";
-  if (aDead !== bDead) return aDead ? 1 : -1;
-  const ds = netScore(b) - netScore(a);
-  if (ds !== 0) return ds;
-  const dShame = a.shame - b.shame;
-  if (dShame !== 0) return dShame;
-  return b.wounds - a.wounds;
-}
-
 export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, onReturn }: ReckoningScreenProps) {
   const { t } = useTranslation();
-  const ranked = [...game.players].sort(compareForRanking);
+  // Total kills across the voyage drives Davy Jones's Cut (six_feet_under)
+  // bonuses inside finalScore + each EndGameRow. `dead` is the terminal status
+  // so we can count it directly off the live roster.
+  const totalKills = game.players.filter((p) => p.status === "dead").length;
+  const ranked = rankPlayers(game.players, totalKills);
   const winner = ranked[0];
   const rest = ranked.slice(1);
 
@@ -60,11 +52,11 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
   const buttonsDelayMs = winnerDelayMs + WINNER_DURATION_MS + BUTTONS_AFTER_WINNER_MS - 200;
 
   return (
-    <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
+    <Box sx={{ width: "100vw", height: "100vh" }}>
       <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
         <Masthead
-          left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(game.round.number) })}</em></>}
-          right={<>{t("shell.room")} <em>{roomId}</em></>}
+          left={<>{t("shell.room")} <em>{roomId}</em></>}
+          right={<FullscreenButton />}
         />
 
         <Box
@@ -73,12 +65,16 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
             padding: "0.6rem 2rem",
             display: "flex",
             flexDirection: "column",
-            borderTop: `4px double ${palette.ruleStrong}`,
-            borderBottom: `4px double ${palette.ruleStrong}`,
             minHeight: 0,
           }}
         >
-          <WinnerEnthronement winner={winner} t={t} enterDelayMs={winnerDelayMs} durationMs={WINNER_DURATION_MS} />
+          <WinnerEnthronement
+            winner={winner}
+            t={t}
+            enterDelayMs={winnerDelayMs}
+            durationMs={WINNER_DURATION_MS}
+            totalKills={totalKills}
+          />
 
           <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "auto", marginTop: "0.4rem" }}>
             {rest.map((p, i) => (
@@ -88,6 +84,7 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
                 player={p}
                 eliminatedRound={eliminatedByRound[p.id] ?? null}
                 enterDelayMs={(rest.length - 1 - i) * ROW_STAGGER_MS}
+                totalKills={totalKills}
               />
             ))}
           </Box>
@@ -95,7 +92,7 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
 
         <Box
           sx={{
-            padding: "0.7rem 1.5rem 0.8rem",
+            padding: "0.7rem 1.5rem 1.6rem",
             display: "flex",
             justifyContent: "center",
             gap: "1.5rem",
@@ -119,14 +116,16 @@ function WinnerEnthronement({
   t,
   enterDelayMs,
   durationMs,
+  totalKills,
 }: {
   winner: Player;
   t: (k: string, p?: Record<string, unknown>) => string;
   enterDelayMs: number;
   durationMs: number;
+  totalKills: number;
 }) {
   const winnerDead = winner.status !== "alive";
-  const score = netScore(winner);
+  const score = finalScore(winner, totalKills);
   const titleColor = winnerDead ? palette.paperDim : palette.paper;
   // Sub-stagger inside the winner block: the eyebrow leads, the medallion
   // pops in with the most flourish, and the cry tags out at the end.
@@ -138,7 +137,6 @@ function WinnerEnthronement({
       sx={{
         textAlign: "center",
         padding: "0.8rem 0 0.6rem",
-        borderBottom: `1px solid ${palette.rule}`,
         marginBottom: "0.6rem",
       }}
     >
@@ -219,6 +217,20 @@ function WinnerEnthronement({
           >
             ${score.toLocaleString()}
           </Box>
+          {winner.effects.length > 0 && (
+            <Box
+              sx={{
+                display: "flex",
+                gap: "0.5rem",
+                marginTop: "0.6rem",
+                animation: `${fadeIn} 500ms ease-out ${medallionDelayMs + 160}ms both`,
+              }}
+            >
+              {winner.effects.map((e) => (
+                <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
+              ))}
+            </Box>
+          )}
         </Box>
       </Box>
       <Box

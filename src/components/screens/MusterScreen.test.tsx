@@ -39,13 +39,14 @@ function stub(colorOrAvatar: string, displayName: string): Player {
 describe("MusterScreen", () => {
   it("renders the room code", () => {
     render(<MusterScreen roomState={makeRoom()} joinUrl="https://x/join/QSPY" canStart onStart={() => {}} />);
-    expect(screen.getByText("QSPY")).toBeInTheDocument();
+    // Code appears in both the masthead and the big punch-in tile.
+    expect(screen.getAllByText("QSPY").length).toBeGreaterThan(0);
   });
 
   it("renders one card per claimed player and a placeholder per empty seat", () => {
     render(<MusterScreen roomState={makeRoom()} joinUrl="https://x" canStart onStart={() => {}} />);
-    expect(screen.getByText(/CALICO JACK/i)).toBeInTheDocument();
-    expect(screen.getByText(/BLACKBEARD/i)).toBeInTheDocument();
+    expect(screen.getByText(/MAUD/i)).toBeInTheDocument();
+    expect(screen.getByText(/MARY/i)).toBeInTheDocument();
     expect(screen.getAllByText(/EMPTY SEAT/i)).toHaveLength(2);
   });
 

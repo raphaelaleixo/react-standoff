@@ -10,28 +10,21 @@
 
 import { useEffect, useState } from "react";
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import type { BulletCard, Game, RoundPhase } from "../game/types";
+import type { BulletCard, Game, PowerKind } from "../game/types";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
-import { DevControlsPanel } from "../components/dev/DevControlsPanel";
+import { DevControlsPanel, type DevScreen } from "../components/dev/DevControlsPanel";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS } from "../lib/phaseDurations";
-import { FIXTURE_GAME_PHONE, MOCK_PHONE_PRESPENT } from "../components/dev/mockFixtures";
-
-const PHASE_LABEL: Record<RoundPhase, string> = {
-  commit: "LOAD & AIM",
-  standoff: "STANDOFF",
-  standoff_hold: "STANDOFF",
-  withdraw: "YIELD?",
-  reveal_withdraw: "REVEAL",
-  reveal_bbb: "REVEAL",
-  reveal_others: "REVEAL",
-  split: "SPLIT",
-};
+import {
+  FIXTURE_GAME_PHONE,
+  MOCK_PHONE_PRESPENT,
+  RECKONING_GAME,
+} from "../components/dev/mockFixtures";
 
 export default function MockPlayerPage() {
   const { game, actions } = useMockGameState(FIXTURE_GAME_PHONE);
@@ -39,6 +32,30 @@ export default function MockPlayerPage() {
   // Default to player "a" (Cap'n Maud) so you land on a populated hand. The
   // selector at the top of the page lets you switch seats live.
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("a");
+  // Dev-screen toggle — mirrors MockBigScreen. "reckoning" swaps the live
+  // mock game for the RECKONING fixture so the phone end-game view can be
+  // previewed without driving an actual game to phase "ended". "muster" has
+  // no player-side surface and just falls through to the in-game ledger.
+  const [screen, setScreen] = useState<DevScreen>("game");
+  const isReckoning = screen === "reckoning";
+  // Super Powers variant toggle + per-seat power injector. Flipping the
+  // variant lights up variant-conditional UI in PhaseView; the power
+  // injector lets the dev preview the start-reveal / power widget paths
+  // without having to actually deal the game.
+  const [variantOn, setVariantOn] = useState(false);
+  const [myPower, setMyPower] = useState<PowerKind | null>(null);
+  const baseRenderGame: Game = isReckoning ? RECKONING_GAME : game;
+  // Apply variant + power injection to whatever game we're rendering. We
+  // only ever push the power into the active seat — other seats stay clean.
+  const renderGame: Game = {
+    ...baseRenderGame,
+    variants: { superPowers: variantOn },
+    players: baseRenderGame.players.map(p =>
+      p.id === selectedPlayerId
+        ? { ...p, effects: myPower ? [{ kind: myPower, revealed: false, used: false }] : p.effects }
+        : p,
+    ),
+  };
 
   // Mock-only auto-advance through standoff → standoff_hold → withdraw, same
   // as MockBigScreen so the phone surface previews the production pacing.
@@ -58,7 +75,10 @@ export default function MockPlayerPage() {
     }
   }, [game.round.phase, standoffCount, actions]);
 
-  const me = game.players.find(p => p.id === selectedPlayerId) ?? game.players[0];
+  // Source of seats follows whichever game we're rendering — switching to
+  // reckoning shows the RECKONING_PLAYERS roster in the seat selector.
+  const me =
+    renderGame.players.find(p => p.id === selectedPlayerId) ?? renderGame.players[0];
 
   // Wire the mock state's setCommit into the submitCommit / submitDuck signature
   // PhaseView expects, so the commit picker actually persists picks into the
@@ -73,36 +93,35 @@ export default function MockPlayerPage() {
   // For commit phase the dev wants to interact with the picker, so we mask
   // out the active player's existing commit (if any) before passing the
   // game through. Other phases need the commits intact for the right UI
-  // (standoff aim target, withdraw aimed-at-list, etc.).
-  const phoneGame: Game =
-    game.round.phase === "commit" && game.round.commits[selectedPlayerId]
-      ? {
-          ...game,
-          round: {
-            ...game.round,
-            commits: { ...game.round.commits, [selectedPlayerId]: {} },
-          },
-        }
-      : game;
+  // (standoff aim target, withdraw aimed-at-list, etc.). In reckoning the
+  // fixture is frozen so we hand it through untouched.
+  const phoneGame: Game = isReckoning
+    ? renderGame
+    : renderGame.round.phase === "commit" && renderGame.round.commits[selectedPlayerId]
+    ? {
+        ...renderGame,
+        round: {
+          ...renderGame.round,
+          commits: { ...renderGame.round.commits, [selectedPlayerId]: {} },
+        },
+      }
+    : renderGame;
 
   return (
     <>
       <SeatSelector
-        players={game.players.map(p => ({ id: p.id, displayName: p.displayName }))}
-        selectedId={selectedPlayerId}
+        players={renderGame.players.map(p => ({ id: p.id, displayName: p.displayName }))}
+        selectedId={me.id}
         onSelect={setSelectedPlayerId}
       />
-      <PhoneShell
-        me={me}
-        round={game.round.number}
-        phaseLabel={PHASE_LABEL[game.round.phase]}
-      >
+      <PhoneShell me={me} roomId="MOCK">
+
         <PhaseView
           game={phoneGame}
           me={me}
           submitCommit={submitCommit}
           submitDuck={submitDuck}
-          handPrespent={MOCK_PHONE_PRESPENT[me.id] ?? []}
+          handPrespent={isReckoning ? [] : MOCK_PHONE_PRESPENT[me.id] ?? []}
         />
       </PhoneShell>
       <DevControlsPanel
@@ -110,8 +129,12 @@ export default function MockPlayerPage() {
         game={game}
         actions={actions}
         onClose={() => setOpen(false)}
-        screen="game"
-        onScreenChange={() => {}}
+        screen={screen}
+        onScreenChange={setScreen}
+        variantSuperPowers={variantOn}
+        onVariantSuperPowersChange={setVariantOn}
+        myPower={myPower}
+        onMyPowerChange={setMyPower}
       />
     </>
   );

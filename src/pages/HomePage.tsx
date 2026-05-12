@@ -1,28 +1,49 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Box } from "@mui/material";
+import { Alert, Box, Link } from "@mui/material";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Button } from "../components/shell/Button";
 import { StandoffLogo } from "../components/shell/StandoffLogo";
+import { Ludoratory } from "../components/shell/Ludoratory";
+import { createRoom } from "../lib/createRoom";
 
 export default function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onNewGame = async () => {
+    if (creating) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const id = await createRoom();
+      navigate(`/room/${id}`);
+    } catch (e) {
+      console.error("createRoom failed:", e);
+      setError((e as Error).message);
+      setCreating(false);
+    }
+  };
   return (
     <Box
       sx={{
-        width: "100vw",
+        position: "relative",
+        zIndex: 1,
         minHeight: "100vh",
-        padding: "8px",
+        padding: "2rem 8px",
         boxSizing: "border-box",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        gap: "0.4rem",
       }}
     >
-      <PageCanvas sx={{ width: "min(560px, 100%)", padding: "3rem 2rem" }}>
+      <PageCanvas sx={{ width: "min(560px, 100%)", padding: "2rem 2rem" }}>
         <Box
           sx={{
             display: "flex",
@@ -61,10 +82,11 @@ export default function HomePage() {
               marginTop: "1rem",
             }}
           >
-            <Button fullWidth onClick={() => navigate("/join")}>
-              {t("home.newGame").toUpperCase()}
+            <Button fullWidth onClick={onNewGame} disabled={creating}>
+              {(creating ? t("home.newGameSubmitting") : t("home.newGame")).toUpperCase()}
             </Button>
-            <Button variant="ghost" fullWidth onClick={() => navigate("/join")}>
+            {error && <Alert severity="error">{error}</Alert>}
+            <Button variant="ghost" fullWidth onClick={() => navigate("/join")} disabled={creating}>
               {t("home.resumeGame").toUpperCase()}
             </Button>
             <Button variant="text" fullWidth onClick={() => navigate("/how-to-play")}>
@@ -73,6 +95,57 @@ export default function HomePage() {
           </Box>
         </Box>
       </PageCanvas>
+      <Box
+        component="footer"
+        sx={{
+          width: "min(560px, 100%)",
+          padding: "1rem 1.2rem 0.6rem",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "0.7rem",
+          color: palette.paper,
+          borderTop: `1px solid ${palette.rule}`,
+        }}
+      >
+        <Ludoratory size={32} />
+        <Box
+          sx={{
+            fontFamily: fonts.body,
+            fontSize: "0.78rem",
+            lineHeight: 1.45,
+            color: palette.paperDim,
+            textAlign: "center",
+          }}
+        >
+          <Box>
+            {t("footer.madeByPrefix")}
+            <Link
+              href="https://ludoratory.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="none"
+              sx={{ color: "inherit" }}
+            >
+              {t("footer.madeByLink")}
+            </Link>
+            {t("footer.madeBySuffix")}
+          </Box>
+          <Box>
+            {t("footer.licensePrefix")}
+            <Link
+              href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="none"
+              sx={{ color: "inherit" }}
+            >
+              {t("footer.licenseLink")}
+            </Link>
+            {t("footer.licenseSuffix")}
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 }

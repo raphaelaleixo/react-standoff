@@ -7,10 +7,21 @@ export interface Banknote {
 
 export type Denomination = Banknote["value"];
 
-// Reserved hook for v2 super powers / secret roles. Not instantiated in v1.
-export interface Effect {
-  kind: string;
+export type PowerKind =
+  | 'six_feet_under'
+  | 'unbreakable'
+  | 'dragon_skin'
+  | 'super_coward'
+  | 'specialist'
+  | 'tough';
+
+export interface PowerEffect {
+  kind: PowerKind;
+  revealed: boolean;
+  used?: boolean;
 }
+
+export type Effect = PowerEffect;
 
 export interface Player {
   id: string;
@@ -18,7 +29,7 @@ export interface Player {
   colorOrAvatar: string;
   bullets: BulletCard[];
   cash: Banknote[];
-  wounds: 0 | 1 | 2 | 3;
+  wounds: 0 | 1 | 2 | 3 | 4;
   shame: number;
   status: 'alive' | 'dead';
   effects: Effect[];
@@ -31,7 +42,9 @@ export type RoundPhase =
   | 'withdraw'
   | 'reveal_withdraw'
   | 'reveal_bbb'
+  | 'specialist_prompt'
   | 'reveal_others'
+  | 'tough_prompt'
   | 'split';
 
 export interface Commit {
@@ -53,6 +66,17 @@ export interface RoundShot {
   outcome: ShotOutcome;
 }
 
+export interface PowerActivation {
+  playerId: string;
+  kind: PowerKind;
+  context?: Record<string, unknown>;
+}
+
+export interface RoundActivations {
+  specialist?: { playerId: string; discardedBulletKind: BulletCard };
+  tough?: string[];
+}
+
 export interface RoundResolution {
   shots: RoundShot[];
   ducks: string[];
@@ -61,6 +85,7 @@ export interface RoundResolution {
   eliminated: string[];
   awards: Record<string, Banknote[]>;
   carryover: Banknote[];
+  powerActivations: PowerActivation[];
 }
 
 export interface Round {
@@ -69,10 +94,15 @@ export interface Round {
   phaseStartedAt: number;
   loot: Banknote[];
   commits: Record<string, Commit>;
+  activations: RoundActivations;
   resolution?: RoundResolution;
 }
 
 export type GamePhase = 'lobby' | 'in_progress' | 'ended';
+
+export interface GameVariants {
+  superPowers: boolean;
+}
 
 export interface Game {
   phase: GamePhase;
@@ -81,5 +111,6 @@ export interface Game {
   bankDeck: Banknote[];
   discardedBullets: BulletCard[];
   seed: string;
+  variants: GameVariants;
   previousRoundSummary?: { round: number; resolution: RoundResolution };
 }

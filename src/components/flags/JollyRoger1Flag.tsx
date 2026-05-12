@@ -1,5 +1,5 @@
 // Jolly Roger variant 1.
-export function JollyRoger1Flag({ size = 64 }: { size?: number }) {
+export function JollyRoger1Flag({ size = 64 }: { size?: number | string }) {
   return (
     <svg viewBox="0 0 14 14" width={size} height={size} role="img" aria-label="Jolly Roger">
       <g fill="currentColor">

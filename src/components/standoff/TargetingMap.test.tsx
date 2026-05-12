@@ -13,9 +13,10 @@ function makeGame(overrides?: Partial<Game>): Game {
       number: 1,
       phase: "standoff",
       phaseStartedAt: 0,
-      loot: [], commits: {},
+      loot: [], commits: {}, activations: {},
     },
     bankDeck: [], discardedBullets: [], phase: "in_progress",
+    variants: { superPowers: false },
   };
   return { ...base, ...overrides };
 }

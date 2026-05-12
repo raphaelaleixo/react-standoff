@@ -1,7 +1,6 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Fade } from "@mui/material";
 import type { Game } from "../game/types";
-import { palette } from "../theme/colors";
 import { HoardList } from "./hoard/HoardList";
 import { TargetingMap } from "./standoff/TargetingMap";
 import { StandoffStamp } from "./standoff/StandoffStamp";
@@ -23,18 +22,65 @@ const REVEAL_LABEL: Partial<Record<Game["round"]["phase"], string>> = {
   reveal_others: "Shots",
 };
 
-export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
+// Split-phase choreography. The state machine doesn't apply awards until the
+// split → next-round transition fires; here we run a purely-visual transform
+// so the screen reads as a sequence: notes leave the table first, then a beat
+// later the standing players' cash ticks up. The next round's draw lands when
+// the real transition fires (HoardList's dropIn handles those new IDs).
+const SPLIT_AWARDS_REVEAL_DELAY_MS = 250;
+
+function useSplitDisplayGame(game: Game): Game {
+  const inSplit = game.round.phase === "split" && !!game.round.resolution;
+  // Latch the phaseStartedAt of the split whose award reveal has fired. The
+  // effect only sets the latch (no synchronous reset) — leaving the split
+  // phase doesn't need to clear anything because the derived `awardsRevealed`
+  // is gated on `inSplit` and `revealedFor === game.round.phaseStartedAt`,
+  // so it falls back to false naturally when either condition stops holding.
+  const [revealedFor, setRevealedFor] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!inSplit) return;
+    const t = setTimeout(
+      () => setRevealedFor(game.round.phaseStartedAt),
+      SPLIT_AWARDS_REVEAL_DELAY_MS,
+    );
+    return () => clearTimeout(t);
+  }, [inSplit, game.round.phaseStartedAt]);
+
+  const awardsRevealed = inSplit && revealedFor === game.round.phaseStartedAt;
+
+  if (!inSplit) return game;
+  const resolution = game.round.resolution!;
+  const players = awardsRevealed
+    ? game.players.map(p => {
+        const won = resolution.awards[p.id];
+        if (!won || won.length === 0) return p;
+        return { ...p, cash: [...p.cash, ...won] };
+      })
+    : game.players;
+  return {
+    ...game,
+    players,
+    round: { ...game.round, loot: resolution.carryover },
+  };
+}
+
+export function GameBoard({ game: rawGame, freshlyStruck }: GameBoardProps) {
+  const game = useSplitDisplayGame(rawGame);
   const inStandoff = game.round.phase === "standoff";
   const count = useStandoffCount({
     active: inStandoff,
     startedAt: game.round.phaseStartedAt,
     durationMs: STANDOFF_DURATION_MS,
   });
-  // Latch the last visible count so the StandoffStamp keeps reading the
-  // same digit while it fades out. The standoff phase persists for an
-  // extra silent beat (STANDOFF_HOLD_MS) after the count reaches 0; we
-  // hide the stamp at that point so the "0" digit isn't held on screen.
+  // Latch the last visible count/seconds/label so the stamp keeps reading
+  // the same value while it fades out. Updating these refs during render is
+  // intentional: lifting the latch into state would put the stamp's first
+  // frame at the stale (initial) value for one render, briefly flashing the
+  // wrong digit before the effect commits. The render-time write is exactly
+  // the canonical "useRef as render-cache" pattern.
   const lastCountRef = useRef(0);
+  // eslint-disable-next-line react-hooks/refs
   if (count !== null && count > 0) lastCountRef.current = count;
   const showStamp = inStandoff && count !== null && count > 0;
 
@@ -45,11 +91,13 @@ export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
     durationMs: WITHDRAW_DURATION_MS,
   });
   const lastWithdrawRef = useRef(0);
+  // eslint-disable-next-line react-hooks/refs
   if (withdrawSeconds !== null) lastWithdrawRef.current = withdrawSeconds;
   const showWithdraw = inWithdraw && withdrawSeconds !== null;
 
   const revealLabel = REVEAL_LABEL[game.round.phase];
   const lastRevealLabelRef = useRef("");
+  // eslint-disable-next-line react-hooks/refs
   if (revealLabel) lastRevealLabelRef.current = revealLabel;
   const showReveal = !!revealLabel;
 
@@ -68,8 +116,6 @@ export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
           flex: 1,
           display: "grid",
           gridTemplateColumns: "25% 50% 25%",
-          borderTop: `4px double ${palette.ruleStrong}`,
-          borderBottom: `4px double ${palette.ruleStrong}`,
           minHeight: 0,
         }}
       >
@@ -92,16 +138,19 @@ export function GameBoard({ game, freshlyStruck }: GameBoardProps) {
               <>
                 <Fade in={showStamp} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
                   <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     <StandoffStamp count={lastCountRef.current} />
                   </Box>
                 </Fade>
                 <Fade in={showWithdraw} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
                   <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     <WithdrawStamp count={lastWithdrawRef.current} />
                   </Box>
                 </Fade>
                 <Fade in={showReveal} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
                   <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     <RevealStamp label={lastRevealLabelRef.current} />
                   </Box>
                 </Fade>

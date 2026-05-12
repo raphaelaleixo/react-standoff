@@ -2,10 +2,13 @@ import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
-import { FlagFor, jollyRogerForColor } from "../flags";
+import { FlagFor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
+import { PowerCard } from "../powers/PowerCard";
 import type { Player } from "../../game/types";
-import { cashTotal, shamePenalty, netScore } from "../../lib/score";
+import { cashTotal } from "../../lib/score";
+import { finalScore, hasEffect } from "../../game/scoring";
 import { toRoman } from "../../lib/navyHours";
 import { slideUpIn } from "../../theme/animations";
 
@@ -16,21 +19,30 @@ interface EndGameRowProps {
   eliminatedRound: number | null;
   /** Stagger delay for the entrance animation (ms). 0 = animates immediately. */
   enterDelayMs?: number;
+  /**
+   * Number of crew killed across the voyage. Drives Davy Jones's Cut
+   * (six_feet_under) bonus rendering and is folded into `finalScore`. Defaults
+   * to 0 so the base-game callsite doesn't have to thread it.
+   */
+  totalKills?: number;
 }
 
-// Each piece of info gets its own grid column so values line up across rows
-// like a proper ledger. Widths are fixed where the content is bounded
-// (rank, chip, pips, money strings) so vertical alignment holds even when
-// cash totals shrink or shame counts vary; the name column is the only
-// flex 1fr.
-const GRID_COLUMNS = "44px 60px 1fr 52px 80px 110px 110px 130px";
+// One grid column per ledger field so columns line up across rows. The Undertaker
+// (six_feet_under) bonus and the held-powers strip have their own columns so the
+// base-game layout is unchanged when those segments don't render. The shame
+// column flips sign when super_coward is held — same column, same width, just
+// "+" in success.main instead of "− " in blood.
+const GRID_COLUMNS = "44px 60px 1fr 52px 80px 110px 110px 110px 130px auto";
 
-export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0 }: EndGameRowProps) {
+export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, totalKills = 0 }: EndGameRowProps) {
   const { t } = useTranslation();
   const dead = player.status === "dead";
   const cash = cashTotal(player);
-  const penalty = shamePenalty(player);
-  const score = dead ? null : netScore(player);
+  const isCoward = hasEffect(player, "super_coward");
+  const hasUndertaker = hasEffect(player, "six_feet_under");
+  const shameAbs = player.shame * 5000;
+  const undertakerBonus = totalKills * 10000;
+  const score = dead ? null : finalScore(player, totalKills);
   return (
     <Box
       sx={{
@@ -116,10 +128,19 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0 }: 
       </Box>
       {/* Cash */}
       <MoneyCell value={dead ? null : `$${cash.toLocaleString()}`} color={palette.paper} />
-      {/* Shame penalty (negative) */}
+      {/* Shame line — sign flips for super_coward (Yellow-Belly's Purse): the
+          shame becomes a bonus rather than a penalty. Hidden when shame is 0
+          or the player is dead, regardless of variant. */}
       <MoneyCell
-        value={dead || player.shame === 0 ? null : `− $${penalty.toLocaleString()}`}
-        color={palette.blood}
+        value={dead || player.shame === 0 ? null : isCoward ? `+$${shameAbs.toLocaleString()}` : `− $${shameAbs.toLocaleString()}`}
+        color={isCoward ? palette.gold : palette.blood}
+      />
+      {/* Undertaker (six_feet_under) bonus — only renders when the player
+          holds Davy Jones's Cut. Column is reserved even when empty so other
+          rows line up. */}
+      <MoneyCell
+        value={hasUndertaker && !dead ? `+$${undertakerBonus.toLocaleString()}` : null}
+        color={palette.gold}
       />
       {/* Net score / DEAD */}
       <Box
@@ -135,6 +156,14 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0 }: 
         }}
       >
         {dead ? t("reckoning.dead") : `$${score!.toLocaleString()}`}
+      </Box>
+      {/* Held powers — flip face-up at the reckoning so unrevealed cards get
+          their "I had X all along" moment. Empty in the base game (no effects),
+          so the column collapses naturally. */}
+      <Box sx={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end" }}>
+        {player.effects.map((e) => (
+          <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
+        ))}
       </Box>
     </Box>
   );

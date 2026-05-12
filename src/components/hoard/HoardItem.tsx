@@ -19,7 +19,7 @@ export function HoardItem({ value }: HoardItemProps) {
     <Box
       sx={{
         position: "relative",
-        padding: "0.75rem 0.6rem",
+        padding: "1.1rem 0.6rem",
         clipPath:
           "polygon(6px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px)",
         backgroundColor: palette.ruleStrong,
@@ -52,10 +52,13 @@ export function HoardItem({ value }: HoardItemProps) {
         <Box
           sx={{
             fontFamily: fonts.blackletter,
-            fontWeight: 400,
+            fontWeight: 700,
             fontSize: "1.4rem",
             letterSpacing: "0.02em",
-            color: palette.paper,
+            color:
+              value === 20000 ? palette.jewelPurple :
+              value === 10000 ? palette.yellow :
+              palette.paper,
             textBox: "trim-both ex alphabetic",
             lineHeight: 1,
           }}

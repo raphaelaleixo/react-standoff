@@ -13,7 +13,7 @@ export function Foot({ left, cry, right }: FootProps) {
     <Box
       component="footer"
       sx={{
-        padding: "0.4rem 1.5rem 0.45rem",
+        padding: "1rem 1.5rem 1.05rem",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",

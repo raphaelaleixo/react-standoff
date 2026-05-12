@@ -73,7 +73,7 @@ function PlaceholderSpent() {
     <Box
       sx={{
         position: "relative",
-        aspectRatio: "2 / 3",
+        aspectRatio: "3 / 4",
         background: palette.inkUp,
         border: `1.5px solid ${palette.paper}`,
         boxShadow: `2px 2px 0 ${palette.inkDeep}`,

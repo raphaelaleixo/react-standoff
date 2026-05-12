@@ -47,6 +47,13 @@ export const pulse = keyframes`
   50%      { transform: scale(1.3); }
 `;
 
+// Slow opacity breath — for idle/waiting copy. Soft sine-like fade in and
+// out so the line keeps the eye without strobing.
+export const breath = keyframes`
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+`;
+
 // Blood-splash entrance: starts undersized and slightly rotated, overshoots
 // to suggest impact, then settles. Used by the struck-roundel halo.
 export const bloodSplash = keyframes`

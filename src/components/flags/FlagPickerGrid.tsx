@@ -2,7 +2,8 @@ import { Box } from "@mui/material";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
 import { FlagFor } from ".";
-import { FLAG_IDS, FLAG_LABELS } from "../../game/playerFlags";
+import { jollyRogerForColor } from "./jollyRogerForColor";
+import { FLAG_IDS } from "../../game/playerFlags";
 
 interface FlagPickerGridProps {
   /** Set of flag ids already claimed by other players. Disabled in the grid. */
@@ -12,17 +13,20 @@ interface FlagPickerGridProps {
   onChange: (id: string) => void;
 }
 
-// 3-column grid of flag tiles for the player join screen. Tile shows the
-// historical pirate flag SVG tinted in the flag colour, with the flag name
-// in displayCaps small caps beneath. This is the one place in the app where
-// the original pirate flags appear (not the per-colour jolly rogers) — the
-// player is choosing which historical pirate to fly under, and the distinct
-// flag designs are how they tell the options apart.
+// 3-column grid of flag tiles for the player join screen. Each tile renders
+// the per-colour jolly roger (via `jollyRogerForColor`) tinted in its flag
+// colour — players pick by colour silhouette, not pirate name.
 //
 // Tile states:
 // - Available: paper-bordered ink-up tile, lifted on hover, flag-color tint
 // - Selected: ink-bg + paper inset border + blood drop-shadow + lifted
 // - Taken: dashed paperFaint border, no shadow, "TAKEN" badge, no tap response
+// `generic` is a fallback flag for unset players (used in big-screen / phone
+// views when a slot has no colour yet) — it's not a pick-able identity, so
+// exclude it from the picker. Without this filter it would also collide with
+// `calico_jack` since both map to the same jolly-roger silhouette.
+const PICKABLE_FLAGS = FLAG_IDS.filter(id => id !== "generic");
+
 export function FlagPickerGrid({ taken, value, onChange }: FlagPickerGridProps) {
   return (
     <Box
@@ -33,12 +37,12 @@ export function FlagPickerGrid({ taken, value, onChange }: FlagPickerGridProps) 
         padding: "0.4rem 0.85rem",
       }}
     >
-      {FLAG_IDS.map((id, i) => {
+      {PICKABLE_FLAGS.map((id, i) => {
         const isTaken = taken.has(id);
         const isSel = value === id;
         // If the row count modulo 3 leaves one orphan tile at the end, centre
         // it in the second column so the grid doesn't look amputated.
-        const lastSlot = i === FLAG_IDS.length - 1 && FLAG_IDS.length % 3 === 1;
+        const lastSlot = i === PICKABLE_FLAGS.length - 1 && PICKABLE_FLAGS.length % 3 === 1;
         return (
           <Box
             key={id}
@@ -63,53 +67,42 @@ export function FlagPickerGrid({ taken, value, onChange }: FlagPickerGridProps) 
             sx={{
               gridColumn: lastSlot ? 2 : undefined,
               background: isSel
-                ? palette.ink
+                ? flagColor(id)
                 : isTaken
-                  ? "rgba(20,17,13,0.06)"
+                  ? palette.inkUp
                   : palette.inkUp,
-              border: `2px ${isTaken ? "dashed" : "solid"} ${
-                isTaken ? palette.paperFaint : palette.paper
+              border: `${isSel ? 3 : 2}px ${isTaken ? "dashed" : "solid"} ${
+                isSel
+                  ? palette.blood
+                  : isTaken
+                    ? palette.paperDim
+                    : palette.paper
               }`,
               boxShadow: isSel
-                ? `3px 3px 0 ${palette.blood}, inset 0 0 0 2px ${palette.paper}`
+                ? `inset 0 0 0 2px ${palette.paper}, 5px 5px 0 ${palette.inkDeep}`
                 : !isTaken
                   ? `2px 2px 0 ${palette.inkDeep}`
                   : "none",
-              transform: isSel ? "translateY(-2px)" : "none",
-              aspectRatio: "1",
+              transform: isSel ? "translateY(-4px)" : "none",
+              opacity: isTaken ? 0.35 : 1,
+              aspectRatio: "52 / 36",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               gap: "0.25rem",
-              color: isTaken ? palette.paperFaint : flagColor(id),
+              color: isSel ? palette.paper : isTaken ? palette.paperDim : flagColor(id),
               cursor: isTaken ? "not-allowed" : "pointer",
               position: "relative",
               overflow: "hidden",
-              transition: "transform 0.12s ease",
+              transition: "transform 0.12s ease, background 0.18s ease, color 0.18s ease",
               "&:focus-visible": {
                 outline: `2px solid ${palette.blood}`,
                 outlineOffset: "2px",
               },
             }}
           >
-            <FlagFor id={id} size={42} />
-            <Box
-              sx={{
-                fontFamily: fonts.displayCaps,
-                fontFeatureSettings: '"smcp"',
-                fontSize: "0.55rem",
-                letterSpacing: "0.16em",
-                color: isTaken ? palette.paperFaint : palette.paper,
-                textAlign: "center",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: "100%",
-              }}
-            >
-              {FLAG_LABELS[id]}
-            </Box>
+            <FlagFor id={jollyRogerForColor(id)} size={44} />
             {isTaken && (
               <Box
                 sx={{
@@ -120,9 +113,9 @@ export function FlagPickerGrid({ taken, value, onChange }: FlagPickerGridProps) 
                   textAlign: "center",
                   fontFamily: fonts.displayCaps,
                   fontFeatureSettings: '"smcp"',
-                  fontSize: "0.5rem",
+                  fontSize: "0.7rem",
                   letterSpacing: "0.22em",
-                  color: palette.paperFaint,
+                  color: palette.paper,
                 }}
               >
                 TAKEN

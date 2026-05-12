@@ -42,6 +42,20 @@ const theme = createTheme({
       fontSize: "0.96rem",
     },
   },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        // Force lining figures everywhere — keeps UI numerals (cash, hours,
+        // room codes) consistent regardless of the serif's default figure
+        // style. `font-variant-numeric` inherits and survives child
+        // `font-feature-settings: "smcp"` overrides, since the two properties
+        // map to independent OpenType features.
+        body: {
+          fontVariantNumeric: "lining-nums",
+        },
+      },
+    },
+  },
 });
 
 export default theme;

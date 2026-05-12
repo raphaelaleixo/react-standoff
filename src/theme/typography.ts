@@ -3,14 +3,13 @@
 //   - displayCaps:    UI labels, button text, headings, status pills, column heads
 //   - body:           italic captions, nicknames, flavor lines, hints
 //
-// Crimson Pro is a single family on Google Fonts — small caps come from the
-// OpenType `smcp` feature. Pair `displayCaps` with `fontFeatureSettings:
-// '"smcp"'` at the call site (or via the theme variant) to get true small caps.
-//
-// Loaded via Google Fonts <link> in index.html.
+// Platypi is a single family on Google Fonts. Loaded via Google Fonts <link>
+// in index.html. Note: unlike Crimson Pro, Platypi does not ship an OpenType
+// `smcp` (small caps) feature — call sites that previously relied on it will
+// fall back to regular caps via `textTransform: 'uppercase'`.
 
 export const fonts = {
   blackletter: '"Grenze Gotisch", Georgia, serif',
-  displayCaps: '"Crimson Pro", Georgia, serif',
-  body: '"Crimson Pro", Georgia, serif',
+  displayCaps: '"Platypi", Georgia, serif',
+  body: '"Platypi", Georgia, serif',
 } as const;

@@ -6,19 +6,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { FullscreenButton } from "../components/shell/FullscreenButton";
 import { PageCanvas } from "../components/shell/PageCanvas";
 import { Masthead } from "../components/shell/Masthead";
 import { Foot } from "../components/shell/Foot";
 import { GameBoard } from "../components/GameBoard";
 import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
-import { navyHoursLabel, toRoman } from "../lib/navyHours";
-import { countAlive, countDead, countYielded } from "../lib/playerCounts";
-import type { Game } from "../game/types";
+import { toRoman } from "../lib/navyHours";
+import type { Game, PowerKind } from "../game/types";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel, type DevScreen } from "../components/dev/DevControlsPanel";
 import { useStandoffCount } from "../hooks/useStandoffCount";
+import { useBigScreenZoom } from "../hooks/useBigScreenZoom";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS } from "../lib/phaseDurations";
 import {
   FIXTURE_GAME,
@@ -31,42 +32,46 @@ import {
 
 export default function MockBigScreen() {
   const { t } = useTranslation();
+  useBigScreenZoom();
   const { game, actions } = useMockGameState(FIXTURE_GAME);
   const { open, setOpen } = useDevPanelToggle(true);
   const [screen, setScreen] = useState<DevScreen>("game");
+  // Super Powers variant dev controls. `variantOn` flips the Game.variants
+  // flag so any variant-conditional UI lights up; `forcedActivations` lets us
+  // inject synthetic power reveals into the round's resolution so the big-
+  // screen overlay can be visually reviewed without a live game.
+  const [variantOn, setVariantOn] = useState(false);
+  const [forcedActivations, setForcedActivations] = useState<PowerKind[]>([]);
 
   // Overlay a phase-appropriate resolution onto the mock game so the reveal
   // banners have data to render. The dev hook only tracks phase + commits;
   // the real resolver isn't wired in here, so we hand-pick a resolution per
   // phase. Other phases see no resolution and the banner stays hidden.
-  //
-  // For "split" we additionally redistribute loot to standing players' cash
-  // (so the cash tickers go up) and reduce game.round.loot to the carryover
-  // banknotes (so the awarded notes fade out of the hoard).
+  // GameBoard reads `resolution.awards` / `.carryover` to drive the split-
+  // phase choreography (notes leave table, then cash ticks up).
   const displayGame = useMemo<Game>(() => {
-    if (game.round.phase === "split") {
-      const awardedToC = game.round.loot.filter(n => n.id === "loot-1" || n.id === "loot-3");
-      const awardedToE = game.round.loot.filter(n => n.id === "loot-4");
-      const carryover = game.round.loot.filter(
-        n => n.id !== "loot-1" && n.id !== "loot-3" && n.id !== "loot-4",
-      );
-      const players = game.players.map(p => {
-        if (p.id === "c") return { ...p, cash: [...p.cash, ...awardedToC] };
-        if (p.id === "e") return { ...p, cash: [...p.cash, ...awardedToE] };
-        return p;
-      });
-      return {
-        ...game,
-        players,
-        round: { ...game.round, loot: carryover, resolution: RESOLUTION_KILL },
+    const firstPlayerId = game.players[0]?.id ?? "a";
+    const injected = forcedActivations.map(k => ({ playerId: firstPlayerId, kind: k }));
+    let resolution =
+      game.round.phase === "reveal_bbb" ? RESOLUTION_BROADSIDE :
+      game.round.phase === "reveal_others" || game.round.phase === "split" ? RESOLUTION_KILL :
+      undefined;
+    if (resolution && injected.length > 0) {
+      resolution = { ...resolution, powerActivations: [...resolution.powerActivations, ...injected] };
+    } else if (!resolution && injected.length > 0) {
+      // No real resolution this phase, but the dev injected activations —
+      // synthesize a minimal resolution shell so the overlay still fires.
+      resolution = {
+        shots: [], ducks: [], standing: [], woundedThisRound: {},
+        eliminated: [], awards: {}, carryover: [], powerActivations: injected,
       };
     }
-    const resolution =
-      game.round.phase === "reveal_bbb" ? RESOLUTION_BROADSIDE :
-      game.round.phase === "reveal_others" ? RESOLUTION_KILL :
-      undefined;
-    return { ...game, round: { ...game.round, resolution } };
-  }, [game]);
+    return {
+      ...game,
+      variants: { superPowers: variantOn },
+      round: { ...game.round, resolution },
+    };
+  }, [game, variantOn, forcedActivations]);
 
   // Mock-only auto-advance: in production the server transitions the round
   // out of standoff. Here, watch the StandoffStamp's count and advance to
@@ -112,17 +117,15 @@ export default function MockBigScreen() {
     );
   } else {
     surface = (
-      <Box sx={{ width: "100vw", height: "100vh", padding: 2, boxSizing: "border-box" }}>
+      <Box sx={{ width: "100vw", height: "100vh" }}>
         <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
           <Masthead
-            left={<>{t("shell.round")} <em>{t("shell.ofTotal", { n: toRoman(displayGame.round.number) })}</em></>}
-            right={<>{t("shell.room")} <em>MOCK</em></>}
+            left={<>{t("shell.room")} <em>MOCK</em></>}
+            right={<FullscreenButton />}
           />
           <GameBoard game={displayGame} />
           <Foot
-            left={`${countAlive(displayGame)} ${t("shell.alive")} · ${countYielded(displayGame)} ${t("shell.yielded")} · ${countDead(displayGame)} ${t("shell.dead")}`}
-            cry={navyHoursLabel(displayGame.round.number, t)}
-            right={t("shell.next")}
+            cry={<>{t("shell.round")} {t("shell.ofTotal", { n: toRoman(displayGame.round.number) })}</>}
           />
         </PageCanvas>
       </Box>
@@ -139,6 +142,10 @@ export default function MockBigScreen() {
         onClose={() => setOpen(false)}
         screen={screen}
         onScreenChange={setScreen}
+        variantSuperPowers={variantOn}
+        onVariantSuperPowersChange={setVariantOn}
+        forcedActivations={forcedActivations}
+        onForcedActivationsChange={setForcedActivations}
       />
     </>
   );

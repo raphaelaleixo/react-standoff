@@ -31,7 +31,7 @@ export function StandoffStamp({ count }: StandoffStampProps) {
           animation: `${fadeIn} ${durations.base}ms ease-out both`,
         }}
       >
-        — AT THE COUNT OF —
+        — AIM TO YOUR TARGET IN —
       </Box>
       <Box
         sx={{
@@ -60,34 +60,6 @@ export function StandoffStamp({ count }: StandoffStampProps) {
           }}
         >
           {count}
-        </Box>
-      </Box>
-      <Box
-        sx={{
-          position: "absolute",
-          top: "calc(100% + 1em)",
-          left: "50%",
-          transform: "translateX(-50%)",
-          whiteSpace: "nowrap",
-          fontFamily: fonts.body,
-          fontStyle: "italic",
-          fontSize: "1.05rem",
-          letterSpacing: "0.05em",
-          color: palette.paperDim,
-          animation: `${fadeIn} ${durations.base}ms ease-out both`,
-        }}
-      >
-        three… two… one…{" "}
-        <Box
-          component="span"
-          sx={{
-            fontFamily: fonts.displayCaps,
-            fontStyle: "normal",
-            letterSpacing: "0.3em",
-            color: palette.blood,
-          }}
-        >
-          STAND.
         </Box>
       </Box>
     </Box>

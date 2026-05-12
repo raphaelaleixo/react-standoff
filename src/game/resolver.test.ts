@@ -1,12 +1,16 @@
-import { describe, expect, test } from 'vitest';
-import type { Banknote, BulletCard, Commit, Player } from './types';
+import { describe, expect, it, test } from 'vitest';
+import type { Banknote, BulletCard, Commit, Player, PowerKind } from './types';
 import { resolveRound } from './resolver';
 
 let nextNoteId = 0;
-const note = (value: Banknote['value']): Banknote => ({
-  id: `n${nextNoteId++}`,
-  value,
-});
+function note(value: Banknote['value']): Banknote;
+function note(id: string, value: Banknote['value']): Banknote;
+function note(idOrValue: string | Banknote['value'], maybeValue?: Banknote['value']): Banknote {
+  if (typeof idOrValue === 'string') {
+    return { id: idOrValue, value: maybeValue! };
+  }
+  return { id: `n${nextNoteId++}`, value: idOrValue };
+}
 
 function p(id: string, opts: Partial<Player> = {}): Player {
   return {
@@ -19,6 +23,20 @@ function p(id: string, opts: Partial<Player> = {}): Player {
     shame: opts.shame ?? 0,
     status: opts.status ?? 'alive',
     effects: opts.effects ?? [],
+  };
+}
+
+function pl(id: string, opts: { wounds?: 0|1|2|3|4; powers?: PowerKind[] } = {}): Player {
+  return {
+    id,
+    displayName: id,
+    colorOrAvatar: 'calico_jack',
+    bullets: ['clic','clic','clic','clic','clic','bang','bang','bang_bang_bang'],
+    cash: [],
+    wounds: opts.wounds ?? 0,
+    shame: 0,
+    status: 'alive',
+    effects: (opts.powers ?? []).map(k => ({ kind: k, revealed: false, used: false })),
   };
 }
 
@@ -277,5 +295,180 @@ describe('resolveRound — end-of-round bookkeeping', () => {
       [],
     );
     expect(result.discardedBullets.sort()).toEqual(['bang', 'bang_bang_bang', 'clic']);
+  });
+});
+
+describe('resolveRound — Dragon Skin', () => {
+  it('clamps multi-wound to 1 and pushes activation', () => {
+    const players = [
+      pl('p1', { powers: ['dragon_skin'] }),
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.woundedThisRound.p1).toBe(1);
+    const act = resolution.powerActivations.find(a => a.kind === 'dragon_skin');
+    expect(act?.playerId).toBe('p1');
+  });
+
+  it('1 wound: no clamp, no activation (power stays hidden)', () => {
+    const players = [pl('p1', { powers: ['dragon_skin'] }), pl('p2'), pl('p3')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.woundedThisRound.p1).toBe(1);
+    expect(resolution.powerActivations).toEqual([]);
+  });
+
+  it('no Dragon Skin in hand: multi-wound unchanged (regression)', () => {
+    const players = [pl('p1'), pl('p2'), pl('p3')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.woundedThisRound.p1).toBe(2);
+    expect(resolution.powerActivations).toEqual([]);
+  });
+});
+
+describe('resolveRound — Unbreakable', () => {
+  it('player at 0 wounds + 3 incoming: not eliminated, activation pushed', () => {
+    const players = [
+      pl('p1', { wounds: 0, powers: ['unbreakable'] }),
+      pl('p2'), pl('p3'), pl('p4'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+      p4: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution, players: out } = resolveRound(commits, players, []);
+    expect(resolution.eliminated).not.toContain('p1');
+    const survived = out.find(p => p.id === 'p1');
+    expect(survived?.wounds).toBe(3);
+    expect(survived?.status).toBe('alive');
+    expect(resolution.powerActivations.some(a => a.kind === 'unbreakable')).toBe(true);
+  });
+
+  it('player at 0 wounds + 4 incoming: eliminated at 4', () => {
+    const players = [
+      pl('p1', { wounds: 0, powers: ['unbreakable'] }),
+      pl('p2'), pl('p3'), pl('p4'), pl('p5'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+      p4: { bullet: 'bang', target: 'p1' },
+      p5: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.eliminated).toContain('p1');
+  });
+
+  it('regression: non-Unbreakable still dies at 3 wounds', () => {
+    const players = [pl('p1', { wounds: 0 }), pl('p2'), pl('p3'), pl('p4')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+      p4: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.eliminated).toContain('p1');
+  });
+});
+
+describe('resolveRound — Tough', () => {
+  it('wounded holder activated: re-added to standing, gets share', () => {
+    const players = [
+      pl('p1', { powers: ['tough'] }),
+      pl('p2'), pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const loot = [note('n1', 10000), note('n2', 10000), note('n3', 10000)];
+    const { resolution } = resolveRound(commits, players, loot, { tough: ['p1'] });
+    expect(resolution.standing).toContain('p1');
+    expect(resolution.awards.p1).toBeDefined();
+    expect(resolution.powerActivations.some(a => a.kind === 'tough' && a.playerId === 'p1')).toBe(true);
+  });
+
+  it('no activation: wounded holder is not in standing (regression)', () => {
+    const players = [pl('p1', { powers: ['tough'] }), pl('p2'), pl('p3')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const { resolution } = resolveRound(commits, players, [], {});
+    expect(resolution.standing).not.toContain('p1');
+  });
+
+  it('dead holder cannot use Tough', () => {
+    const players = [
+      pl('p1', { wounds: 2, powers: ['tough'] }),
+      pl('p2'), pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p2' },
+    };
+    const { resolution } = resolveRound(commits, players, [], { tough: ['p1'] });
+    expect(resolution.standing).not.toContain('p1');
+    expect(resolution.eliminated).toContain('p1');
+  });
+});
+
+describe('resolveRound — Specialist', () => {
+  it('played B!B!B! + activation: B!B!B! stays in bullets, chosen kind discarded', () => {
+    const players = [
+      pl('p1', { powers: ['specialist'] }),
+      pl('p2'), pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'bang_bang_bang', target: 'p2' },
+      p2: { bullet: 'clic', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p1' },
+    };
+    const { players: out, discardedBullets } = resolveRound(
+      commits, players, [], { specialist: { playerId: 'p1', discardedBulletKind: 'clic' } },
+    );
+    const p1Out = out.find(p => p.id === 'p1')!;
+    expect(p1Out.bullets.filter(b => b === 'bang_bang_bang')).toHaveLength(1);
+    expect(p1Out.bullets.filter(b => b === 'clic')).toHaveLength(4); // started with 5 clics, -1 chosen
+    expect(discardedBullets).toContain('clic');
+    expect(discardedBullets).not.toContain('bang_bang_bang');
+    expect(p1Out.effects.find(e => e.kind === 'specialist')?.used).toBe(true);
+    expect(p1Out.effects.find(e => e.kind === 'specialist')?.revealed).toBe(true);
+  });
+
+  it('no activation: B!B!B! is discarded normally (regression)', () => {
+    const players = [pl('p1', { powers: ['specialist'] }), pl('p2'), pl('p3')];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'bang_bang_bang', target: 'p2' },
+      p2: { bullet: 'clic', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p1' },
+    };
+    const { players: out, discardedBullets } = resolveRound(commits, players, [], {});
+    const p1Out = out.find(p => p.id === 'p1')!;
+    expect(p1Out.bullets.filter(b => b === 'bang_bang_bang')).toHaveLength(0);
+    expect(discardedBullets).toContain('bang_bang_bang');
+    expect(p1Out.effects.find(e => e.kind === 'specialist')?.used).toBeFalsy();
   });
 });

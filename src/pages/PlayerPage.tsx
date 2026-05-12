@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -5,36 +6,33 @@ import {
   Box,
   CircularProgress,
   Container,
-  Stack,
+  Dialog,
+  DialogContent,
   Typography,
 } from "@mui/material";
-import type { RoundPhase } from "../game/types";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
 import { FlagFor } from "../components/flags";
-import { flagColor } from "../theme/colors";
+import { jollyRogerForColor } from "../components/flags/jollyRogerForColor";
+import { flagColor, palette } from "../theme/colors";
+import { fonts } from "../theme/typography";
+import { breath } from "../theme/animations";
+import { PageCanvas } from "../components/shell/PageCanvas";
+import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
-
-// Concise phase labels for the PhoneShell's round/phase strip. The four
-// reveal sub-phases collapse to "REVEAL" — the player has nothing to do
-// during them anyway; the big screen is the show.
-const PHASE_LABEL: Record<RoundPhase, string> = {
-  commit: "LOAD & AIM",
-  standoff: "STANDOFF",
-  standoff_hold: "STANDOFF",
-  withdraw: "YIELD?",
-  reveal_withdraw: "REVEAL",
-  reveal_bbb: "REVEAL",
-  reveal_others: "REVEAL",
-  split: "SPLIT",
-};
+import { PowerCard } from "../components/powers/PowerCard";
+import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptScreen";
+import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
+import { eligibleForSpecialist, eligibleForTough } from "../game/powers";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
-  const { game, submitCommit, submitDuck } = useGameState(id);
+  const { game, submitCommit, submitDuck, submitSpecialist, submitTough } = useGameState(id);
+  const [introDismissed, setIntroDismissed] = useState(false);
+  const [widgetOpen, setWidgetOpen] = useState(false);
 
   if (loading) {
     return (
@@ -65,18 +63,74 @@ export default function PlayerPage() {
   if (roomState.status === "lobby" || !game) {
     const flagId = slot.data?.colorOrAvatar ?? "generic";
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Stack spacing={3} sx={{ alignItems: "center" }}>
-          <Box sx={{ color: flagColor(flagId) }}>
-            <FlagFor id={flagId} size={96} />
+      <Box
+        sx={{
+          width: "100vw",
+          height: "100dvh",
+          padding: "8px",
+          boxSizing: "border-box",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <PageCanvas
+          borderRadius={28}
+          sx={{ width: "100%", maxWidth: "440px", height: "100%" }}
+        >
+          <PhoneHeader roomId={roomState.roomId} flagId={flagId} />
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "1.4rem",
+              padding: "1.5rem",
+              textAlign: "center",
+            }}
+          >
+            <Box
+              sx={{
+                width: "10rem",
+                height: "6.9rem",
+                background: flagColor(flagId),
+                color: palette.paper,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: `4px 4px 0 ${palette.inkDeep}`,
+              }}
+            >
+              <FlagFor id={jollyRogerForColor(flagId)} size="4.5rem" />
+            </Box>
+            <Box
+              sx={{
+                fontFamily: fonts.displayCaps,
+                fontSize: "1.7rem",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: palette.paper,
+              }}
+            >
+              {slot.name}
+            </Box>
+            <Box
+              sx={{
+                fontFamily: fonts.body,
+                fontStyle: "italic",
+                fontSize: "1.05rem",
+                color: palette.paperDim,
+                marginTop: "-1rem",
+                animation: `${breath} 2.4s ease-in-out infinite`,
+              }}
+            >
+              {t("player.lobbyWaiting")}
+            </Box>
           </Box>
-          <Typography variant="h5">{slot.name}</Typography>
-          <Box sx={{ textAlign: "center", py: 4 }}>
-            <CircularProgress size={32} sx={{ mb: 2 }} />
-            <Typography color="text.secondary">{t("player.lobbyWaiting")}</Typography>
-          </Box>
-        </Stack>
-      </Container>
+        </PageCanvas>
+      </Box>
     );
   }
 
@@ -89,18 +143,110 @@ export default function PlayerPage() {
     );
   }
 
-  return (
-    <PhoneShell
-      me={me}
-      round={game.round.number}
-      phaseLabel={PHASE_LABEL[game.round.phase]}
-    >
-      <PhaseView
-        game={game}
-        me={me}
-        submitCommit={submitCommit}
-        submitDuck={submitDuck}
+  const myPower = me.effects[0];
+  const showIntro =
+    game.variants.superPowers &&
+    !!myPower &&
+    !introDismissed &&
+    game.phase === "in_progress" &&
+    game.round.number === 1 &&
+    game.round.phase === "commit";
+
+  if (showIntro && myPower) {
+    return (
+      <Box
+        onClick={() => setIntroDismissed(true)}
+        sx={{
+          position: "fixed",
+          inset: 0,
+          bgcolor: "background.default",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 2,
+          zIndex: 1400,
+          cursor: "pointer",
+        }}
+      >
+        <PowerCard kind={myPower.kind} variant="faceUp" size="lg" />
+        <Typography variant="caption">{t("powers.tapToStart")}</Typography>
+      </Box>
+    );
+  }
+
+  if (
+    game.variants.superPowers &&
+    game.round.phase === "specialist_prompt" &&
+    eligibleForSpecialist(game, me.id)
+  ) {
+    const playedBullet = game.round.commits[me.id]?.bullet;
+    if (playedBullet) {
+      return (
+        <SpecialistPromptScreen
+          me={me}
+          playedBullet={playedBullet}
+          onUse={(kind) => submitSpecialist(me.id, kind)}
+          onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
+          expiresAtMs={game.round.phaseStartedAt + 10000}
+        />
+      );
+    }
+  }
+
+  if (
+    game.variants.superPowers &&
+    game.round.phase === "tough_prompt" &&
+    eligibleForTough(game, me.id)
+  ) {
+    return (
+      <ToughPromptScreen
+        onUse={() => submitTough(me.id)}
+        onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
+        expiresAtMs={game.round.phaseStartedAt + 10000}
       />
-    </PhoneShell>
+    );
+  }
+
+  return (
+    <>
+      <PhoneShell me={me} roomId={roomState.roomId}>
+        <PhaseView
+          game={game}
+          me={me}
+          submitCommit={submitCommit}
+          submitDuck={submitDuck}
+        />
+      </PhoneShell>
+      {game.variants.superPowers && myPower && (
+        <>
+          <Box
+            sx={{
+              position: "fixed",
+              bottom: 12,
+              right: 12,
+              zIndex: 1200,
+              cursor: "pointer",
+            }}
+            onClick={() => setWidgetOpen(true)}
+          >
+            <PowerCard
+              kind={myPower.kind}
+              variant={myPower.used ? "used" : "faceUp"}
+              size="sm"
+            />
+          </Box>
+          <Dialog open={widgetOpen} onClose={() => setWidgetOpen(false)}>
+            <DialogContent>
+              <PowerCard
+                kind={myPower.kind}
+                variant={myPower.used ? "used" : "faceUp"}
+                size="lg"
+              />
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
+    </>
   );
 }

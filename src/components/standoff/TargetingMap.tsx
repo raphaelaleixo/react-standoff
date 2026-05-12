@@ -5,7 +5,7 @@ import type { Game, RoundPhase } from "../../game/types";
 import { Roundel } from "./Roundel";
 import { seatPositions, pairGeometry } from "./geometry";
 import { durations } from "../../theme/animations";
-import { jollyRogerForColor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 
 const CANVAS = 480;
 const RADIUS = 180;
@@ -143,7 +143,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
       sx={{
         position: "relative",
         width: "100%",
-        maxWidth: CANVAS,
+        maxWidth: "30rem",
         aspectRatio: "1 / 1",
         margin: "0 auto",
         opacity: dim ? 0.55 : 1,
@@ -451,8 +451,8 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
           key={p.id}
           sx={{
             position: "absolute",
-            left: center + positions[i].x,
-            top: center + positions[i].y,
+            left: `${((center + positions[i].x) / CANVAS) * 100}%`,
+            top: `${((center + positions[i].y) / CANVAS) * 100}%`,
             transform: "translate(-50%, -50%)",
           }}
         >
@@ -462,6 +462,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
             ducked={ducked(p.id)}
             dim={p.status === "dead"}
             struck={struck(p.id)}
+            size="4rem"
           />
         </Box>
       ))}

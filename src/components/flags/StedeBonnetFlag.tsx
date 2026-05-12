@@ -1,4 +1,4 @@
-export function StedeBonnetFlag({ size = 64 }: { size?: number }) {
+export function StedeBonnetFlag({ size = 64 }: { size?: number | string }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} role="img" aria-label="Stede Bonnet flag">
       <g fill="currentColor">

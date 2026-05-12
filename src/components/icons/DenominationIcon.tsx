@@ -3,7 +3,7 @@ import type { Denomination } from "../../game/types";
 
 interface DenominationIconProps {
   value: Denomination;
-  size?: number;
+  size?: number | string;
   "aria-label"?: string;
 }
 

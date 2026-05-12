@@ -26,10 +26,12 @@ const baseGame = (overrides: Partial<Game> = {}): Game => ({
     phaseStartedAt: 0,
     loot: [],
     commits: {},
+    activations: {},
   },
   bankDeck: [],
   discardedBullets: [],
   seed: 'test',
+  variants: { superPowers: false },
   ...overrides,
 });
 
@@ -60,6 +62,7 @@ describe('startNextRound', () => {
         phaseStartedAt: 0,
         loot: [],
         commits: { A: { withdrew: true } },
+        activations: {},
       },
       bankDeck: [note(5000), note(5000), note(10000), note(10000), note(20000)],
     });
@@ -74,7 +77,7 @@ describe('startNextRound', () => {
     const carryNote = note(20000);
     const resolution: RoundResolution = {
       shots: [], ducks: [], standing: [], woundedThisRound: {}, eliminated: [],
-      awards: {}, carryover: [carryNote],
+      awards: {}, carryover: [carryNote], powerActivations: [],
     };
     const game = baseGame({
       round: {
@@ -83,6 +86,7 @@ describe('startNextRound', () => {
         phaseStartedAt: 0,
         loot: [carryNote],
         commits: {},
+        activations: {},
         resolution,
       },
       bankDeck: [note(5000), note(5000), note(5000), note(5000), note(5000), note(10000)],
@@ -109,7 +113,7 @@ describe('startNextRound', () => {
       shots: [{ shooter: 'A', target: 'B', card: 'bang', outcome: 'hit' }],
       ducks: ['C'], standing: ['A'],
       woundedThisRound: { B: 1 }, eliminated: [],
-      awards: { A: [note(10000)] }, carryover: [],
+      awards: { A: [note(10000)] }, carryover: [], powerActivations: [],
     };
     const game = baseGame({
       round: { ...baseGame().round, number: 3, resolution },
@@ -170,5 +174,45 @@ describe('endGameStatus', () => {
       ],
     });
     expect(endGameStatus(game)).toEqual({ ended: true, reason: 'last_alive' });
+  });
+});
+
+describe('startNextRound variants & activations', () => {
+  const variantBaseGame = (): Game => ({
+    phase: 'in_progress',
+    players: [],
+    round: {
+      number: 1,
+      phase: 'split',
+      phaseStartedAt: 0,
+      loot: [],
+      commits: { p1: { bullet: 'bang', target: 'p2' } },
+      activations: { tough: ['p3'] },
+      resolution: {
+        shots: [], ducks: [], standing: [], woundedThisRound: {},
+        eliminated: [], awards: {}, carryover: [], powerActivations: [],
+      },
+    },
+    bankDeck: [],
+    discardedBullets: [],
+    seed: 's',
+    variants: { superPowers: true },
+  });
+
+  test('preserves Game.variants across rounds', () => {
+    const next = startNextRound(variantBaseGame(), 1000);
+    expect(next.variants).toEqual({ superPowers: true });
+  });
+
+  test('resets Round.activations to {} on the new round', () => {
+    const next = startNextRound(variantBaseGame(), 1000);
+    expect(next.round.activations).toEqual({});
+  });
+
+  test('preserves variants when superPowers is false', () => {
+    const g = variantBaseGame();
+    g.variants = { superPowers: false };
+    const next = startNextRound(g, 1000);
+    expect(next.variants).toEqual({ superPowers: false });
   });
 });

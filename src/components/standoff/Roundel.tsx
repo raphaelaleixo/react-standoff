@@ -14,8 +14,15 @@ interface RoundelProps {
   dim?: boolean;
   /** Just took a wound this phase — solid blood-red border, ducked-style dim/rotate. */
   struck?: boolean;
-  size?: number;
+  size?: number | string;
   "data-testid"?: string;
+}
+
+function halfSize(size: number | string): number | string {
+  if (typeof size === "number") return size * 0.5;
+  const m = size.match(/^([\d.]+)(.*)$/);
+  if (!m) return size;
+  return parseFloat(m[1]) * 0.5 + m[2];
 }
 
 export function Roundel({
@@ -95,7 +102,7 @@ export function Roundel({
           transition: "transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease, border-color 0.3s ease, box-shadow 0.3s ease",
         }}
       >
-        <FlagFor id={flagId} size={size * 0.5} />
+        <FlagFor id={flagId} size={halfSize(size)} />
       </Box>
       {name && (
         <Box

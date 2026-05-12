@@ -17,31 +17,20 @@ const me: Player = {
 };
 
 describe("PhoneShell", () => {
-  it("renders the player header strip with displayName, cash, and wounds chip", () => {
+  it("renders the room code and a footer with cash + wound chip", () => {
     render(
-      <PhoneShell me={me} round={3} phaseLabel="LOAD & AIM">
+      <PhoneShell me={me} roomId="QSPY">
         <div>body</div>
       </PhoneShell>,
     );
-    expect(screen.getByText("Cap'n Maud")).toBeInTheDocument();
+    expect(screen.getByText("QSPY")).toBeInTheDocument();
     expect(screen.getByText("$15,000")).toBeInTheDocument();
     expect(screen.getByText(/wounds I\/III/i)).toBeInTheDocument();
   });
 
-  it("renders the round + phase strip", () => {
-    render(
-      <PhoneShell me={me} round={3} phaseLabel="LOAD & AIM">
-        <div />
-      </PhoneShell>,
-    );
-    expect(screen.getByText("ROUND")).toBeInTheDocument();
-    expect(screen.getByText("III of VIII")).toBeInTheDocument();
-    expect(screen.getByText("LOAD & AIM")).toBeInTheDocument();
-  });
-
   it("renders body children inside the canvas", () => {
     render(
-      <PhoneShell me={me} round={1} phaseLabel="X">
+      <PhoneShell me={me} roomId="QSPY">
         <div data-testid="body">body</div>
       </PhoneShell>,
     );

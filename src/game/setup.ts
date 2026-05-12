@@ -1,5 +1,6 @@
-import type { Banknote, BulletCard, Game, Player, Round } from './types';
+import type { Banknote, BulletCard, Game, GameVariants, Player, Round } from './types';
 import { makeRng, shuffle } from './random';
+import { dealPowers } from './powers';
 
 const STARTING_HAND: BulletCard[] = [
   'clic', 'clic', 'clic', 'clic', 'clic',
@@ -17,13 +18,18 @@ export function buildBankDeck(): Banknote[] {
   return BANK_NOTE_VALUES.map((value, i) => ({ id: `n${i}`, value }));
 }
 
-export function initGame(players: Player[], seed: string, now: number): Game {
+export function initGame(
+  players: Player[],
+  seed: string,
+  now: number,
+  variants: GameVariants = { superPowers: false },
+): Game {
   const rng = makeRng(seed);
   const shuffledDeck = shuffle(buildBankDeck(), rng);
   const loot = shuffledDeck.slice(0, 5);
   const bankDeck = shuffledDeck.slice(5);
 
-  const dealtPlayers: Player[] = players.map(p => ({
+  const baseDealt: Player[] = players.map(p => ({
     ...p,
     bullets: [...STARTING_HAND],
     cash: [],
@@ -33,12 +39,17 @@ export function initGame(players: Player[], seed: string, now: number): Game {
     effects: [],
   }));
 
+  const dealtPlayers = variants.superPowers
+    ? dealPowers(baseDealt, rng)
+    : baseDealt;
+
   const round: Round = {
     number: 1,
     phase: 'commit',
     phaseStartedAt: now,
     loot,
     commits: {},
+    activations: {},
   };
 
   return {
@@ -48,5 +59,6 @@ export function initGame(players: Player[], seed: string, now: number): Game {
     bankDeck,
     discardedBullets: [],
     seed,
+    variants,
   };
 }
