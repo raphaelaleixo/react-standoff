@@ -20,9 +20,10 @@ interface MusterScreenProps {
   joinUrl: string;
   canStart: boolean;
   onStart: () => void;
+  variantSlot?: React.ReactNode;
 }
 
-export function MusterScreen({ roomState, joinUrl, canStart, onStart }: MusterScreenProps) {
+export function MusterScreen({ roomState, joinUrl, canStart, onStart, variantSlot }: MusterScreenProps) {
   const { t } = useTranslation();
   useBigScreenZoom();
   const claimed = roomState.players.filter(p => p.status !== "empty");
@@ -159,6 +160,9 @@ export function MusterScreen({ roomState, joinUrl, canStart, onStart }: MusterSc
                 )}
               </Box>
             </Box>
+            {variantSlot && (
+              <Box sx={{ paddingTop: "1.2rem" }}>{variantSlot}</Box>
+            )}
           </Box>
         </Box>
       </PageCanvas>

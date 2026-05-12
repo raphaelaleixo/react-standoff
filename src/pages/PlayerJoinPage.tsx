@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Alert, Box, CircularProgress } from "@mui/material";
+import { Alert, Box, CircularProgress, Typography } from "@mui/material";
+import { onValue, ref } from "firebase/database";
 import { joinPlayer } from "react-gameroom";
 import { palette, flagColor } from "../theme/colors";
 import { fonts } from "../theme/typography";
@@ -11,6 +12,7 @@ import { Button } from "../components/shell/Button";
 import { FlagPickerGrid } from "../components/flags/FlagPickerGrid";
 import { takenFlags } from "../game/playerFlags";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
+import { database } from "../firebase";
 import type { Player } from "../game/types";
 
 export default function PlayerJoinPage() {
@@ -22,6 +24,13 @@ export default function PlayerJoinPage() {
   const [flag, setFlag] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [variantSuperPowers, setVariantSuperPowers] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    const r = ref(database, `rooms/${id}/lobbyVariants/superPowers`);
+    return onValue(r, snap => setVariantSuperPowers(!!snap.val()));
+  }, [id]);
 
   if (loading) {
     return (
@@ -141,6 +150,14 @@ export default function PlayerJoinPage() {
         sx={{ width: "100%", maxWidth: "440px", height: "100%" }}
       >
         <PhoneHeader roomId={roomState.roomId} flagId={flag ?? undefined} />
+
+        {variantSuperPowers && (
+          <Box sx={{ textAlign: "center", padding: "0.4rem 0.85rem 0", opacity: 0.8 }}>
+            <Typography variant="caption" sx={{ color: palette.paperDim }}>
+              {t("powers.lobbyBannerOn")}
+            </Typography>
+          </Box>
+        )}
 
         <Box
           sx={{

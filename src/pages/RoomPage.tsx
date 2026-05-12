@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -5,8 +6,11 @@ import {
   Box,
   CircularProgress,
   Container,
+  FormControlLabel,
+  Switch,
+  Typography,
 } from "@mui/material";
-import { get, ref, update } from "firebase/database";
+import { get, onValue, ref, set, update } from "firebase/database";
 import { buildJoinUrl, startGame, useRoomState } from "react-gameroom";
 import type { RoomState } from "react-gameroom";
 import type { GameVariants, Player } from "../game/types";
@@ -37,6 +41,13 @@ export default function RoomPage() {
   const { roomState, loading, error } = useFirebaseRoom(id);
   const { game } = useGameState(id);
   const derived = useRoomState(roomState ?? EMPTY_ROOM);
+  const [variantSuperPowers, setVariantSuperPowers] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    const r = ref(database, `rooms/${id}/lobbyVariants/superPowers`);
+    return onValue(r, snap => setVariantSuperPowers(!!snap.val()));
+  }, [id]);
 
   if (loading) {
     return (
@@ -77,12 +88,35 @@ export default function RoomPage() {
     });
   };
 
+  const onVariantToggle = async (next: boolean) => {
+    if (!id) return;
+    await set(ref(database, `rooms/${id}/lobbyVariants`), { superPowers: next });
+  };
+
+  const variantSlot = (
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={variantSuperPowers}
+            onChange={(_, v) => onVariantToggle(v)}
+          />
+        }
+        label={t("powers.variantLabel")}
+      />
+      <Typography variant="caption" sx={{ opacity: 0.7 }}>
+        {t("powers.variantHint")}
+      </Typography>
+    </Box>
+  );
+
   return (
     <MusterScreen
       roomState={roomState}
       joinUrl={joinUrl}
       canStart={derived.canStart}
       onStart={onStart}
+      variantSlot={variantSlot}
     />
   );
 }
