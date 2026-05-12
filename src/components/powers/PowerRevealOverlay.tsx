@@ -11,16 +11,23 @@ interface Props {
 export function PowerRevealOverlay({ activations, players }: Props) {
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(activations.length > 0);
+  // Content key so the effect only re-fires when the activation set itself
+  // changes. Depending on `activations` (the array ref) made every game
+  // snapshot reset the overlay — even when the resolution was unchanged —
+  // which is what made the Krakenscale card flash on every Firebase tick
+  // through the reveal phases.
+  const sig = activations.map(a => `${a.playerId}:${a.kind}`).join("|");
+  const count = activations.length;
 
   useEffect(() => {
-    if (activations.length === 0) return;
+    if (count === 0) return;
     setIdx(0);
     setOpen(true);
     const stepMs = 1500;
     const i = setInterval(() => {
       setIdx(cur => {
         const next = cur + 1;
-        if (next >= activations.length) {
+        if (next >= count) {
           setOpen(false);
           clearInterval(i);
         }
@@ -28,7 +35,7 @@ export function PowerRevealOverlay({ activations, players }: Props) {
       });
     }, stepMs);
     return () => clearInterval(i);
-  }, [activations]);
+  }, [sig, count]);
 
   if (activations.length === 0 || idx >= activations.length) return null;
   const cur = activations[idx];
