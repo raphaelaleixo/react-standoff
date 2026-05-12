@@ -168,6 +168,12 @@ export default function MockPlayerPage() {
       <PhoneShell
         me={me}
         roomId="MOCK"
+        introOpen={
+          !isReckoning &&
+          renderGame.variants.superPowers &&
+          !!myPower &&
+          renderGame.round.phase === "commit"
+        }
         aboveFooter={
           myPower === "insane" && !isReckoning &&
           (eligibleForInsane(renderGame, me.id) || grenadeArmed) ? (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { palette } from "../../theme/colors";
@@ -39,6 +39,17 @@ export function PhoneShell({ me, roomId, children, aboveFooter, introOpen }: Pho
   // `introActive` flips false the first time the card closes. After that
   // taps just toggle, and the hint stays gone for the rest of the session.
   const [introActive, setIntroActive] = useState(!!introOpen);
+  // Track whether we've already auto-opened for the intro, so a late prop
+  // flip (e.g. game state arrives after mount, or the mock deals a power)
+  // still triggers the reveal — but the user's subsequent close is final.
+  const hasTriggeredIntroRef = useRef(!!introOpen);
+  useEffect(() => {
+    if (introOpen && !hasTriggeredIntroRef.current) {
+      hasTriggeredIntroRef.current = true;
+      setPowerOpen(true);
+      setIntroActive(true);
+    }
+  }, [introOpen]);
   const closeCard = () => {
     setPowerOpen(false);
     setIntroActive(false);
