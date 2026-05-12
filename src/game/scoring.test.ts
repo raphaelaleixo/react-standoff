@@ -67,7 +67,7 @@ describe('rankPlayers (tiebreakers)', () => {
   });
   it('tie on score → fewer shame wins', () => {
     const a = pl('a', { cash: [note('n', 10000)], shame: 0 });
-    const b = pl('b', { cash: [note('n', 15000)], shame: 1 });
+    const b = pl('b', { cash: [note('n1', 10000), note('n2', 5000)], shame: 1 });
     // both score $10k. a has fewer shame.
     expect(rankPlayers([a, b], 0).map(p => p.id)).toEqual(['a', 'b']);
   });

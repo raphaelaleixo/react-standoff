@@ -9,14 +9,16 @@ import {
   MenuItem,
   Select,
   Stack,
+  Switch,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import type { BulletCard, Game, Player, RoundPhase } from "../../game/types";
+import type { BulletCard, Game, Player, PowerKind, RoundPhase } from "../../game/types";
 import type { MockGameActions } from "./useMockGameState";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS, WITHDRAW_DURATION_MS } from "../../lib/phaseDurations";
+import { POWER_KINDS } from "../../game/powerKinds";
 
 const PHASES: RoundPhase[] = [
   "commit",
@@ -25,7 +27,9 @@ const PHASES: RoundPhase[] = [
   "withdraw",
   "reveal_withdraw",
   "reveal_bbb",
+  "specialist_prompt",
   "reveal_others",
+  "tough_prompt",
   "split",
 ];
 
@@ -44,7 +48,9 @@ const PHASE_HOLD_MS: Record<RoundPhase, number> = {
   withdraw: WITHDRAW_DURATION_MS,
   reveal_withdraw: 1500,
   reveal_bbb: 2500,
+  specialist_prompt: 2500,
   reveal_others: 2500,
+  tough_prompt: 2500,
   split: 0, // terminal — no hold; round ends here
 };
 
@@ -62,9 +68,30 @@ interface DevControlsPanelProps {
   /** Which big-screen surface MockBigScreen is rendering. */
   screen: DevScreen;
   onScreenChange(screen: DevScreen): void;
+  /** Super Powers variant toggle + activation injector. */
+  variantSuperPowers?: boolean;
+  onVariantSuperPowersChange?(on: boolean): void;
+  forcedActivations?: PowerKind[];
+  onForcedActivationsChange?(next: PowerKind[]): void;
+  /** Optional per-seat power injector (phone mock only). */
+  myPower?: PowerKind | null;
+  onMyPowerChange?(power: PowerKind | null): void;
 }
 
-export function DevControlsPanel({ open, game, actions, onClose, screen, onScreenChange }: DevControlsPanelProps) {
+export function DevControlsPanel({
+  open,
+  game,
+  actions,
+  onClose,
+  screen,
+  onScreenChange,
+  variantSuperPowers,
+  onVariantSuperPowersChange,
+  forcedActivations,
+  onForcedActivationsChange,
+  myPower,
+  onMyPowerChange,
+}: DevControlsPanelProps) {
   const [playing, setPlaying] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -145,6 +172,76 @@ export function DevControlsPanel({ open, game, actions, onClose, screen, onScree
             </Typography>
           )}
         </Section>
+
+        {onVariantSuperPowersChange && (
+          <Section title="Variant">
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={!!variantSuperPowers}
+                  onChange={(_, v) => onVariantSuperPowersChange(v)}
+                />
+              }
+              label={<Typography variant="body2">Super Powers</Typography>}
+            />
+            {variantSuperPowers && onForcedActivationsChange && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" sx={{ display: "block", mb: 0.5 }}>
+                  Force activations (big-screen overlay)
+                </Typography>
+                <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5 }}>
+                  {POWER_KINDS.map(k => (
+                    <Button
+                      key={k}
+                      size="small"
+                      variant="outlined"
+                      onClick={() =>
+                        onForcedActivationsChange([...(forcedActivations ?? []), k])
+                      }
+                      sx={{ textTransform: "none" }}
+                    >
+                      +{k}
+                    </Button>
+                  ))}
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => onForcedActivationsChange([])}
+                  >
+                    clear
+                  </Button>
+                </Stack>
+                {forcedActivations && forcedActivations.length > 0 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                    Queued: {forcedActivations.join(", ")}
+                  </Typography>
+                )}
+              </Box>
+            )}
+            {variantSuperPowers && onMyPowerChange && (
+              <Box sx={{ mt: 1.5 }}>
+                <Typography variant="caption" sx={{ display: "block", mb: 0.5 }}>
+                  Deal me a power
+                </Typography>
+                <Select
+                  size="small"
+                  fullWidth
+                  value={myPower ?? "none"}
+                  onChange={e => {
+                    const v = e.target.value;
+                    onMyPowerChange(v === "none" ? null : (v as PowerKind));
+                  }}
+                >
+                  <MenuItem value="none">none</MenuItem>
+                  {POWER_KINDS.map(k => (
+                    <MenuItem key={k} value={k}>{k}</MenuItem>
+                  ))}
+                </Select>
+              </Box>
+            )}
+          </Section>
+        )}
 
         <Section title="Round">
           <Typography variant="caption">Phase</Typography>

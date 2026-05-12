@@ -55,6 +55,7 @@ export const RESOLUTION_BROADSIDE: RoundResolution = {
   eliminated: [],
   awards: {},
   carryover: [],
+  powerActivations: [],
 };
 
 export const RESOLUTION_KILL: RoundResolution = {
@@ -117,11 +118,12 @@ export const RECKONING_PLAYERS: Player[] = [
 export const RECKONING_GAME: Game = {
   seed: "mock-reckoning",
   players: RECKONING_PLAYERS,
-  round: { number: 8, phase: "split", phaseStartedAt: 0, loot: [], commits: {} },
+  round: { number: 8, phase: "split", phaseStartedAt: 0, loot: [], commits: {}, activations: {} },
   bankDeck: [],
   discardedBullets: [],
   phase: "ended",
-} as Game;
+  variants: { superPowers: false },
+};
 
 export const RECKONING_ELIMINATED_BY_ROUND: Record<string, number> = { c: 6 };
 
@@ -148,10 +150,12 @@ export const FIXTURE_GAME: Game = {
       e: { bullet: "clic", target: "f" },
       f: { withdrew: true, bullet: "clic", target: "a" },
     },
+    activations: {},
   },
   bankDeck: [],
   discardedBullets: [],
   phase: "in_progress",
+  variants: { superPowers: false },
 };
 
 // Phone-mock fixture: same shape as FIXTURE_GAME but seats every player with
@@ -191,8 +195,10 @@ export const FIXTURE_GAME_PHONE: Game = {
       e: { bullet: "clic", target: "f" },
       f: { withdrew: true, bullet: "clic", target: "a" },
     },
+    activations: {},
   },
   bankDeck: [],
   discardedBullets: [],
   phase: "in_progress",
+  variants: { superPowers: false },
 };

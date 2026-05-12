@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import type { BulletCard, Game } from "../game/types";
+import type { BulletCard, Game, PowerKind } from "../game/types";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { PhoneShell } from "../components/shell/PhoneShell";
@@ -38,7 +38,24 @@ export default function MockPlayerPage() {
   // no player-side surface and just falls through to the in-game ledger.
   const [screen, setScreen] = useState<DevScreen>("game");
   const isReckoning = screen === "reckoning";
-  const renderGame: Game = isReckoning ? RECKONING_GAME : game;
+  // Super Powers variant toggle + per-seat power injector. Flipping the
+  // variant lights up variant-conditional UI in PhaseView; the power
+  // injector lets the dev preview the start-reveal / power widget paths
+  // without having to actually deal the game.
+  const [variantOn, setVariantOn] = useState(false);
+  const [myPower, setMyPower] = useState<PowerKind | null>(null);
+  const baseRenderGame: Game = isReckoning ? RECKONING_GAME : game;
+  // Apply variant + power injection to whatever game we're rendering. We
+  // only ever push the power into the active seat — other seats stay clean.
+  const renderGame: Game = {
+    ...baseRenderGame,
+    variants: { superPowers: variantOn },
+    players: baseRenderGame.players.map(p =>
+      p.id === selectedPlayerId
+        ? { ...p, effects: myPower ? [{ kind: myPower, revealed: false, used: false }] : p.effects }
+        : p,
+    ),
+  };
 
   // Mock-only auto-advance through standoff → standoff_hold → withdraw, same
   // as MockBigScreen so the phone surface previews the production pacing.
@@ -114,6 +131,10 @@ export default function MockPlayerPage() {
         onClose={() => setOpen(false)}
         screen={screen}
         onScreenChange={setScreen}
+        variantSuperPowers={variantOn}
+        onVariantSuperPowersChange={setVariantOn}
+        myPower={myPower}
+        onMyPowerChange={setMyPower}
       />
     </>
   );

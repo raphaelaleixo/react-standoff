@@ -19,9 +19,10 @@ const game = (players: Player[], commits: Game["round"]["commits"]): Game => ({
   seed: "x",
   phase: "in_progress",
   players,
-  round: { number: 1, phase: "commit", phaseStartedAt: 0, loot: [], commits },
+  round: { number: 1, phase: "commit", phaseStartedAt: 0, loot: [], commits, activations: {} },
   bankDeck: [],
   discardedBullets: [],
+  variants: { superPowers: false },
 });
 
 describe("playerCounts", () => {

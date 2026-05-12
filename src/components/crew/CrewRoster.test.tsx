@@ -10,8 +10,9 @@ function makeGame(): Game {
   }));
   return {
     seed: "x", players,
-    round: { number: 1, phase: "commit", phaseStartedAt: 0, loot: [], commits: {} },
+    round: { number: 1, phase: "commit", phaseStartedAt: 0, loot: [], commits: {}, activations: {} },
     bankDeck: [], discardedBullets: [], phase: "in_progress",
+    variants: { superPowers: false },
   };
 }
 

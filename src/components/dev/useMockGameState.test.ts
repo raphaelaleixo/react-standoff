@@ -25,10 +25,12 @@ const baseGame = (): Game => ({
     phaseStartedAt: 0,
     loot: [],
     commits: { a: { bullet: "bang", target: "b" } },
+    activations: {},
   },
   bankDeck: [],
   discardedBullets: [],
   seed: "test",
+  variants: { superPowers: false },
 });
 
 describe("useMockGameState", () => {

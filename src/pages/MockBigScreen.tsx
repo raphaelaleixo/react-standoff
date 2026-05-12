@@ -14,7 +14,7 @@ import { GameBoard } from "../components/GameBoard";
 import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
 import { toRoman } from "../lib/navyHours";
-import type { Game } from "../game/types";
+import type { Game, PowerKind } from "../game/types";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel, type DevScreen } from "../components/dev/DevControlsPanel";
@@ -36,6 +36,12 @@ export default function MockBigScreen() {
   const { game, actions } = useMockGameState(FIXTURE_GAME);
   const { open, setOpen } = useDevPanelToggle(true);
   const [screen, setScreen] = useState<DevScreen>("game");
+  // Super Powers variant dev controls. `variantOn` flips the Game.variants
+  // flag so any variant-conditional UI lights up; `forcedActivations` lets us
+  // inject synthetic power reveals into the round's resolution so the big-
+  // screen overlay can be visually reviewed without a live game.
+  const [variantOn, setVariantOn] = useState(false);
+  const [forcedActivations, setForcedActivations] = useState<PowerKind[]>([]);
 
   // Overlay a phase-appropriate resolution onto the mock game so the reveal
   // banners have data to render. The dev hook only tracks phase + commits;
@@ -44,12 +50,28 @@ export default function MockBigScreen() {
   // GameBoard reads `resolution.awards` / `.carryover` to drive the split-
   // phase choreography (notes leave table, then cash ticks up).
   const displayGame = useMemo<Game>(() => {
-    const resolution =
+    const firstPlayerId = game.players[0]?.id ?? "a";
+    const injected = forcedActivations.map(k => ({ playerId: firstPlayerId, kind: k }));
+    let resolution =
       game.round.phase === "reveal_bbb" ? RESOLUTION_BROADSIDE :
       game.round.phase === "reveal_others" || game.round.phase === "split" ? RESOLUTION_KILL :
       undefined;
-    return { ...game, round: { ...game.round, resolution } };
-  }, [game]);
+    if (resolution && injected.length > 0) {
+      resolution = { ...resolution, powerActivations: [...resolution.powerActivations, ...injected] };
+    } else if (!resolution && injected.length > 0) {
+      // No real resolution this phase, but the dev injected activations —
+      // synthesize a minimal resolution shell so the overlay still fires.
+      resolution = {
+        shots: [], ducks: [], standing: [], woundedThisRound: {},
+        eliminated: [], awards: {}, carryover: [], powerActivations: injected,
+      };
+    }
+    return {
+      ...game,
+      variants: { superPowers: variantOn },
+      round: { ...game.round, resolution },
+    };
+  }, [game, variantOn, forcedActivations]);
 
   // Mock-only auto-advance: in production the server transitions the round
   // out of standoff. Here, watch the StandoffStamp's count and advance to
@@ -120,6 +142,10 @@ export default function MockBigScreen() {
         onClose={() => setOpen(false)}
         screen={screen}
         onScreenChange={setScreen}
+        variantSuperPowers={variantOn}
+        onVariantSuperPowersChange={setVariantOn}
+        forcedActivations={forcedActivations}
+        onForcedActivationsChange={setForcedActivations}
       />
     </>
   );
