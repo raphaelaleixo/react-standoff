@@ -4,6 +4,7 @@ import { fonts } from "../../theme/typography";
 import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
+import { PowerBadge } from "../powers/PowerBadge";
 import type { Player } from "../../game/types";
 import { durations, popIn } from "../../theme/animations";
 import { useTickingNumber } from "../../hooks/useTickingNumber";
@@ -36,6 +37,7 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
   const dead = player.status === "dead" || status === "dead";
   const struck = status === "struck";
   const yielded = status === "yielded";
+  const revealedEffects = player.effects.filter(e => e.revealed);
   return (
     <Box
       data-testid={testid}
@@ -104,6 +106,13 @@ export function CrewRow({ player, status, freshWoundIndex, "data-testid": testid
       <Box sx={{ display: "flex", flexDirection: "column", gap: "0.18rem", alignItems: "flex-end" }}>
         <StatusPill status={status} label={status ? STATUS_LABEL[status] : ""} />
         <WoundPips count={player.wounds} freshIndex={freshWoundIndex} />
+        {revealedEffects.length > 0 && (
+          <Box sx={{ display: "flex", gap: "0.25rem", marginTop: "0.1rem" }}>
+            {revealedEffects.map(e => (
+              <PowerBadge key={e.kind} kind={e.kind} />
+            ))}
+          </Box>
+        )}
       </Box>
     </Box>
   );
