@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
+import { slashDraw, popIn } from "../theme/animations";
 import { get, onValue, ref, set, update } from "firebase/database";
 import { buildJoinUrl, startGame, useRoomState } from "react-gameroom";
 import type { RoomState } from "react-gameroom";
@@ -119,34 +120,63 @@ export default function RoomPage() {
           },
         }}
       >
-        {/* X-marks-the-spot box: paper-stroked ink chip with a chunky paper
-            X when the variant is on. Same visual language as the spent
-            overlay on PowderCard, scaled down. */}
+        {/* X-marks-the-spot chip: paper-stroked ink box. When the variant is
+            on, two blood-red slashes get stroked in (left-leaning first,
+            then right-leaning) with a tiny pop on the chip — like a stamp
+            being smacked down. Strokes overshoot the chip edges and use
+            slight angle variation so they read as hand-drawn, not CAD. */}
         <Box
           sx={{
             position: "relative",
-            width: 30,
-            height: 30,
+            width: 32,
+            height: 32,
             border: `1.5px solid ${palette.paper}`,
             background: palette.inkUp,
             boxShadow: `2px 2px 0 ${palette.inkDeep}`,
             flexShrink: 0,
+            // Let the slashes peek past the chip's edges for a hand-stamped
+            // feel — the SVG viewBox is over-extended for this exact reason.
+            overflow: "visible",
+            animation: variantSuperPowers
+              ? `${popIn} 280ms cubic-bezier(.2,.7,.2,1.4) both`
+              : undefined,
           }}
         >
           {variantSuperPowers && (
             <Box
               component="svg"
-              viewBox="0 0 100 100"
+              viewBox="-10 -10 120 120"
               aria-hidden="true"
-              sx={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+              sx={{
+                position: "absolute",
+                inset: "-10px",
+                width: "calc(100% + 20px)",
+                height: "calc(100% + 20px)",
+                overflow: "visible",
+                // Each slash path uses pathLength=100 so dasharray=100 is
+                // the whole thing, and dashoffset 100→0 paints it in.
+                "& path": {
+                  fill: "none",
+                  stroke: palette.blood,
+                  strokeWidth: 14,
+                  strokeLinecap: "round",
+                  strokeDasharray: 100,
+                },
+              }}
             >
-              <line
-                x1="20" y1="20" x2="80" y2="80"
-                stroke={palette.paper} strokeWidth="11" strokeLinecap="round"
+              <path
+                d="M 8 14 L 92 88"
+                pathLength={100}
+                style={{
+                  animation: `${slashDraw} 200ms cubic-bezier(0.7, 0, 0.3, 1) both`,
+                }}
               />
-              <line
-                x1="80" y1="20" x2="20" y2="80"
-                stroke={palette.paper} strokeWidth="11" strokeLinecap="round"
+              <path
+                d="M 94 10 L 6 90"
+                pathLength={100}
+                style={{
+                  animation: `${slashDraw} 220ms cubic-bezier(0.7, 0, 0.3, 1) 180ms both`,
+                }}
               />
             </Box>
           )}
@@ -167,7 +197,7 @@ export default function RoomPage() {
       <Box
         sx={{
           marginTop: "0.4rem",
-          marginLeft: "calc(30px + 0.7rem)",
+          marginLeft: "calc(32px + 0.7rem)",
           fontFamily: fonts.body,
           fontStyle: "italic",
           fontSize: "0.9rem",

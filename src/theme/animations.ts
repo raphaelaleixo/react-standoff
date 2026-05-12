@@ -69,3 +69,11 @@ export const slideUpIn = keyframes`
   0%   { opacity: 0; transform: translateY(18px); }
   100% { opacity: 1; transform: translateY(0); }
 `;
+
+// Slash-draw: stroke a single SVG path from its start to its end. Paths
+// must declare pathLength="100" + strokeDasharray="100" so the offset
+// animation reads as a uniform 0–100% draw regardless of geometry.
+export const slashDraw = keyframes`
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+`;
