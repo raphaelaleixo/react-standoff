@@ -23,13 +23,14 @@ import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { PowerCard } from "../components/powers/PowerCard";
 import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptScreen";
-import { eligibleForSpecialist } from "../game/powers";
+import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
+import { eligibleForSpecialist, eligibleForTough } from "../game/powers";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
-  const { game, submitCommit, submitDuck, submitSpecialist } = useGameState(id);
+  const { game, submitCommit, submitDuck, submitSpecialist, submitTough } = useGameState(id);
   const [introDismissed, setIntroDismissed] = useState(false);
   const [widgetOpen, setWidgetOpen] = useState(false);
 
@@ -191,6 +192,20 @@ export default function PlayerPage() {
         />
       );
     }
+  }
+
+  if (
+    game.variants.superPowers &&
+    game.round.phase === "tough_prompt" &&
+    eligibleForTough(game, me.id)
+  ) {
+    return (
+      <ToughPromptScreen
+        onUse={() => submitTough(me.id)}
+        onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
+        expiresAtMs={game.round.phaseStartedAt + 10000}
+      />
+    );
   }
 
   return (
