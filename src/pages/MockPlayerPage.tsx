@@ -16,7 +16,9 @@ import { fonts } from "../theme/typography";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
-import { eligibleForInsane } from "../game/powers";
+import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptScreen";
+import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
+import { eligibleForInsane, eligibleForSpecialist, eligibleForTough } from "../game/powers";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel, type DevScreen } from "../components/dev/DevControlsPanel";
@@ -122,13 +124,43 @@ export default function MockPlayerPage() {
       }
     : renderGame;
 
-  return (
-    <>
-      <SeatSelector
-        players={renderGame.players.map(p => ({ id: p.id, displayName: p.displayName }))}
-        selectedId={me.id}
-        onSelect={setSelectedPlayerId}
+  // Specialist / Tough prompts take over the phone canvas the same way
+  // PlayerPage does in production — they replace the surface, but the dev
+  // panel + seat selector stay mounted so the dev can step out.
+  const showSpecialistPrompt =
+    !isReckoning &&
+    renderGame.variants.superPowers &&
+    renderGame.round.phase === "specialist_prompt" &&
+    eligibleForSpecialist(renderGame, me.id);
+  const showToughPrompt =
+    !isReckoning &&
+    renderGame.variants.superPowers &&
+    renderGame.round.phase === "tough_prompt" &&
+    eligibleForTough(renderGame, me.id);
+  const promptExpiresAtMs = renderGame.round.phaseStartedAt + 10000;
+  const playedBullet = renderGame.round.commits[me.id]?.bullet;
+
+  let surface: React.ReactNode;
+  if (showSpecialistPrompt && playedBullet) {
+    surface = (
+      <SpecialistPromptScreen
+        me={me}
+        playedBullet={playedBullet}
+        onUse={() => { /* mock: no-op, dev advances phase manually */ }}
+        onSkip={() => { /* mock: no-op */ }}
+        expiresAtMs={promptExpiresAtMs}
       />
+    );
+  } else if (showToughPrompt) {
+    surface = (
+      <ToughPromptScreen
+        onUse={() => { /* mock: no-op, dev advances phase manually */ }}
+        onSkip={() => { /* mock: no-op */ }}
+        expiresAtMs={promptExpiresAtMs}
+      />
+    );
+  } else {
+    surface = (
       <PhoneShell
         me={me}
         roomId="MOCK"
@@ -150,6 +182,17 @@ export default function MockPlayerPage() {
           handPrespent={isReckoning ? [] : MOCK_PHONE_PRESPENT[me.id] ?? []}
         />
       </PhoneShell>
+    );
+  }
+
+  return (
+    <>
+      <SeatSelector
+        players={renderGame.players.map(p => ({ id: p.id, displayName: p.displayName }))}
+        selectedId={me.id}
+        onSelect={setSelectedPlayerId}
+      />
+      {surface}
       <DevControlsPanel
         open={open}
         game={game}
