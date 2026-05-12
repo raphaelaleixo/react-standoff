@@ -16,6 +16,7 @@ import type { RoomState } from "react-gameroom";
 import type { GameVariants, Player } from "../game/types";
 import { initGame } from "../game/setup";
 import { GameBoard } from "../components/GameBoard";
+import { PowerRevealOverlay } from "../components/powers/PowerRevealOverlay";
 import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
@@ -161,6 +162,16 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
           cry={<>{t("shell.round")} {t("shell.ofTotal", { n: toRoman(round.number) })}</>}
         />
       </PageCanvas>
+      {game.round.resolution && (
+        <PowerRevealOverlay
+          activations={
+            (game.round.resolution.powerActivations ?? []).filter(
+              a => a.kind === "unbreakable" || a.kind === "dragon_skin"
+            )
+          }
+          players={game.players}
+        />
+      )}
     </Box>
   );
 }
