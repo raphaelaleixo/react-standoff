@@ -13,7 +13,7 @@ interface Props {
 
 export function SpecialistPromptScreen({ me, playedBullet, onUse, onSkip, expiresAtMs }: Props) {
   const { t } = useTranslation();
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 200);
     return () => clearInterval(i);
