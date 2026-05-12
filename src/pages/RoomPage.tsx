@@ -6,10 +6,10 @@ import {
   CircularProgress,
   Container,
 } from "@mui/material";
-import { ref, update } from "firebase/database";
+import { get, ref, update } from "firebase/database";
 import { buildJoinUrl, startGame, useRoomState } from "react-gameroom";
 import type { RoomState } from "react-gameroom";
-import type { Player } from "../game/types";
+import type { GameVariants, Player } from "../game/types";
 import { initGame } from "../game/setup";
 import { GameBoard } from "../components/GameBoard";
 import { MusterScreen } from "../components/screens/MusterScreen";
@@ -64,10 +64,13 @@ export default function RoomPage() {
     if (!id || !roomState) return;
     if (!derived.canStart) return;
     const startedRoom = startGame(roomState);
+    const variantsSnap = await get(ref(database, `rooms/${id}/lobbyVariants`));
+    const variants: GameVariants =
+      (variantsSnap.val() as GameVariants | null) ?? { superPowers: false };
     const players = startedRoom.players
       .filter(p => p.status !== "empty" && p.data)
       .map(p => p.data as Player);
-    const initialGame = initGame(players, id, Date.now());
+    const initialGame = initGame(players, id, Date.now(), variants);
     await update(ref(database), {
       [`rooms/${id}/state`]: startedRoom,
       [`rooms/${id}/game`]: initialGame,
