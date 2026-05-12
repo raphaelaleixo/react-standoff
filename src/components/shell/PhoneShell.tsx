@@ -68,7 +68,7 @@ export function PhoneShell({ me, roomId, children, aboveFooter }: PhoneShellProp
               sx={{
                 position: "absolute",
                 bottom: "100%",
-                right: "0.95rem",
+                left: "0.95rem",
                 paddingBottom: "0.5rem",
                 zIndex: 4,
               }}
