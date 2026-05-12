@@ -28,14 +28,11 @@ export default function PlayerPage() {
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
   const { game, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane } = useGameState(id);
-  // Compute `me` early (without the alive guard) so we can call useHandSlots
-  // at the top of the component — hooks must run unconditionally, and we
-  // need this cache to outlive PlayerPage's specialist_prompt / tough_prompt
-  // branch switches so card slot positions survive.
+  // Compute hand layout from current bullets. Pure derivation against
+  // STARTING_HAND — no cached state, so it's reload-stable.
   const slotIdNum = Number(playerId);
   const meBullets = game?.players.find(p => p.id === String(slotIdNum))?.bullets ?? [];
-  const meIdForSlots = String(slotIdNum);
-  const handSlots = useHandSlots(meBullets, meIdForSlots);
+  const handSlots = useHandSlots(meBullets);
 
   if (loading) {
     return (

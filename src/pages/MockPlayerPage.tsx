@@ -97,11 +97,10 @@ export default function MockPlayerPage() {
   // reckoning shows the RECKONING_PLAYERS roster in the seat selector.
   const me =
     renderGame.players.find(p => p.id === selectedPlayerId) ?? renderGame.players[0];
-  // Hand slot cache hoisted here so it survives PhaseView remounts when the
-  // page swaps in/out of the specialist/tough prompt surfaces.
+  // Pure derivation of the hand layout. Reckoning has no MOCK_PHONE_PRESPENT
+  // overlay; the in-game mock seats use it to demo the spent visual.
   const handSlots = useHandSlots(
     me.bullets,
-    me.id,
     isReckoning ? [] : MOCK_PHONE_PRESPENT[me.id] ?? [],
   );
 

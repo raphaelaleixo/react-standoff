@@ -2,7 +2,7 @@ import type { Banknote, BulletCard, Game, GameVariants, Player, Round } from './
 import { makeRng, shuffle } from './random';
 import { dealPowers } from './powers';
 
-const STARTING_HAND: BulletCard[] = [
+export const STARTING_HAND: BulletCard[] = [
   'clic', 'clic', 'clic', 'clic', 'clic',
   'bang', 'bang',
   'bang_bang_bang',
