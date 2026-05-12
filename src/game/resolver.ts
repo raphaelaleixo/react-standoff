@@ -201,7 +201,10 @@ export function resolveRound(
   if (activations.insane) {
     const holderId = activations.insane.playerId;
     const holder = newPlayers.find(p => p.id === holderId);
-    if (holder) {
+    // Guard against a stray activation slot pointing at a player without
+    // the effect (variant-off or malformed write). Mirrors how Tough and
+    // Specialist gate on hasUnusedPower before firing.
+    if (holder && hasUnusedPower(holder, 'insane')) {
       // Mark the holder's insane effect used + revealed regardless.
       const idx = newPlayers.findIndex(p => p.id === holderId);
       newPlayers[idx] = {
