@@ -18,6 +18,13 @@ export interface ResolveRoundResult {
   discardedBullets: BulletCard[];
 }
 
+// Has the effect at all (revealed or not). Passive abilities like Dragon
+// Skin and Unbreakable use this so they stay active across rounds once the
+// card has been shown to the table.
+function hasPower(player: Player, kind: PowerKind): boolean {
+  return !!player.effects.find(ef => ef.kind === kind);
+}
+
 function hasUnrevealedPower(player: Player, kind: PowerKind): boolean {
   const e = player.effects.find(ef => ef.kind === kind);
   return !!e && !e.revealed;
@@ -86,33 +93,42 @@ export function resolveRound(
     }
   }
 
-  // Dragon Skin: clamp wounds-this-round to 1 for unrevealed holders.
+  // Dragon Skin: clamp wounds-this-round to 1. Passive ability — fires every
+  // round the holder takes 2+ wounds, regardless of whether the card has
+  // already been revealed in a prior round. The reveal-overlay activation
+  // is only pushed the first time so the audience doesn't re-watch the card.
   for (const pl of players) {
-    if (!hasUnrevealedPower(pl, 'dragon_skin')) continue;
+    if (!hasPower(pl, 'dragon_skin')) continue;
     const w = woundedThisRound[pl.id] ?? 0;
     if (w > 1) {
       woundedThisRound[pl.id] = 1;
-      powerActivations.push({
-        playerId: pl.id,
-        kind: 'dragon_skin',
-        context: { clampedFrom: w },
-      });
+      if (hasUnrevealedPower(pl, 'dragon_skin')) {
+        powerActivations.push({
+          playerId: pl.id,
+          kind: 'dragon_skin',
+          context: { clampedFrom: w },
+        });
+      }
     }
   }
 
-  // Unbreakable: raise death threshold to 4 for unrevealed holders.
+  // Unbreakable: raise death threshold to 4. Passive ability — same as
+  // Dragon Skin, the threshold raise applies every round the holder is
+  // projected to hit 3 wounds, even after the card has been revealed.
   const deathThreshold: Record<string, number> = {};
   for (const pl of players) {
     deathThreshold[pl.id] = 3;
-    if (hasUnrevealedPower(pl, 'unbreakable')) {
+    if (hasPower(pl, 'unbreakable')) {
       const projected = pl.wounds + (woundedThisRound[pl.id] ?? 0);
       if (projected >= 3) {
         deathThreshold[pl.id] = 4;
-        powerActivations.push({
-          playerId: pl.id,
-          kind: 'unbreakable',
-          context: { savedFromWounds: projected },
-        });
+        if (hasUnrevealedPower(pl, 'unbreakable')) {
+          powerActivations.push({
+            playerId: pl.id,
+            kind: 'unbreakable',
+            context: { savedFromWounds: projected },
+          });
+        }
       }
     }
   }

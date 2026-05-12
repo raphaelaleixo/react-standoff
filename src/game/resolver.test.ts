@@ -339,6 +339,27 @@ describe('resolveRound — Dragon Skin', () => {
     expect(resolution.woundedThisRound.p1).toBe(2);
     expect(resolution.powerActivations).toEqual([]);
   });
+
+  it('already revealed: still clamps, but does not push another activation', () => {
+    const players: Player[] = [
+      {
+        id: 'p1', displayName: 'p1', colorOrAvatar: 'calico_jack',
+        bullets: ['clic','clic','clic','clic','clic','bang','bang','bang_bang_bang'],
+        cash: [], wounds: 0, shame: 0, status: 'alive',
+        effects: [{ kind: 'dragon_skin', revealed: true, used: false }],
+      },
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'bang', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.woundedThisRound.p1).toBe(1);
+    expect(resolution.powerActivations.some(a => a.kind === 'dragon_skin')).toBe(false);
+  });
 });
 
 describe('resolveRound — Unbreakable', () => {
@@ -375,6 +396,27 @@ describe('resolveRound — Unbreakable', () => {
     };
     const { resolution } = resolveRound(commits, players, []);
     expect(resolution.eliminated).toContain('p1');
+  });
+
+  it('already revealed: still raises threshold, but does not push another activation', () => {
+    const players: Player[] = [
+      {
+        id: 'p1', displayName: 'p1', colorOrAvatar: 'calico_jack',
+        bullets: ['clic','clic','clic','clic','clic','bang','bang','bang_bang_bang'],
+        cash: [], wounds: 2, shame: 0, status: 'alive',
+        effects: [{ kind: 'unbreakable', revealed: true, used: false }],
+      },
+      pl('p2'),
+      pl('p3'),
+    ];
+    const commits: Record<string, Commit> = {
+      p1: { bullet: 'clic', target: 'p2' },
+      p2: { bullet: 'bang', target: 'p1' },
+      p3: { bullet: 'clic', target: 'p1' },
+    };
+    const { resolution } = resolveRound(commits, players, []);
+    expect(resolution.eliminated).not.toContain('p1');
+    expect(resolution.powerActivations.some(a => a.kind === 'unbreakable')).toBe(false);
   });
 
   it('regression: non-Unbreakable still dies at 3 wounds', () => {
