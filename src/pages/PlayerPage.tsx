@@ -22,12 +22,14 @@ import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { PowerCard } from "../components/powers/PowerCard";
+import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptScreen";
+import { eligibleForSpecialist } from "../game/powers";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
-  const { game, submitCommit, submitDuck } = useGameState(id);
+  const { game, submitCommit, submitDuck, submitSpecialist } = useGameState(id);
   const [introDismissed, setIntroDismissed] = useState(false);
   const [widgetOpen, setWidgetOpen] = useState(false);
 
@@ -170,6 +172,25 @@ export default function PlayerPage() {
         <Typography variant="caption">{t("powers.tapToStart")}</Typography>
       </Box>
     );
+  }
+
+  if (
+    game.variants.superPowers &&
+    game.round.phase === "specialist_prompt" &&
+    eligibleForSpecialist(game, me.id)
+  ) {
+    const playedBullet = game.round.commits[me.id]?.bullet;
+    if (playedBullet) {
+      return (
+        <SpecialistPromptScreen
+          me={me}
+          playedBullet={playedBullet}
+          onUse={(kind) => submitSpecialist(me.id, kind)}
+          onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
+          expiresAtMs={game.round.phaseStartedAt + 10000}
+        />
+      );
+    }
   }
 
   return (
