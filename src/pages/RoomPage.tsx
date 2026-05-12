@@ -172,6 +172,16 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
           players={game.players}
         />
       )}
+      {(game.round.phase === "specialist_prompt" || game.round.phase === "tough_prompt") && game.round.resolution && (
+        <PowerRevealOverlay
+          activations={
+            (game.round.resolution.powerActivations ?? []).filter(
+              a => a.kind === "specialist" || a.kind === "tough"
+            )
+          }
+          players={game.players}
+        />
+      )}
     </Box>
   );
 }
