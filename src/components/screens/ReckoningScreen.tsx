@@ -10,7 +10,8 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
-import { netScore, compareForRanking } from "../../lib/score";
+import { PowerCard } from "../powers/PowerCard";
+import { finalScore, rankPlayers } from "../../game/scoring";
 import { popIn, fadeIn } from "../../theme/animations";
 import type { Game, Player } from "../../game/types";
 
@@ -35,7 +36,11 @@ interface ReckoningScreenProps {
 
 export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, onReturn }: ReckoningScreenProps) {
   const { t } = useTranslation();
-  const ranked = [...game.players].sort(compareForRanking);
+  // Total kills across the voyage drives Davy Jones's Cut (six_feet_under)
+  // bonuses inside finalScore + each EndGameRow. `dead` is the terminal status
+  // so we can count it directly off the live roster.
+  const totalKills = game.players.filter((p) => p.status === "dead").length;
+  const ranked = rankPlayers(game.players, totalKills);
   const winner = ranked[0];
   const rest = ranked.slice(1);
 
@@ -63,7 +68,13 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
             minHeight: 0,
           }}
         >
-          <WinnerEnthronement winner={winner} t={t} enterDelayMs={winnerDelayMs} durationMs={WINNER_DURATION_MS} />
+          <WinnerEnthronement
+            winner={winner}
+            t={t}
+            enterDelayMs={winnerDelayMs}
+            durationMs={WINNER_DURATION_MS}
+            totalKills={totalKills}
+          />
 
           <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "auto", marginTop: "0.4rem" }}>
             {rest.map((p, i) => (
@@ -73,6 +84,7 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
                 player={p}
                 eliminatedRound={eliminatedByRound[p.id] ?? null}
                 enterDelayMs={(rest.length - 1 - i) * ROW_STAGGER_MS}
+                totalKills={totalKills}
               />
             ))}
           </Box>
@@ -104,14 +116,16 @@ function WinnerEnthronement({
   t,
   enterDelayMs,
   durationMs,
+  totalKills,
 }: {
   winner: Player;
   t: (k: string, p?: Record<string, unknown>) => string;
   enterDelayMs: number;
   durationMs: number;
+  totalKills: number;
 }) {
   const winnerDead = winner.status !== "alive";
-  const score = netScore(winner);
+  const score = finalScore(winner, totalKills);
   const titleColor = winnerDead ? palette.paperDim : palette.paper;
   // Sub-stagger inside the winner block: the eyebrow leads, the medallion
   // pops in with the most flourish, and the cry tags out at the end.
@@ -203,6 +217,20 @@ function WinnerEnthronement({
           >
             ${score.toLocaleString()}
           </Box>
+          {winner.effects.length > 0 && (
+            <Box
+              sx={{
+                display: "flex",
+                gap: "0.5rem",
+                marginTop: "0.6rem",
+                animation: `${fadeIn} 500ms ease-out ${medallionDelayMs + 160}ms both`,
+              }}
+            >
+              {winner.effects.map((e) => (
+                <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
+              ))}
+            </Box>
+          )}
         </Box>
       </Box>
       <Box

@@ -5,7 +5,8 @@ import { fonts } from "../../theme/typography";
 import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
-import { netScore, compareForRanking } from "../../lib/score";
+import { PowerCard } from "../powers/PowerCard";
+import { finalScore, rankPlayers } from "../../game/scoring";
 import { toRoman } from "../../lib/navyHours";
 import { breath, fadeIn, popIn, slideUpIn } from "../../theme/animations";
 import type { Game, Player } from "../../game/types";
@@ -32,7 +33,10 @@ interface PhoneReckoningProps {
 // spot themselves at a glance.
 export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
   const { t } = useTranslation();
-  const ranked = [...game.players].sort(compareForRanking);
+  // Same kills-count signal as the big-screen ReckoningScreen — drives Davy
+  // Jones's Cut bonus inside finalScore so both surfaces rank seats the same.
+  const totalKills = game.players.filter((p) => p.status === "dead").length;
+  const ranked = rankPlayers(game.players, totalKills);
   const winner = ranked[0];
   const rest = ranked.slice(1);
 
@@ -55,6 +59,7 @@ export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
         isMe={winner.id === me.id}
         enterDelayMs={winnerDelayMs}
         durationMs={WINNER_DURATION_MS}
+        totalKills={totalKills}
       />
 
       <Box
@@ -76,6 +81,7 @@ export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
             player={p}
             isMe={p.id === me.id}
             enterDelayMs={(rest.length - 1 - i) * ROW_STAGGER_MS}
+            totalKills={totalKills}
           />
         ))}
       </Box>
@@ -102,15 +108,17 @@ function PhoneWinnerEnthronement({
   isMe,
   enterDelayMs,
   durationMs,
+  totalKills,
 }: {
   winner: Player;
   isMe: boolean;
   enterDelayMs: number;
   durationMs: number;
+  totalKills: number;
 }) {
   const { t } = useTranslation();
   const winnerDead = winner.status !== "alive";
-  const score = netScore(winner);
+  const score = finalScore(winner, totalKills);
   const titleColor = winnerDead ? palette.paperDim : palette.paper;
   // Same sub-stagger shape as the big-screen: eyebrow leads, medallion pops
   // in with the most flourish, cry tags out last.
@@ -213,6 +221,21 @@ function PhoneWinnerEnthronement({
       >
         ${score.toLocaleString()}
       </Box>
+      {winner.effects.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "0.4rem",
+            marginTop: "0.4rem",
+            animation: `${fadeIn} 400ms ease-out ${medallionDelayMs + 200}ms both`,
+          }}
+        >
+          {winner.effects.map((e) => (
+            <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
+          ))}
+        </Box>
+      )}
       <Box
         sx={{
           fontFamily: fonts.body,
@@ -240,22 +263,25 @@ function PhoneEndRow({
   player,
   isMe,
   enterDelayMs,
+  totalKills,
 }: {
   rank: number;
   player: Player;
   isMe: boolean;
   enterDelayMs: number;
+  totalKills: number;
 }) {
   const { t } = useTranslation();
   const dead = player.status === "dead";
-  const score = dead ? null : netScore(player);
+  const score = dead ? null : finalScore(player, totalKills);
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: PHONE_GRID_COLUMNS,
-        gap: "0.6rem",
-        alignItems: "center",
+        // Outer wrapper carries the row's chrome (border, animation, dead
+        // dim) so the inner grid stays a clean 4-column ledger. Held powers
+        // tack on as a second row in this column flow.
+        display: "flex",
+        flexDirection: "column",
         padding: "0.4rem 0.45rem",
         borderBottom: `1px solid ${palette.rule}`,
         // Highlight the local seat's row with a paper outline + slight tonal
@@ -265,6 +291,14 @@ function PhoneEndRow({
         background: isMe ? palette.inkUp : "transparent",
         animation: `${slideUpIn} 360ms ease-out ${enterDelayMs}ms both`,
         filter: dead ? "opacity(0.6)" : undefined,
+      }}
+    >
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: PHONE_GRID_COLUMNS,
+        gap: "0.6rem",
+        alignItems: "center",
       }}
     >
       <Box
@@ -338,6 +372,21 @@ function PhoneEndRow({
       >
         {dead ? t("reckoning.dead") : `$${score!.toLocaleString()}`}
       </Box>
+    </Box>
+      {player.effects.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: "0.35rem",
+            marginTop: "0.35rem",
+            paddingLeft: "calc(26px + 0.6rem)", // align under the flag chip
+          }}
+        >
+          {player.effects.map((e) => (
+            <PowerCard key={e.kind} kind={e.kind} variant="faceUp" size="sm" />
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

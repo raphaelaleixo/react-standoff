@@ -31,10 +31,11 @@ function makeGame(): Game {
       player({ id: "c", displayName: "Wet Match", colorOrAvatar: "edward_low",
         wounds: 3, status: "dead" }),
     ],
-    round: { number: 8, phase: "split", phaseStartedAt: 0, loot: [], commits: {} },
+    round: { number: 8, phase: "split", phaseStartedAt: 0, loot: [], commits: {}, activations: {} },
     bankDeck: [],
     discardedBullets: [],
     phase: "ended",
+    variants: { superPowers: false },
   } as Game;
 }
 
