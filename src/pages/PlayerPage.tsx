@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
+import { useHandSlots } from "../hooks/useHandSlots";
 import { FlagFor } from "../components/flags";
 import { jollyRogerForColor } from "../components/flags/jollyRogerForColor";
 import { flagColor, palette } from "../theme/colors";
@@ -27,6 +28,14 @@ export default function PlayerPage() {
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
   const { game, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane } = useGameState(id);
+  // Compute `me` early (without the alive guard) so we can call useHandSlots
+  // at the top of the component — hooks must run unconditionally, and we
+  // need this cache to outlive PlayerPage's specialist_prompt / tough_prompt
+  // branch switches so card slot positions survive.
+  const slotIdNum = Number(playerId);
+  const meBullets = game?.players.find(p => p.id === String(slotIdNum))?.bullets ?? [];
+  const meIdForSlots = String(slotIdNum);
+  const handSlots = useHandSlots(meBullets, meIdForSlots);
 
   if (loading) {
     return (
@@ -215,6 +224,7 @@ export default function PlayerPage() {
         me={me}
         submitCommit={submitCommit}
         submitDuck={submitDuck}
+        handSlots={handSlots}
       />
     </PhoneShell>
   );

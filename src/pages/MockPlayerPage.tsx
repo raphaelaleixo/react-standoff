@@ -20,6 +20,7 @@ import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptSc
 import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
 import { eligibleForInsane, eligibleForSpecialist, eligibleForTough } from "../game/powers";
 import { useMockGameState } from "../components/dev/useMockGameState";
+import { useHandSlots } from "../hooks/useHandSlots";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
 import { DevControlsPanel, type DevScreen } from "../components/dev/DevControlsPanel";
 import { useStandoffCount } from "../hooks/useStandoffCount";
@@ -96,6 +97,13 @@ export default function MockPlayerPage() {
   // reckoning shows the RECKONING_PLAYERS roster in the seat selector.
   const me =
     renderGame.players.find(p => p.id === selectedPlayerId) ?? renderGame.players[0];
+  // Hand slot cache hoisted here so it survives PhaseView remounts when the
+  // page swaps in/out of the specialist/tough prompt surfaces.
+  const handSlots = useHandSlots(
+    me.bullets,
+    me.id,
+    isReckoning ? [] : MOCK_PHONE_PRESPENT[me.id] ?? [],
+  );
 
   // Wire the mock state's setCommit into the submitCommit / submitDuck signature
   // PhaseView expects, so the commit picker actually persists picks into the
@@ -189,7 +197,7 @@ export default function MockPlayerPage() {
           me={me}
           submitCommit={submitCommit}
           submitDuck={submitDuck}
-          handPrespent={isReckoning ? [] : MOCK_PHONE_PRESPENT[me.id] ?? []}
+          handSlots={handSlots}
         />
       </PhoneShell>
     );

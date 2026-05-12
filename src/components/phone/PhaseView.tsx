@@ -21,7 +21,7 @@ function spellCount(n: number): string {
   return COUNT_WORDS[n] ?? String(n);
 }
 import { useStandoffCount } from "../../hooks/useStandoffCount";
-import { useHandSlots, type HandSlot } from "../../hooks/useHandSlots";
+import type { HandSlot } from "../../hooks/useHandSlots";
 import { STANDOFF_DURATION_MS } from "../../lib/phaseDurations";
 import { SHAME_PENALTY } from "../../lib/score";
 import { AimBarrel } from "./AimBarrel";
@@ -37,17 +37,18 @@ interface PhaseViewProps {
   submitCommit: (id: string, b: BulletCard, t: string) => Promise<void>;
   submitDuck: (id: string, w: boolean) => Promise<void>;
   /**
-   * Mock-only override: bullets to seed `useHandSlots` as already-spent on
-   * mount, so MockPlayerPage can demonstrate the post-spend visual treatment
-   * on every seat (production never passes this — bullets shrink naturally
-   * across rounds).
+   * Stable hand layout — slot positions persist across phases/rounds so a
+   * card spent earlier stays in its original slot. Hoisted into the parent
+   * page so the cache survives PlayerPage's branch switches (e.g. when the
+   * specialist_prompt screen takes over and PhaseView would otherwise be
+   * unmounted, the cached slot positions would be lost on remount).
    */
-  handPrespent?: BulletCard[];
+  handSlots: HandSlot[];
 }
 
 // The phase-by-phase body of the player surface — extracted from PlayerPage
 // so the mock player page can render the exact same UI against fixture state.
-export function PhaseView({ game, me, submitCommit, submitDuck, handPrespent }: PhaseViewProps) {
+export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: PhaseViewProps) {
   const { t } = useTranslation();
   // Standoff countdown — `active` only during the count itself; the silent
   // standoff_hold beat that follows shouldn't restart the timer. Computed
@@ -58,10 +59,6 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handPrespent }: 
     startedAt: game.round.phaseStartedAt,
     durationMs: STANDOFF_DURATION_MS,
   });
-  // Stable hand layout — slot positions persist across phases/rounds so a
-  // card spent earlier stays in its original slot (dimmed face + red X)
-  // instead of remaining cards re-sorting to fill the gap.
-  const handSlots = useHandSlots(me.bullets, me.id, handPrespent);
   // Group phases that should NOT cross-fade between each other (standoff and
   // standoff_hold share the same render branch — the AimBarrel handles its
   // own count → no-count fade — so flipping between them shouldn't trigger
