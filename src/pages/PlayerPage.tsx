@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -5,6 +6,9 @@ import {
   Box,
   CircularProgress,
   Container,
+  Dialog,
+  DialogContent,
+  Typography,
 } from "@mui/material";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
@@ -17,12 +21,15 @@ import { PageCanvas } from "../components/shell/PageCanvas";
 import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
+import { PowerCard } from "../components/powers/PowerCard";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
   const { game, submitCommit, submitDuck } = useGameState(id);
+  const [introDismissed, setIntroDismissed] = useState(false);
+  const [widgetOpen, setWidgetOpen] = useState(false);
 
   if (loading) {
     return (
@@ -133,14 +140,77 @@ export default function PlayerPage() {
     );
   }
 
+  const myPower = me.effects[0];
+  const showIntro =
+    game.variants.superPowers &&
+    !!myPower &&
+    !introDismissed &&
+    game.phase === "in_progress" &&
+    game.round.number === 1 &&
+    game.round.phase === "commit";
+
+  if (showIntro && myPower) {
+    return (
+      <Box
+        onClick={() => setIntroDismissed(true)}
+        sx={{
+          position: "fixed",
+          inset: 0,
+          bgcolor: "background.default",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 2,
+          zIndex: 1400,
+          cursor: "pointer",
+        }}
+      >
+        <PowerCard kind={myPower.kind} variant="faceUp" size="lg" />
+        <Typography variant="caption">{t("powers.tapToStart")}</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <PhoneShell me={me} roomId={roomState.roomId}>
-      <PhaseView
-        game={game}
-        me={me}
-        submitCommit={submitCommit}
-        submitDuck={submitDuck}
-      />
-    </PhoneShell>
+    <>
+      <PhoneShell me={me} roomId={roomState.roomId}>
+        <PhaseView
+          game={game}
+          me={me}
+          submitCommit={submitCommit}
+          submitDuck={submitDuck}
+        />
+      </PhoneShell>
+      {game.variants.superPowers && myPower && (
+        <>
+          <Box
+            sx={{
+              position: "fixed",
+              bottom: 12,
+              right: 12,
+              zIndex: 1200,
+              cursor: "pointer",
+            }}
+            onClick={() => setWidgetOpen(true)}
+          >
+            <PowerCard
+              kind={myPower.kind}
+              variant={myPower.used ? "used" : "faceUp"}
+              size="sm"
+            />
+          </Box>
+          <Dialog open={widgetOpen} onClose={() => setWidgetOpen(false)}>
+            <DialogContent>
+              <PowerCard
+                kind={myPower.kind}
+                variant={myPower.used ? "used" : "faceUp"}
+                size="lg"
+              />
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
+    </>
   );
 }
