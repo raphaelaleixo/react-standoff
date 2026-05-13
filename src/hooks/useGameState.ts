@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { BulletCard, Commit, Game, Player } from "../game/types";
 import { resolveRound, type ResolveRoundResult } from "../game/resolver";
 import { startNextRound, endGameStatus } from "../game/transitions";
-import { eligibleForSpecialist, eligibleForTough } from "../game/powers";
+import { eligibleForTough } from "../game/powers";
 import type { GameStore } from "./gameStore";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
 
@@ -18,7 +18,6 @@ const POWER_CARD_MS = 4420;
 const REVEAL_WITHDRAW_TAIL_MS = 320;
 const REVEAL_BBB_MS = 5000;
 const REVEAL_OTHERS_MS = 5000;
-const SPECIALIST_PROMPT_MS = 10000;
 const TOUGH_PROMPT_MS = 10000;
 const GRENADE_EXPLOSION_MS = 2800;
 // Split-phase budget: notes-leave-table fade (~300ms) → small beat → cash
@@ -195,34 +194,16 @@ export function useGameState(
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
 
-  // reveal_bbb → specialist_prompt (animation pace; pure phase handoff)
+  // reveal_bbb → reveal_others
+  //
+  // Specialist (Quartermaster's Reload) used to live in its own prompt phase
+  // between these two beats. The decision is now bundled into the commit
+  // (see CommitPicker), so we just need to re-resolve at the handoff to
+  // pick up the activation that was already submitted at commit time.
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "reveal_bbb") return;
     const remaining = REVEAL_BBB_MS - (serverNow() - game.round.phaseStartedAt);
-    const fire = () => store.update("round", {
-      phase: "specialist_prompt",
-      phaseStartedAt: store.serverTimestamp(),
-    });
-    const t = setTimeout(fire, Math.max(0, remaining));
-    return () => clearTimeout(t);
-  }, [store, game, serverNow]);
-
-  // specialist_prompt → reveal_others
-  // Auto-skips when the variant is off or no eligible player; otherwise waits
-  // up to SPECIALIST_PROMPT_MS for an activation, then re-resolves so any
-  // submitted activation lands in `round/resolution` before reveal_others.
-  useEffect(() => {
-    if (!store || !game) return;
-    if (game.round.phase !== "specialist_prompt") return;
-    if (!game.variants.superPowers) {
-      store.update("round", {
-        phase: "reveal_others",
-        phaseStartedAt: store.serverTimestamp(),
-      });
-      return;
-    }
-    const eligible = game.players.find(p => eligibleForSpecialist(game, p.id));
     const fire = () => {
       const result = resolveRound(
         game.round.commits, game.players, game.round.loot, game.round.activations,
@@ -245,11 +226,6 @@ export function useGameState(
         "round/resolution": result.resolution,
       });
     };
-    if (!eligible) {
-      fire();
-      return;
-    }
-    const remaining = SPECIALIST_PROMPT_MS - (serverNow() - game.round.phaseStartedAt);
     const t = setTimeout(fire, Math.max(0, remaining));
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
@@ -347,10 +323,31 @@ export function useGameState(
   // ─────────── Player-side write helpers ───────────
 
   const submitCommit = useCallback(
-    async (playerId: string, bullet: BulletCard, target: string) => {
+    async (
+      playerId: string,
+      bullet: BulletCard,
+      target: string,
+      specialistDiscard?: BulletCard,
+    ) => {
       if (!store) return;
       const c: Commit = { bullet, target };
-      await store.update(`round/commits/${playerId}`, c as unknown as Record<string, unknown>);
+      // When the holder of Specialist + B!B!B! chooses to save their
+      // Quickdraw at commit time, write the activation atomically alongside
+      // the commit. Otherwise just the commit.
+      if (specialistDiscard) {
+        await store.update("round", {
+          [`commits/${playerId}`]: c,
+          "activations/specialist": {
+            playerId,
+            discardedBulletKind: specialistDiscard,
+          },
+        });
+      } else {
+        await store.update(
+          `round/commits/${playerId}`,
+          c as unknown as Record<string, unknown>,
+        );
+      }
     },
     [store],
   );

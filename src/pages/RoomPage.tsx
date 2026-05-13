@@ -268,17 +268,21 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
         <PowerRevealOverlay
           activations={
             (game.round.resolution.powerActivations ?? []).filter(
-              a => a.kind === "unbreakable" || a.kind === "dragon_skin" || a.kind === "insane"
+              a =>
+                a.kind === "unbreakable" ||
+                a.kind === "dragon_skin" ||
+                a.kind === "specialist" ||
+                a.kind === "insane"
             )
           }
           players={game.players}
         />
       )}
-      {(game.round.phase === "specialist_prompt" || game.round.phase === "tough_prompt") && game.round.resolution && (
+      {game.round.phase === "tough_prompt" && game.round.resolution && (
         <PowerRevealOverlay
           activations={
             (game.round.resolution.powerActivations ?? []).filter(
-              a => a.kind === "specialist" || a.kind === "tough"
+              a => a.kind === "tough"
             )
           }
           players={game.players}

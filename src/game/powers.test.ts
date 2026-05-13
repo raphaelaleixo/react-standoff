@@ -78,7 +78,7 @@ describe('eligibleForSpecialist', () => {
         effects: [{ kind: 'specialist', revealed: false, used: false }],
       })],
       round: {
-        number: 1, phase: 'specialist_prompt', phaseStartedAt: 0, loot: [],
+        number: 1, phase: 'commit', phaseStartedAt: 0, loot: [],
         commits: { p1: { bullet: 'bang_bang_bang', target: 'p2' } },
         activations: {},
       },
@@ -92,7 +92,7 @@ describe('eligibleForSpecialist', () => {
         effects: [{ kind: 'specialist', revealed: false, used: false }],
       })],
       round: {
-        number: 1, phase: 'specialist_prompt', phaseStartedAt: 0, loot: [],
+        number: 1, phase: 'commit', phaseStartedAt: 0, loot: [],
         commits: { p1: { bullet: 'bang', target: 'p2' } },
         activations: {},
       },
@@ -106,7 +106,7 @@ describe('eligibleForSpecialist', () => {
         effects: [{ kind: 'specialist', revealed: true, used: true }],
       })],
       round: {
-        number: 1, phase: 'specialist_prompt', phaseStartedAt: 0, loot: [],
+        number: 1, phase: 'commit', phaseStartedAt: 0, loot: [],
         commits: { p1: { bullet: 'bang_bang_bang', target: 'p2' } },
         activations: {},
       },
@@ -120,7 +120,7 @@ describe('eligibleForSpecialist', () => {
         effects: [{ kind: 'specialist', revealed: false }],
       })],
       round: {
-        number: 1, phase: 'specialist_prompt', phaseStartedAt: 0, loot: [],
+        number: 1, phase: 'commit', phaseStartedAt: 0, loot: [],
         commits: { p1: { bullet: 'bang_bang_bang', target: 'p2' } },
         activations: {},
         resolution: {

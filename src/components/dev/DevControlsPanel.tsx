@@ -27,7 +27,6 @@ const PHASES: RoundPhase[] = [
   "withdraw",
   "reveal_withdraw",
   "reveal_bbb",
-  "specialist_prompt",
   "reveal_others",
   "tough_prompt",
   "split",
@@ -48,7 +47,6 @@ const PHASE_HOLD_MS: Record<RoundPhase, number> = {
   withdraw: WITHDRAW_DURATION_MS,
   reveal_withdraw: 1500,
   reveal_bbb: 2500,
-  specialist_prompt: 2500,
   reveal_others: 2500,
   tough_prompt: 2500,
   split: 0, // terminal — no hold; round ends here

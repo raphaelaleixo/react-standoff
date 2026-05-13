@@ -34,13 +34,13 @@ import { YieldRibbon } from "./YieldRibbon";
 interface PhaseViewProps {
   game: Game;
   me: Player;
-  submitCommit: (id: string, b: BulletCard, t: string) => Promise<void>;
+  submitCommit: (id: string, b: BulletCard, t: string, specialistDiscard?: BulletCard) => Promise<void>;
   submitDuck: (id: string, w: boolean) => Promise<void>;
   /**
    * Stable hand layout — slot positions persist across phases/rounds so a
    * card spent earlier stays in its original slot. Hoisted into the parent
    * page so the cache survives PlayerPage's branch switches (e.g. when the
-   * specialist_prompt screen takes over and PhaseView would otherwise be
+   * tough_prompt screen takes over and PhaseView would otherwise be
    * unmounted, the cached slot positions would be lost on remount).
    */
   handSlots: HandSlot[];
@@ -94,6 +94,7 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
           myCommit={myCommit}
           onSubmit={submitCommit}
           handSlots={handSlots}
+          variantOn={!!game.variants.superPowers}
         />
       </PhaseFader>
     );
@@ -228,17 +229,27 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
   return null;
 }
 
-function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
+function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn }: {
   me: Player;
   opponents: Player[];
   myCommit?: { bullet?: BulletCard; target?: string };
-  onSubmit: (id: string, b: BulletCard, t: string) => Promise<void>;
+  onSubmit: (id: string, b: BulletCard, t: string, specialistDiscard?: BulletCard) => Promise<void>;
   handSlots: HandSlot[];
+  variantOn: boolean;
 }) {
   const { t } = useTranslation();
   const [pick, setPick] = useState<{ load: BulletCard; slotIndex: number } | null>(null);
   const [target, setTarget] = useState<string | null>(null);
+  const [specialistDiscard, setSpecialistDiscard] = useState<BulletCard | null>(null);
   const ready = myCommit?.bullet && myCommit.target;
+  const hasSpecialist = variantOn && me.effects.some(
+    e => e.kind === "specialist" && !e.revealed && !e.used,
+  );
+  const offerSpecialist = hasSpecialist && pick?.load === "bang_bang_bang";
+  // Reset the discard pick if the user changes their bullet away from B!B!B!.
+  if (!offerSpecialist && specialistDiscard !== null) {
+    setSpecialistDiscard(null);
+  }
 
   if (ready) {
     const target = opponents.find(o => o.id === myCommit?.target);
@@ -325,6 +336,15 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
         />
       </Box>
 
+      {offerSpecialist && (
+        <SpecialistCommitChoice
+          me={me}
+          playedSlotIndex={pick?.slotIndex ?? null}
+          selected={specialistDiscard}
+          onChange={setSpecialistDiscard}
+        />
+      )}
+
       {/* Push the commit button to the bottom of the available space so
           it stays under the thumb regardless of how much room the picker +
           hand take above. */}
@@ -340,7 +360,10 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
         <Button
           fullWidth
           disabled={!pick || !target}
-          onClick={() => pick && target && onSubmit(me.id, pick.load, target)}
+          onClick={() =>
+            pick && target &&
+            onSubmit(me.id, pick.load, target, specialistDiscard ?? undefined)
+          }
           caption={
             pick && target
               ? `${t(`load.${pick.load}`)} → ${opponents.find(o => o.id === target)?.displayName ?? "?"}`
@@ -351,6 +374,110 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots }: {
             ? t("phase.commit.lockIn").toUpperCase()
             : t("phase.commit.ready").toUpperCase()}
         </Button>
+      </Box>
+    </Box>
+  );
+}
+
+// Inline Specialist choice — only rendered when the player holds an unrevealed
+// Specialist effect and has selected B!B!B! as their commit. Tapping a powder
+// arms the save (it'll be discarded so the B!B!B! stays in the holder's hand
+// after the round); tapping again clears it. The choice rides on the same
+// Lock In button as the commit — no separate phase, no prompt, no wait.
+function SpecialistCommitChoice({
+  me,
+  playedSlotIndex,
+  selected,
+  onChange,
+}: {
+  me: Player;
+  playedSlotIndex: number | null;
+  selected: BulletCard | null;
+  onChange: (b: BulletCard | null) => void;
+}) {
+  // Discard candidates: every kind still in the player's hand except the
+  // played B!B!B! itself. Dedupe by kind — clic and bang are interchangeable
+  // within a kind, so the player picks the kind, not the slot.
+  const kinds = new Set<BulletCard>();
+  me.bullets.forEach((b, i) => {
+    if (i === playedSlotIndex) return; // exclude the played B!B!B!
+    if (b === "bang_bang_bang") return; // and any other quickdraws too
+    kinds.add(b);
+  });
+  const choices = Array.from(kinds);
+  return (
+    <Box
+      sx={{
+        marginTop: "0.7rem",
+        padding: "0.55rem 0.9rem 0.65rem",
+        marginInline: "auto",
+        maxWidth: "calc(4 * 75px + 3 * 0.45rem)",
+        border: `1.5px solid ${palette.bloodDeep}`,
+        background: "rgba(201, 58, 48, 0.08)",
+        animation: `${fadeIn} 320ms ease-out both`,
+      }}
+    >
+      <Box
+        sx={{
+          textAlign: "center",
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "0.7rem",
+          letterSpacing: "0.32em",
+          color: palette.paperDim,
+          marginBottom: "0.3rem",
+        }}
+      >
+        SAVE YOUR QUICKDRAW?
+      </Box>
+      <Box
+        sx={{
+          textAlign: "center",
+          fontFamily: fonts.body,
+          fontStyle: "italic",
+          fontSize: "0.82rem",
+          color: palette.paperDim,
+          marginBottom: "0.55rem",
+        }}
+      >
+        Discard another powder to take your Quickdraw back.
+      </Box>
+      <Box sx={{ display: "flex", justifyContent: "center", gap: "0.45rem", flexWrap: "wrap" }}>
+        {choices.map(kind => {
+          const isSelected = selected === kind;
+          return (
+            <Box
+              key={kind}
+              role="button"
+              tabIndex={0}
+              onClick={() => onChange(isSelected ? null : kind)}
+              onKeyDown={e => {
+                if (e.key === " " || e.key === "Enter") {
+                  e.preventDefault();
+                  onChange(isSelected ? null : kind);
+                }
+              }}
+              sx={{
+                padding: "0.35rem 0.7rem",
+                fontFamily: fonts.displayCaps,
+                fontFeatureSettings: '"smcp"',
+                fontSize: "0.78rem",
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                userSelect: "none",
+                border: `1.5px solid ${palette.paper}`,
+                background: isSelected ? palette.blood : "transparent",
+                color: palette.paper,
+                boxShadow: isSelected ? `2px 2px 0 ${palette.inkDeep}` : "none",
+                transform: isSelected ? "translateY(-2px)" : "none",
+                transition: "transform 0.1s ease, background 0.1s ease",
+              }}
+            >
+              {kind === "clic" ? "CLICK" : kind === "bang" ? "SHOT" : "QUICKDRAW"}
+            </Box>
+          );
+        })}
       </Box>
     </Box>
   );

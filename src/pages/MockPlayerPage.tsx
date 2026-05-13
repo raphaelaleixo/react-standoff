@@ -16,9 +16,8 @@ import { fonts } from "../theme/typography";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
-import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptScreen";
 import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
-import { eligibleForInsane, eligibleForSpecialist, eligibleForTough } from "../game/powers";
+import { eligibleForInsane, eligibleForTough } from "../game/powers";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useHandSlots } from "../hooks/useHandSlots";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
@@ -131,36 +130,19 @@ export default function MockPlayerPage() {
       }
     : renderGame;
 
-  // Specialist / Tough prompts take over the phone canvas the same way
-  // PlayerPage does in production — they replace the surface, but the dev
-  // panel + seat selector stay mounted so the dev can step out.
-  const showSpecialistPrompt =
-    !isReckoning &&
-    renderGame.variants.superPowers &&
-    renderGame.round.phase === "specialist_prompt" &&
-    eligibleForSpecialist(renderGame, me.id);
+  // Tough prompt takes over the phone canvas the same way PlayerPage does
+  // in production — replaces the surface, but the dev panel + seat
+  // selector stay mounted so the dev can step out. Specialist is bundled
+  // into the commit picker, so no prompt phase for it.
   const showToughPrompt =
     !isReckoning &&
     renderGame.variants.superPowers &&
     renderGame.round.phase === "tough_prompt" &&
     eligibleForTough(renderGame, me.id);
   const promptExpiresAtMs = renderGame.round.phaseStartedAt + 10000;
-  const playedBullet = renderGame.round.commits[me.id]?.bullet;
 
   let surface: React.ReactNode;
-  if (showSpecialistPrompt && playedBullet) {
-    surface = (
-      <PhoneShell me={me} roomId="MOCK">
-        <SpecialistPromptScreen
-          me={me}
-          playedBullet={playedBullet}
-          onUse={() => { /* mock: no-op, dev advances phase manually */ }}
-          onSkip={() => { /* mock: no-op */ }}
-          expiresAtMs={promptExpiresAtMs}
-        />
-      </PhoneShell>
-    );
-  } else if (showToughPrompt) {
+  if (showToughPrompt) {
     surface = (
       <PhoneShell me={me} roomId="MOCK">
         <ToughPromptScreen

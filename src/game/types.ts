@@ -43,7 +43,6 @@ export type RoundPhase =
   | 'withdraw'
   | 'reveal_withdraw'
   | 'reveal_bbb'
-  | 'specialist_prompt'
   | 'reveal_others'
   | 'tough_prompt'
   | 'split'

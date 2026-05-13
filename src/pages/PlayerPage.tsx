@@ -21,10 +21,9 @@ import { PageCanvas } from "../components/shell/PageCanvas";
 import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
-import { SpecialistPromptScreen } from "../components/screens/SpecialistPromptScreen";
 import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
 import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
-import { eligibleForInsane, eligibleForSpecialist, eligibleForTough } from "../game/powers";
+import { eligibleForInsane, eligibleForTough } from "../game/powers";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
@@ -32,7 +31,7 @@ export default function PlayerPage() {
   const { roomState, loading, error } = useFirebaseRoom(id);
   const store = useMemo(() => (id ? createFirebaseGameStore(id) : null), [id]);
   const { serverNow } = useServerTime();
-  const { game, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane } = useGameState(store, serverNow);
+  const { game, submitCommit, submitDuck, submitTough, submitInsane } = useGameState(store, serverNow);
   // Compute hand layout from current bullets. Pure derivation against
   // STARTING_HAND — no cached state, so it's reload-stable.
   const slotIdNum = Number(playerId);
@@ -158,27 +157,6 @@ export default function PlayerPage() {
     game.phase === "in_progress" &&
     game.round.number === 1 &&
     game.round.phase === "commit";
-
-  if (
-    game.variants.superPowers &&
-    game.round.phase === "specialist_prompt" &&
-    eligibleForSpecialist(game, me.id)
-  ) {
-    const playedBullet = game.round.commits[me.id]?.bullet;
-    if (playedBullet) {
-      return (
-        <PhoneShell me={me} roomId={roomState.roomId}>
-          <SpecialistPromptScreen
-            me={me}
-            playedBullet={playedBullet}
-            onUse={(kind) => submitSpecialist(me.id, kind)}
-            onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
-            expiresAtMs={game.round.phaseStartedAt + 10000}
-          />
-        </PhoneShell>
-      );
-    }
-  }
 
   if (
     game.variants.superPowers &&
