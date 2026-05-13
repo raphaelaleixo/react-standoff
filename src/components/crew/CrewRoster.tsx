@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import type { Game, Player } from "../../game/types";
+import type { Game, Player, PowerKind } from "../../game/types";
 import { CrewRow, type CrewStatus } from "./CrewRow";
 import { SectionHeader } from "../shell/SectionHeader";
 
@@ -100,13 +100,39 @@ function deriveStatus(
   }
 }
 
+// Power kinds that should appear as a row badge AS SOON AS they're in flight,
+// not later when the resolver flips the persistent revealed flag at split.
+// Sources:
+//   - resolution.powerActivations from the in-flight resolver pass
+//   - the armed-not-fired insane holder (activations.insane is set but the
+//     grenade hasn't detonated yet)
+// Returns playerId → set of kinds (deduped against revealed effects inside
+// CrewRow).
+function computeExtraBadges(game: Game): Map<string, PowerKind[]> {
+  const out = new Map<string, PowerKind[]>();
+  const add = (playerId: string, kind: PowerKind): void => {
+    const existing = out.get(playerId);
+    if (existing) {
+      if (!existing.includes(kind)) existing.push(kind);
+    } else {
+      out.set(playerId, [kind]);
+    }
+  };
+  const insaneHolder = game.round.activations.insane?.playerId;
+  if (insaneHolder) add(insaneHolder, "insane");
+  for (const a of game.round.resolution?.powerActivations ?? []) {
+    add(a.playerId, a.kind);
+  }
+  return out;
+}
+
 export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
   const fresh = freshlyStruck ?? new Set<string>();
   // Union the freshlyStruck signal from the parent (real-time wound application)
   // with our commits-based derivation so the STRUCK pill works for both live
   // games and the mock board (where freshlyStruck isn't simulated).
   const struck = new Set<string>([...computeStruck(game), ...fresh]);
-  const armedInsaneHolderId = game.round.activations.insane?.playerId;
+  const extraBadges = computeExtraBadges(game);
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "visible" }}>
       <SectionHeader title="The Crew" subtitle="six souls, one prize" />
@@ -120,7 +146,7 @@ export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
               player={{ ...p, wounds, shame }}
               status={deriveStatus(game, p, struck)}
               freshWoundIndex={fresh.has(p.id) ? wounds - 1 : undefined}
-              armedInsane={armedInsaneHolderId === p.id}
+              extraBadgeKinds={extraBadges.get(p.id)}
             />
           );
         })}

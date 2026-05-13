@@ -5,7 +5,7 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { PowerBadge } from "../powers/PowerBadge";
-import type { Player } from "../../game/types";
+import type { Player, PowerKind } from "../../game/types";
 import { durations, popIn } from "../../theme/animations";
 import { useTickingNumber } from "../../hooks/useTickingNumber";
 
@@ -28,23 +28,23 @@ interface CrewRowProps {
   player: Player;
   status?: CrewStatus;
   freshWoundIndex?: number; // index of the just-applied wound (0..2) for pulse
-  // Synthesizes an Insane badge for the holder during the reveal window —
-  // the activations slot is set but the resolver hasn't flipped the effect
-  // to revealed yet.
-  armedInsane?: boolean;
+  // Extra power kinds to show alongside the player's revealed effects. Used
+  // to surface "in-flight" reveals — the resolver pushed a powerActivation
+  // (Dragon Skin / Ironhide / Specialist / Tough) or the Insane holder
+  // armed their grenade — before the resolver flips the effect's
+  // revealed flag at split → next round.
+  extraBadgeKinds?: PowerKind[];
   "data-testid"?: string;
 }
 
-export function CrewRow({ player, status, freshWoundIndex, armedInsane, "data-testid": testid }: CrewRowProps) {
+export function CrewRow({ player, status, freshWoundIndex, extraBadgeKinds, "data-testid": testid }: CrewRowProps) {
   const cash = player.cash.reduce((s, n) => s + n.value, 0);
   const tickingCash = useTickingNumber(cash, CASH_TICK_DURATION_MS);
   const dead = player.status === "dead" || status === "dead";
   const struck = status === "struck";
   const yielded = status === "yielded";
-  const revealedEffects = player.effects.filter(e => e.revealed);
-  const badgeKinds = armedInsane && !revealedEffects.some(e => e.kind === "insane")
-    ? [...revealedEffects.map(e => e.kind), "insane" as const]
-    : revealedEffects.map(e => e.kind);
+  const revealedKinds = player.effects.filter(e => e.revealed).map(e => e.kind);
+  const badgeKinds = Array.from(new Set([...revealedKinds, ...(extraBadgeKinds ?? [])]));
   return (
     <Box
       data-testid={testid}
