@@ -7,10 +7,11 @@
 // submitInsane so the grenade scenario plays through.
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Box, FormControlLabel, Switch, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { PhoneReckoning } from "../components/phone/PhoneReckoning";
+import { XMarksCheckbox } from "../components/XMarksCheckbox";
 import { useGameState } from "../hooks/useGameState";
 import { useHandSlots } from "../hooks/useHandSlots";
 import { createLocalGameStore, type LocalGameStore } from "../components/dev/localGameStore";
@@ -171,19 +172,9 @@ export default function MockPlayerPage() {
           selectedId={me.id}
           onSelect={setSelectedPlayerId}
         />
-        <FormControlLabel
-          sx={{
-            color: palette.paper,
-            marginLeft: 0,
-            "& .MuiTypography-root": { fontFamily: fonts.body, fontSize: "0.85rem" },
-          }}
-          control={
-            <Switch
-              size="small"
-              checked={renderGame.variants.superPowers}
-              onChange={e => setVariantOverride(e.target.checked)}
-            />
-          }
+        <XMarksCheckbox
+          checked={renderGame.variants.superPowers}
+          onChange={setVariantOverride}
           label="Super Powers"
         />
       </ScenarioDock>
