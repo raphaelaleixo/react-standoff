@@ -151,6 +151,63 @@ export const SCENARIOS: Scenario[] = [
       }),
   },
   {
+    id: "pick-and-play-specialist",
+    label: "Pick & play — Specialist (Quartermaster's Reload)",
+    blurb:
+      "Seat 'a' (Specialist) is the only open commit; b, c, d are pre-filled. " +
+      "Mad Mary is banging Maud. Pick B!B!B! to surface the discard chips, " +
+      "tap a CLICK to save the Quickdraw, commit, watch the round resolve " +
+      "— then round 2 opens with the card stamped USED.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "specialist" },
+        commits: {
+          b: { bullet: "bang", target: "a" },
+          c: { bullet: "clic", target: "d" },
+          d: { bullet: "clic", target: "c" },
+        },
+      }),
+  },
+  {
+    id: "pick-and-play-tough",
+    label: "Pick & play — Tough (Phantom Pain)",
+    blurb:
+      "Seat 'a' (Tough) is the only open commit; b, c, d are pre-filled. " +
+      "Mad Mary is banging Maud. Tick the Phantom Pain chip, commit any " +
+      "bullet, and at the split the card joins standing and stamps USED " +
+      "for round 2.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "tough" },
+        commits: {
+          b: { bullet: "bang", target: "a" },
+          c: { bullet: "clic", target: "d" },
+          d: { bullet: "clic", target: "c" },
+        },
+      }),
+  },
+  {
+    id: "pick-and-play-insane",
+    label: "Pick & play — Insane (Pocket Inferno)",
+    blurb:
+      "Seat 'a' (Insane) is the only open commit; b, c, d are pre-filled. " +
+      "Mad Mary is banging Maud. Tick Pocket Inferno, commit, and watch the " +
+      "shots fire — the wound trips the grenade, BOOM detonates, card stamps " +
+      "USED at round 2.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "insane" },
+        commits: {
+          b: { bullet: "bang", target: "a" },
+          c: { bullet: "clic", target: "d" },
+          d: { bullet: "clic", target: "c" },
+        },
+      }),
+  },
+  {
     id: "krakenscale-double-shot",
     label: "Krakenscale clamps a double shot",
     blurb:
