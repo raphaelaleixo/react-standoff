@@ -549,7 +549,7 @@ function InsaneCommitChoice({
   return (
     <Box
       sx={{
-        marginTop: "1.1rem",
+        marginTop: "1.4rem",
         marginInline: "auto",
         maxWidth: "calc(4 * 75px + 3 * 0.45rem)",
         animation: `${fadeIn} 320ms ease-out both`,
