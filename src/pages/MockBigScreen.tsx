@@ -61,8 +61,14 @@ export default function MockBigScreen() {
   const handleReset = () => store.reset(null);
 
   const activeScenario = SCENARIOS.find(s => s.id === scenarioId);
+  // Mirror RoomPage: filter insane out of the resolution-based overlay
+  // (the audience already saw the card from the synthetic reveal when the
+  // holder armed it — the detonation is told via the BOOM stamp + wound
+  // pips, not a replay).
   const overlayActivations =
-    game?.round.resolution?.powerActivations ?? [];
+    (game?.round.resolution?.powerActivations ?? []).filter(
+      a => a.kind !== "insane",
+    );
 
   // Fire scenario phase-entry hooks once per phase transition. This is how
   // scenarios inject the activations production reads from a phone (tough,

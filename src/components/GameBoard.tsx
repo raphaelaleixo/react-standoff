@@ -21,6 +21,7 @@ interface GameBoardProps {
 const REVEAL_LABEL: Partial<Record<Game["round"]["phase"], string>> = {
   reveal_bbb: "Quickdraw!",
   reveal_others: "Shots",
+  grenade: "Boom!",
 };
 
 // Split-phase choreography. The state machine doesn't apply awards until the

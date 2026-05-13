@@ -153,6 +153,16 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   // Wounded-this-round = anyone who's taken a hit by the current phase. They
   // stay laid down (struck visual) through the rest of the round.
   const wounded = new Set<string>([...bbbVictims, ...bangVictims]);
+  // Grenade phase: the resolver already wrote every grenade victim into
+  // resolution.woundedThisRound. Mirror them onto the map so the audience
+  // sees every roundel splatter alongside the BOOM stamp.
+  if (game.round.phase === "grenade" && game.round.resolution) {
+    for (const id of Object.keys(game.round.resolution.woundedThisRound)) {
+      if ((game.round.resolution.woundedThisRound[id] ?? 0) > 0) {
+        wounded.add(id);
+      }
+    }
+  }
   const struck = (id: string) =>
     wounded.has(id) && FROM_BBB_REVEAL.has(game.round.phase);
   const center = CANVAS / 2;

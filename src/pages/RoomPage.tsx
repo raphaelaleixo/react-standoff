@@ -271,8 +271,12 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
               a =>
                 a.kind === "unbreakable" ||
                 a.kind === "dragon_skin" ||
-                a.kind === "specialist" ||
-                a.kind === "insane"
+                a.kind === "specialist"
+              // `insane` is intentionally excluded — when the grenade
+              // detonates the audience already saw the card via the
+              // synthetic reveal that fired when the holder armed it.
+              // The detonation is told via the BOOM stamp + wound pips,
+              // not by replaying the card.
             )
           }
           players={game.players}
