@@ -27,17 +27,20 @@ const STATUS_LABEL: Record<CrewStatus, string> = {
 interface CrewRowProps {
   player: Player;
   status?: CrewStatus;
-  freshWoundIndex?: number; // index of the just-applied wound (0..2) for pulse
+  freshWoundIndex?: number; // index of the just-applied wound for pulse
   // Extra power kinds to show alongside the player's revealed effects. Used
   // to surface "in-flight" reveals — the resolver pushed a powerActivation
   // (Dragon Skin / Ironhide / Specialist / Tough) or the Insane holder
   // armed their grenade — before the resolver flips the effect's
   // revealed flag at split → next round.
   extraBadgeKinds?: PowerKind[];
+  // Wound pip slot count. Defaults to 3; Ironhide bumps this to 4 when
+  // the holder's threshold raise is in flight.
+  woundSlots?: number;
   "data-testid"?: string;
 }
 
-export function CrewRow({ player, status, freshWoundIndex, extraBadgeKinds, "data-testid": testid }: CrewRowProps) {
+export function CrewRow({ player, status, freshWoundIndex, extraBadgeKinds, woundSlots = 3, "data-testid": testid }: CrewRowProps) {
   const cash = player.cash.reduce((s, n) => s + n.value, 0);
   const tickingCash = useTickingNumber(cash, CASH_TICK_DURATION_MS);
   const dead = player.status === "dead" || status === "dead";
@@ -128,7 +131,7 @@ export function CrewRow({ player, status, freshWoundIndex, extraBadgeKinds, "dat
       </Box>
       <Box sx={{ display: "flex", flexDirection: "column", gap: "0.18rem", alignItems: "flex-end" }}>
         <StatusPill status={status} label={status ? STATUS_LABEL[status] : ""} />
-        <WoundPips count={player.wounds} freshIndex={freshWoundIndex} />
+        <WoundPips count={player.wounds} freshIndex={freshWoundIndex} slots={woundSlots} />
       </Box>
     </Box>
   );

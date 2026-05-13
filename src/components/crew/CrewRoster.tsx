@@ -9,54 +9,51 @@ interface CrewRosterProps {
   freshlyStruck?: Set<string>;
 }
 
-// Players wounded by the current phase: BBB victims from reveal_bbb on, plus
-// bang victims once reveal_others lands. Mirrors the targeting map's logic so
-// the STRUCK pill and the map's struck roundel light up for the same players.
-function computeStruck(game: Game): Set<string> {
-  const struck = new Set<string>();
+// Per-player wound count to add for the current phase's pip display.
+// BBB shots count from reveal_bbb onwards; bangs join in at reveal_others.
+// The grenade phase short-circuits the chain and lights up every player
+// the resolver wounded (post-Krakenscale clamp).
+function computeStruckCounts(game: Game): Record<string, number> {
+  const counts: Record<string, number> = {};
   const phase = game.round.phase;
-  // Grenade phase short-circuits the normal reveal chain. Light up every
-  // player who took a wound this round (from the resolver's woundedThisRound)
-  // so the crew rail shows the explosion's victims.
   if (phase === "grenade") {
     const wounded = game.round.resolution?.woundedThisRound ?? {};
     for (const id of Object.keys(wounded)) {
-      if ((wounded[id] ?? 0) > 0) struck.add(id);
+      const n = wounded[id] ?? 0;
+      if (n > 0) counts[id] = n;
     }
-    return struck;
+    return counts;
   }
   if (phase !== "reveal_bbb" && phase !== "reveal_others" && phase !== "split") {
-    return struck;
+    return counts;
   }
+  // BBB shots: each hit lands a wound. Track which shooters were BBB-struck
+  // themselves so their bang doesn't fire in the next pass.
+  const bbbStruck = new Set<string>();
   for (const p of game.players) {
     const c = game.round.commits[p.id];
     if (c?.bullet === "bang_bang_bang" && !c.withdrew && c.target) {
       const tc = game.round.commits[c.target];
-      if (!tc?.withdrew) struck.add(c.target);
+      if (!tc?.withdrew) {
+        counts[c.target] = (counts[c.target] ?? 0) + 1;
+        bbbStruck.add(c.target);
+      }
     }
   }
   if (phase === "reveal_others" || phase === "split") {
     for (const p of game.players) {
       const c = game.round.commits[p.id];
       if (c?.bullet === "bang" && !c.withdrew && c.target) {
-        if (struck.has(p.id)) continue; // shooter was BBB-wounded → bullet voided
+        if (bbbStruck.has(p.id)) continue; // shooter was BBB-wounded → bullet voided
         const tc = game.round.commits[c.target];
         if (tc?.withdrew) continue;
-        if (struck.has(c.target)) continue;
-        struck.add(c.target);
+        counts[c.target] = (counts[c.target] ?? 0) + 1;
       }
     }
   }
-  return struck;
+  return counts;
 }
 
-// Apply this round's in-flight wound to the displayed pip count once it's
-// dramatically resolved — so the BBB victim shows their new pip in reveal_bbb,
-// the bang victim shows it in reveal_others, etc. Caps at 3 (death).
-function effectiveWounds(p: Player, struck: Set<string>): Player["wounds"] {
-  const w = p.wounds + (struck.has(p.id) ? 1 : 0);
-  return Math.min(w, 3) as Player["wounds"];
-}
 
 // Yielding gives a shame marker. The marker becomes visible once the duck is
 // public — reveal_withdraw onward.
@@ -74,7 +71,7 @@ function effectiveShame(p: Player, game: Game): number {
 function deriveStatus(
   game: Game,
   p: Player,
-  struck: Set<string>,
+  struckCount: number,
 ): CrewStatus | undefined {
   if (p.status === "dead") return "dead";
   const c = game.round.commits[p.id];
@@ -91,7 +88,7 @@ function deriveStatus(
     case "reveal_others":
     case "split":
     case "grenade":
-      if (struck.has(p.id)) return "struck";
+      if (struckCount > 0) return "struck";
       if (c?.withdrew) return "yielded";
       // No pill for standing players — they're alive and (in split) get the take.
       return undefined;
@@ -128,25 +125,40 @@ function computeExtraBadges(game: Game): Map<string, PowerKind[]> {
 
 export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
   const fresh = freshlyStruck ?? new Set<string>();
-  // Union the freshlyStruck signal from the parent (real-time wound application)
-  // with our commits-based derivation so the STRUCK pill works for both live
+  // Union the freshlyStruck signal from the parent (real-time wound
+  // application) with our commits-based derivation. The parent only
+  // signals "this player was just hit" — we treat that as +1 to the
+  // computed count so the STRUCK pill + pip pulse work for both live
   // games and the mock board (where freshlyStruck isn't simulated).
-  const struck = new Set<string>([...computeStruck(game), ...fresh]);
+  const counts = computeStruckCounts(game);
+  for (const id of fresh) counts[id] = Math.max(counts[id] ?? 0, 1);
   const extraBadges = computeExtraBadges(game);
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "visible" }}>
       <SectionHeader title="The Crew" subtitle="six souls, one prize" />
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         {game.players.map(p => {
-          const wounds = effectiveWounds(p, struck);
+          const struckCount = counts[p.id] ?? 0;
+          const wounds = p.wounds + struckCount;
           const shame = effectiveShame(p, game);
+          // The pip rail bumps to 4 slots when Ironhide is in flight for this
+          // player — either the persistent revealed flag is up or this
+          // round's resolution pushed an unbreakable activation for them.
+          const hasUnbreakable = p.effects.some(e => e.kind === "unbreakable");
+          const unbreakableRevealed =
+            p.effects.some(e => e.kind === "unbreakable" && e.revealed) ||
+            (game.round.resolution?.powerActivations ?? []).some(
+              a => a.playerId === p.id && a.kind === "unbreakable",
+            );
+          const woundSlots = hasUnbreakable && unbreakableRevealed ? 4 : 3;
           return (
             <CrewRow
               key={p.id}
-              player={{ ...p, wounds, shame }}
-              status={deriveStatus(game, p, struck)}
+              player={{ ...p, wounds: Math.min(wounds, woundSlots) as Player["wounds"], shame }}
+              status={deriveStatus(game, p, struckCount)}
               freshWoundIndex={fresh.has(p.id) ? wounds - 1 : undefined}
               extraBadgeKinds={extraBadges.get(p.id)}
+              woundSlots={woundSlots}
             />
           );
         })}

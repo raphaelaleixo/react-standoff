@@ -4,16 +4,30 @@ import { durations, popIn } from "../../theme/animations";
 
 const POP_TIMING = `${durations.base}ms cubic-bezier(.2,.7,.2,1.4) both`;
 
-// Three wound boxes — filled boxes show a red cross, empty boxes show a small
+// Wound boxes — filled boxes show a red cross, empty boxes show a small
 // circle outline. Lifted out of CrewRow so the Reckoning screen and any other
 // consumer can render the same pip language.
 //
+// `slots` controls how many wound boxes are rendered. Defaults to 3 (the
+// normal death threshold); Ironhide holders bump this to 4 when their save
+// is in flight so the extra circle is visible immediately on reveal.
+//
 // `freshIndex`: when set, that pip pops in on mount with a slightly stronger
 // drop-shadow. Used for the just-applied wound during the BBB / Shots reveal.
-export function WoundPips({ count, freshIndex, size = 12 }: { count: number; freshIndex?: number; size?: number }) {
+export function WoundPips({
+  count,
+  freshIndex,
+  size = 12,
+  slots = 3,
+}: {
+  count: number;
+  freshIndex?: number;
+  size?: number;
+  slots?: number;
+}) {
   return (
     <Box sx={{ display: "flex", gap: "3px" }}>
-      {[0, 1, 2].map(i => {
+      {Array.from({ length: slots }, (_, i) => i).map(i => {
         const filled = i < count;
         const fresh = filled && freshIndex === i;
         return (
