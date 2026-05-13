@@ -285,10 +285,11 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
               const backwardVisible = backwardCommitted && lineVisible(cj, ci, pj.id, pi.id);
               const forwardFired = lineFired(ci?.bullet);
               const backwardFired = lineFired(cj?.bullet);
-              // CLICKs only dim from reveal_bbb on — before shots fire, all
-              // committed lines look equal; once bullets start landing the
-              // CLICKs fade back so the BANG / BBB threads dominate.
-              const dimClic = FROM_BBB_REVEAL.has(phase);
+              // CLICKs only dim from reveal_others on — bullets aren't
+              // public until the quickdraw resolves, so before then every
+              // commit reads equally. Once shots actually land, CLICKs fade
+              // back and let BANG / BBB threads dominate.
+              const dimClic = FROM_OTHERS_REVEAL.has(phase);
               const forwardIsClic = dimClic && ci?.bullet === "clic";
               const backwardIsClic = dimClic && cj?.bullet === "clic";
               const x1 = center + positions[i].x;
