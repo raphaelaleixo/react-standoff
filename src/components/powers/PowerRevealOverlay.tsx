@@ -37,12 +37,16 @@ export function PowerRevealOverlay({ activations, players }: Props) {
     return () => clearInterval(i);
   }, [sig, count]);
 
-  if (activations.length === 0 || idx >= activations.length) return null;
-  const cur = activations[idx];
+  if (activations.length === 0) return null;
+  // Clamp idx to the last activation once the sequence finishes so the Fade
+  // wrapper keeps a child to animate while `open` flips to false — otherwise
+  // the overlay returned null on the very tick that triggered exit, and the
+  // card vanished instead of fading out.
+  const cur = activations[Math.min(idx, activations.length - 1)];
   const owner = players.find(p => p.id === cur.playerId);
 
   return (
-    <Fade in={open}>
+    <Fade in={open} timeout={{ enter: 220, exit: 420 }} unmountOnExit>
       <Box
         sx={{
           position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.65)",
