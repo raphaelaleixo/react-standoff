@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
-import { Box, Fade, Typography } from "@mui/material";
+import { Box, Fade } from "@mui/material";
 import { PowerCard } from "./PowerCard";
+import { FlagFor } from "../flags";
+import { jollyRogerForColor } from "../flags/jollyRogerForColor";
+import { flagColor, palette } from "../../theme/colors";
+import { fonts } from "../../theme/typography";
 import type { PowerActivation, Player } from "../../game/types";
 
 interface Props {
@@ -47,6 +51,7 @@ export function PowerRevealOverlay({ activations, players }: Props) {
   // card vanished instead of fading out.
   const cur = activations[Math.min(idx, activations.length - 1)];
   const owner = players.find(p => p.id === cur.playerId);
+  const ownerColor = owner?.colorOrAvatar ?? "generic";
 
   return (
     <Fade in={open} timeout={{ enter: 380, exit: 620 }} unmountOnExit>
@@ -54,12 +59,42 @@ export function PowerRevealOverlay({ activations, players }: Props) {
         sx={{
           position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.65)",
           display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", zIndex: 1300,
+          alignItems: "center", justifyContent: "center",
+          gap: "1rem",
+          zIndex: 1300,
         }}
       >
-        <Typography variant="overline" sx={{ color: "common.white" }}>
-          {owner?.displayName ?? cur.playerId}
-        </Typography>
+        {/* Owner medallion: flag-aspect chip in the player's colour with
+            their jolly roger, plus the display name. Same visual language
+            as the CrewRow flag chip and the reckoning winner card. */}
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+          <Box
+            sx={{
+              width: 84,
+              height: 58,
+              border: `2px solid ${palette.paper}`,
+              background: flagColor(ownerColor),
+              color: palette.paper,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: `3px 3px 0 ${palette.inkDeep}`,
+            }}
+          >
+            <FlagFor id={jollyRogerForColor(ownerColor)} size={42} />
+          </Box>
+          <Box
+            sx={{
+              fontFamily: fonts.blackletter,
+              fontSize: "1.8rem",
+              lineHeight: 1,
+              color: palette.paper,
+              letterSpacing: "0.02em",
+            }}
+          >
+            {owner?.displayName ?? cur.playerId}
+          </Box>
+        </Box>
         <PowerCard kind={cur.kind} variant="revealing" size="lg" />
       </Box>
     </Fade>
