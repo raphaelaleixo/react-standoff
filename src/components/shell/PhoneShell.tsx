@@ -21,13 +21,18 @@ interface PhoneShellProps {
    *  into its footer corner — one element animating, not a separate intro
    *  screen handing off to a footer widget. */
   introOpen?: boolean;
+  /** When true, the corner power card renders with the X-marks USED stamp
+   *  even before the resolver flips the persistent `effects.used` flag —
+   *  used to give immediate feedback as soon as the holder commits with
+   *  the power armed (specialist/tough/insane). */
+  armedThisRound?: boolean;
 }
 
 // Phone-shaped page canvas. PhoneHeader at top (skull + ROOM code + chosen
 // flag tile), the phase body in the middle, and a footer strip showing
 // cash, wounds, and shame markers — the stash bookkeeping that used to sit
 // inline with the header.
-export function PhoneShell({ me, roomId, children, introOpen }: PhoneShellProps) {
+export function PhoneShell({ me, roomId, children, introOpen, armedThisRound }: PhoneShellProps) {
   const { t } = useTranslation();
   const cash = cashTotal(me);
   const myPower = me.effects[0];
@@ -224,7 +229,7 @@ export function PhoneShell({ me, roomId, children, introOpen }: PhoneShellProps)
                 >
                   <PowerCard
                     kind={myPower.kind}
-                    variant={myPower.used ? "used" : "faceUp"}
+                    variant={myPower.used || armedThisRound ? "used" : "faceUp"}
                     size="lg"
                   />
                 </Box>

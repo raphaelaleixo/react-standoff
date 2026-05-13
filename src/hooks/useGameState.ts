@@ -192,7 +192,7 @@ export function useGameState(
   // bang-inclusive resolve (still with insane suppressed) and advance to
   // reveal_others.
   //
-  // Specialist (Quartermaster's Reload) is bundled into the commit, so the
+  // Specialist (Spare Powder) is bundled into the commit, so the
   // bang-inclusive resolve at this handoff is what picks it up.
   useEffect(() => {
     if (!store || !game) return;

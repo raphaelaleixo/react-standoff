@@ -138,11 +138,11 @@ function scenario({
 export const SCENARIOS: Scenario[] = [
   {
     id: "pick-and-play-specialist",
-    label: "Pick & play — Specialist (Quartermaster's Reload)",
+    label: "Pick & play — Specialist (Spare Powder)",
     blurb:
       "Seat 'a' (Specialist) is the only open commit; b, c, d are pre-filled. " +
-      "Mad Mary is banging Maud. Pick B!B!B!, tick the Quartermaster's " +
-      "Reload chip, commit. Wait through standoff → withdraw → reveals " +
+      "Mad Mary is banging Maud. Pick B!B!B!, tick the Spare Powder " +
+      "chip, commit. Wait through standoff → withdraw → reveals " +
       "(~30s). Round 2 opens with the Specialist card stamped USED.",
     build: () =>
       scenario({
@@ -198,8 +198,8 @@ export const SCENARIOS: Scenario[] = [
     label: "Commit picker — all powers armed",
     blurb:
       "No pre-filled commits — state machine sits in commit phase. Use the " +
-      "seat selector: 'a' has Specialist (tap B!B!B! to see Quartermaster's " +
-      "Reload), 'b' has Tough (Phantom Pain chip), 'c' has Insane (Pocket " +
+      "seat selector: 'a' has Specialist (tap B!B!B! to see Spare " +
+      "Powder), 'b' has Tough (Phantom Pain chip), 'c' has Insane (Pocket " +
       "Inferno chip), 'd' has Dragon Skin (passive, no chip). Round doesn't " +
       "advance until all four seats commit — use this for picker layout, " +
       "not for end-to-end power testing.",
@@ -249,9 +249,9 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "specialist-saves-bbb",
-    label: "Quartermaster's Reload trims a Quickdraw",
+    label: "Spare Powder trims a Quickdraw",
     blurb:
-      "Cap'n Maud plays Quickdraw with Quartermaster's Reload already armed " +
+      "Cap'n Maud plays Quickdraw with Spare Powder already armed " +
       "(discarding a CLICK). The specialist card plays on the big screen " +
       "before the broadside, and the resolved volley shows only the surviving " +
       "two shots.",

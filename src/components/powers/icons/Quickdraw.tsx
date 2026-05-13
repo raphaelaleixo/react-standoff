@@ -1,4 +1,4 @@
-// Lightning bolt — the centred sigil for Quartermaster's Reload
+// Lightning bolt — the centred sigil for Spare Powder
 // (Specialist). Borrows the QUICKDRAW glyph from PowderCard so the
 // "you reload your Quickdraw" mechanic reads visually in one mark.
 // Uses `currentColor` so the host context controls the fill.

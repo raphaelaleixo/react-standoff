@@ -256,7 +256,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
   const hasInsane = variantOn && me.effects.some(
     e => e.kind === "insane" && !e.revealed && !e.used,
   );
-  // Quartermaster's Reload only fires when the holder plays B!B!B!. Auto-
+  // Spare Powder only fires when the holder plays B!B!B!. Auto-
   // resolve the discard at submit time: a CLICK if any remain after the
   // played B!B!B! is removed, otherwise a SHOT. The toggle clears when the
   // pick changes off B!B!B!.
@@ -411,7 +411,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
 // arms the save (it'll be discarded so the B!B!B! stays in the holder's hand
 // after the round); tapping again clears it. The choice rides on the same
 // Lock In button as the commit — no separate phase, no prompt, no wait.
-// Quartermaster's Reload (Specialist) arm — only offered when the holder
+// Spare Powder (Specialist) arm — only offered when the holder
 // has picked B!B!B!. Auto-resolves the discarded kind at submit time
 // (CLICK if any remain in hand, else SHOT), so the player only has to
 // decide whether to save the Quickdraw at all.
@@ -434,7 +434,7 @@ function SpecialistCommitChoice({
       <XMarksCheckbox
         checked={armed}
         onChange={onChange}
-        label="Arm Quartermaster's Reload"
+        label="Arm Spare Powder"
         hint="Save your Quickdraw — discard a click instead (or a shot if none remain)."
       />
     </Box>

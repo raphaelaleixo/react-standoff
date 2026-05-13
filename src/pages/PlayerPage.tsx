@@ -155,11 +155,21 @@ export default function PlayerPage() {
     game.round.number === 1 &&
     game.round.phase === "commit";
 
+  // Flip the corner power card to USED as soon as the holder commits with
+  // the power armed — without waiting for the resolver to mark the
+  // persistent effect.used flag at split. Specialist + Insane atomically
+  // write to activations on commit; Tough rides on the commit itself.
+  const armedThisRound =
+    game.round.activations.specialist?.playerId === me.id ||
+    game.round.activations.insane?.playerId === me.id ||
+    game.round.commits[me.id]?.armTough === true;
+
   return (
     <PhoneShell
       me={me}
       roomId={roomState.roomId}
       introOpen={introOpen}
+      armedThisRound={armedThisRound}
     >
       <PhaseView
         game={game}
