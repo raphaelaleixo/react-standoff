@@ -23,7 +23,10 @@ export function PowerRevealOverlay({ activations, players }: Props) {
     if (count === 0) return;
     setIdx(0);
     setOpen(true);
-    const stepMs = 1500;
+    // How long each card sits on screen before the next one steps in (or
+    // the overlay fades out). Long enough for the audience to read the
+    // card name + see who owns it.
+    const stepMs = 2600;
     const i = setInterval(() => {
       setIdx(cur => {
         const next = cur + 1;
@@ -46,7 +49,7 @@ export function PowerRevealOverlay({ activations, players }: Props) {
   const owner = players.find(p => p.id === cur.playerId);
 
   return (
-    <Fade in={open} timeout={{ enter: 220, exit: 420 }} unmountOnExit>
+    <Fade in={open} timeout={{ enter: 380, exit: 620 }} unmountOnExit>
       <Box
         sx={{
           position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.65)",
