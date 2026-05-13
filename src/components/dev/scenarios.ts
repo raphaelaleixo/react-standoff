@@ -208,6 +208,16 @@ export const SCENARIOS: Scenario[] = [
       scenario({
         seats: 4,
         powers: { b: "tough" },
+        // Curated to split cleanly across 4 standing — 4 × $10k with a
+        // $5k carryover — so the audience can see Mary's saved share
+        // hit the table after Phantom Pain lands.
+        loot: [
+          { id: "loot-1", value: 10000 },
+          { id: "loot-2", value: 10000 },
+          { id: "loot-3", value: 10000 },
+          { id: "loot-4", value: 10000 },
+          { id: "loot-5", value: 5000 },
+        ],
         commits: {
           a: { bullet: "clic", target: "c" },
           b: { bullet: "clic", target: "d", armTough: true },
