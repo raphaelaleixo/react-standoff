@@ -10,6 +10,12 @@ const STANDOFF_MS = STANDOFF_DURATION_MS;
 const STANDOFF_HOLD = STANDOFF_HOLD_MS;
 const WITHDRAW_MS = WITHDRAW_DURATION_MS;
 const REVEAL_WITHDRAW_MS = 2500;
+// PowerRevealOverlay timing: stepMs (3800) + Fade exit (620) per card,
+// matched to the constants in components/powers/PowerRevealOverlay.tsx.
+// reveal_withdraw needs to outlast any cards it triggers (Dragon Skin,
+// Ironhide) so they get to play fully before the next phase starts.
+const POWER_CARD_MS = 4420;
+const REVEAL_WITHDRAW_TAIL_MS = 320;
 const REVEAL_BBB_MS = 5000;
 const REVEAL_OTHERS_MS = 5000;
 const SPECIALIST_PROMPT_MS = 10000;
@@ -166,10 +172,21 @@ export function useGameState(
   }, [store, game, serverNow]);
 
   // reveal_withdraw → reveal_bbb (timed; pure visual handoff)
+  //
+  // If the withdraw resolve pushed any Dragon Skin / Ironhide activations,
+  // hold here long enough for the big-screen reveal overlay to play those
+  // cards (otherwise reveal_bbb takes over while the card is still on
+  // screen and the bang animations bleed under it).
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "reveal_withdraw") return;
-    const remaining = REVEAL_WITHDRAW_MS - (serverNow() - game.round.phaseStartedAt);
+    const cards = (game.round.resolution?.powerActivations ?? []).filter(
+      a => a.kind === "dragon_skin" || a.kind === "unbreakable",
+    ).length;
+    const totalMs = cards > 0
+      ? cards * POWER_CARD_MS + REVEAL_WITHDRAW_TAIL_MS
+      : REVEAL_WITHDRAW_MS;
+    const remaining = totalMs - (serverNow() - game.round.phaseStartedAt);
     const fire = () => store.update("round", {
       phase: "reveal_bbb",
       phaseStartedAt: store.serverTimestamp(),
