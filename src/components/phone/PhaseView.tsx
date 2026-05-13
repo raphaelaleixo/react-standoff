@@ -739,8 +739,12 @@ function PhaseFader({ phaseKey, children }: { phaseKey: string; children: React.
         transition: `opacity ${opacity === 0 ? FADE_OUT_MS : 280}ms ease-out`,
         display: "flex",
         flexDirection: "column",
-        flex: 1,
-        minHeight: 0,
+        // Fill the body's visible area when content is short, but allow
+        // growth past 100% when a phase's content is tall (commit picker
+        // with multiple power chips) so the PhoneShell body's overflow-y:
+        // auto can actually scroll. `flex: 1` would crush the content
+        // back to the body's height and never trigger overflow.
+        minHeight: "100%",
       }}
     >
       {/* eslint-disable-next-line react-hooks/refs */}

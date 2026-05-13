@@ -74,15 +74,11 @@ export function PhoneShell({ me, roomId, children, introOpen }: PhoneShellProps)
       >
         <PhoneHeader roomId={roomId} flagId={me.colorOrAvatar} />
 
-        {/* Body. Scrolls vertically when its content overflows, with
-            bottom padding that matches the (absolute-positioned) footer's
-            footprint so the last bit of content can scroll into view above
-            the footer rather than being permanently hidden under it. */}
+        {/* Body. Scrolls vertically; padding-bottom matches the absolute-
+            positioned footer's footprint so content can scroll above it. */}
         <Box
           sx={{
             flex: 1,
-            display: "flex",
-            flexDirection: "column",
             minHeight: 0,
             overflowY: "auto",
             paddingBottom: "6rem",
