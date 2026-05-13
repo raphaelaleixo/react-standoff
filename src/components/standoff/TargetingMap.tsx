@@ -12,6 +12,10 @@ const RADIUS = 180;
 const LANE_GAP = 14;
 const ROUNDEL_RADIUS = 32; // Roundel default size is 64
 const ARROW_TARGET_PADDING = 6; // Pixels of breathing room between arrow tip and target circle edge
+// CLICK lines never fire — they're aim-only — so we dim them so the BANG and
+// BBB lines pop. Applied on top of the visibility opacity (which is what
+// fades voided lines in/out).
+const CLIC_OPACITY = 0.4;
 // `split` is included so the lines stay rendered through the round-end
 // fade-out — the wrapper <g> below transitions opacity to 0 during split,
 // and the per-line visibility logic (bbb-victim filter) keeps its
@@ -281,6 +285,8 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
               const backwardVisible = backwardCommitted && lineVisible(cj, ci, pj.id, pi.id);
               const forwardFired = lineFired(ci?.bullet);
               const backwardFired = lineFired(cj?.bullet);
+              const forwardIsClic = ci?.bullet === "clic";
+              const backwardIsClic = cj?.bullet === "clic";
               const x1 = center + positions[i].x;
               const y1 = center + positions[i].y;
               const x2 = center + positions[j].x;
@@ -320,7 +326,10 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                     <g
                       data-line-visible={forwardVisible ? "true" : "false"}
                       data-line-fired={forwardFired ? "true" : "false"}
-                      style={{ opacity: forwardVisible ? 1 : 0, transition: "opacity 0.4s ease" }}
+                      style={{
+                        opacity: forwardVisible ? (forwardIsClic ? CLIC_OPACITY : 1) : 0,
+                        transition: "opacity 0.4s ease",
+                      }}
                     >
                       {/* Beige dashed track — wiped in via the mask below */}
                       <defs>
@@ -392,7 +401,10 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                     <g
                       data-line-visible={backwardVisible ? "true" : "false"}
                       data-line-fired={backwardFired ? "true" : "false"}
-                      style={{ opacity: backwardVisible ? 1 : 0, transition: "opacity 0.4s ease" }}
+                      style={{
+                        opacity: backwardVisible ? (backwardIsClic ? CLIC_OPACITY : 1) : 0,
+                        transition: "opacity 0.4s ease",
+                      }}
                     >
                       {/* Beige dashed track — wiped in via the mask below */}
                       <defs>
