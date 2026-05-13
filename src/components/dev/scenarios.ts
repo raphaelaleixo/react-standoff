@@ -5,8 +5,10 @@ import type {
   Player,
   PowerKind,
   RoundActivations,
+  RoundPhase,
 } from "../../game/types";
 import { STARTING_HAND } from "../../game/setup";
+import type { GameStore } from "../../hooks/gameStore";
 
 // =============================================================================
 // Scenarios for the dev MockBigScreen.
@@ -45,6 +47,11 @@ export interface Scenario {
   label: string;
   blurb: string;
   build: () => Game;
+  // Optional phase-entry hooks. MockBigScreen calls these once when the
+  // state machine ticks into the named phase, letting a scenario inject
+  // activations that production reads from a phone (tough, insane), so the
+  // scenario plays through to completion in big-screen-only mode.
+  onPhaseEnter?: Partial<Record<RoundPhase, (store: GameStore) => void>>;
 }
 
 interface CrewMember {
@@ -192,11 +199,11 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "tough-saves-struck",
-    label: "Tough prompts a struck player",
+    label: "Phantom Pain claims a share anyway",
     blurb:
-      "Mad Mary holds Phantom Pain (Tough). Wet Match shoots her — she's " +
-      "struck this round. After reveal_others lands, her phone gets the " +
-      "tough prompt and she can claim a share anyway.",
+      "Mad Mary holds Tough. Wet Match shoots her — she's struck this round. " +
+      "At the tough_prompt beat the scenario auto-claims for her, so the " +
+      "Phantom Pain card plays and Mary joins standing for the split.",
     build: () =>
       scenario({
         seats: 4,
@@ -208,6 +215,11 @@ export const SCENARIOS: Scenario[] = [
           d: { bullet: "clic", target: "a" },
         },
       }),
+    onPhaseEnter: {
+      tough_prompt: store => {
+        store.update("round/activations", { tough: ["b"] });
+      },
+    },
   },
   {
     id: "insane-detonates",

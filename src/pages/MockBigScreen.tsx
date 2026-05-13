@@ -5,7 +5,7 @@
 // when it should. Use the scenario picker to choose which situation to
 // rehearse, Reset to restart from the beginning, and the muster/reckoning
 // toggle to switch surfaces.
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, MenuItem, Select, Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { FullscreenButton } from "../components/shell/FullscreenButton";
@@ -63,6 +63,22 @@ export default function MockBigScreen() {
   const activeScenario = SCENARIOS.find(s => s.id === scenarioId);
   const overlayActivations =
     game?.round.resolution?.powerActivations ?? [];
+
+  // Fire scenario phase-entry hooks once per phase transition. This is how
+  // scenarios inject the activations production reads from a phone (tough,
+  // insane) — without it, big-screen-only mode can never reach the resolves
+  // those phases gate on.
+  const lastPhaseRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!game) {
+      lastPhaseRef.current = null;
+      return;
+    }
+    const phase = game.round.phase;
+    if (lastPhaseRef.current === phase) return;
+    lastPhaseRef.current = phase;
+    activeScenario?.onPhaseEnter?.[phase]?.(store);
+  }, [game, activeScenario, store]);
 
   return (
     <>
