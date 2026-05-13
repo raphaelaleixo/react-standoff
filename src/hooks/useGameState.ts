@@ -129,6 +129,11 @@ export function useGameState(
   // pre-resolution `players`. Persisting the post-resolution state at this
   // beat would double-count those deltas in the UI. The resolved players
   // are applied at the split → next-round transition instead.
+  //
+  // Insane is suppressed for this resolve — the grenade can only fire as a
+  // consequence of the holder being shot, and the audience needs to see
+  // that shot animate (reveal_bbb / reveal_others) before BOOM lands. The
+  // real grenade resolve runs at the reveal_others → next handoff.
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "withdraw") return;
@@ -138,25 +143,8 @@ export function useGameState(
         game.round.commits,
         game.players,
         game.round.loot,
-        game.round.activations,
+        { ...game.round.activations, insane: undefined },
       );
-      if (result.resolution.roundTerminated) {
-        // Insane grenade fired. Jump to the dedicated `grenade` phase so the
-        // big screen renders the explosion choreography (and so the normal
-        // reveal_withdraw → reveal_bbb chain can't bleed in during the
-        // linger window).
-        store.update("", {
-          "round/phase": "grenade",
-          "round/phaseStartedAt": store.serverTimestamp(),
-          "round/resolution": result.resolution,
-          discardedBullets: [...game.discardedBullets, ...result.discardedBullets],
-        });
-        setTimeout(
-          () => endRoundFromGrenade(store, game, result, serverNow()),
-          GRENADE_EXPLOSION_MS,
-        );
-        return;
-      }
       store.update("", {
         "round/phase": "reveal_withdraw",
         "round/phaseStartedAt": store.serverTimestamp(),
@@ -195,32 +183,51 @@ export function useGameState(
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
 
-  // reveal_bbb → reveal_others
+  // reveal_bbb → reveal_others (or grenade, if the holder was BBB-shot)
   //
-  // Specialist (Quartermaster's Reload) used to live in its own prompt phase
-  // between these two beats. The decision is now bundled into the commit
-  // (see CommitPicker), so we just need to re-resolve at the handoff to
-  // pick up the activation that was already submitted at commit time.
+  // The grenade detonates the moment the holder takes a wound. To see if a
+  // quickdraw wound is enough, we resolve with bang shots set aside — only
+  // BBB lands. If that's enough to wound the holder, the grenade fires now
+  // (right after the quickdraw animation). Otherwise we run the normal
+  // bang-inclusive resolve (still with insane suppressed) and advance to
+  // reveal_others.
+  //
+  // Specialist (Quartermaster's Reload) is bundled into the commit, so the
+  // bang-inclusive resolve at this handoff is what picks it up.
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "reveal_bbb") return;
     const remaining = REVEAL_BBB_MS - (serverNow() - game.round.phaseStartedAt);
     const fire = () => {
-      const result = resolveRound(
-        game.round.commits, game.players, game.round.loot, game.round.activations,
+      // BBB-only view of commits: bang shots are set aside (bullet → undefined)
+      // so they're skipped by both the shots loop and the bullet-consumption
+      // pass. Their cards stay in hand if the grenade ends the round here.
+      const bbbOnlyCommits: Record<string, Commit> = {};
+      for (const [pid, c] of Object.entries(game.round.commits)) {
+        bbbOnlyCommits[pid] = c.bullet === "bang" ? { ...c, bullet: undefined } : c;
+      }
+      const bbbResult = resolveRound(
+        bbbOnlyCommits, game.players, game.round.loot, game.round.activations,
       );
-      if (result.resolution.roundTerminated) {
+      if (bbbResult.resolution.roundTerminated) {
         store.update("", {
           "round/phase": "grenade",
           "round/phaseStartedAt": store.serverTimestamp(),
-          "round/resolution": result.resolution,
+          "round/resolution": bbbResult.resolution,
+          discardedBullets: [...game.discardedBullets, ...bbbResult.discardedBullets],
         });
         setTimeout(
-          () => endRoundFromGrenade(store, game, result, serverNow()),
+          () => endRoundFromGrenade(store, game, bbbResult, serverNow()),
           GRENADE_EXPLOSION_MS,
         );
         return;
       }
+      const result = resolveRound(
+        game.round.commits,
+        game.players,
+        game.round.loot,
+        { ...game.round.activations, insane: undefined },
+      );
       store.update("", {
         "round/phase": "reveal_others",
         "round/phaseStartedAt": store.serverTimestamp(),
