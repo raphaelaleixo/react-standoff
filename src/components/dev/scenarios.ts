@@ -221,10 +221,10 @@ export const SCENARIOS: Scenario[] = [
     id: "insane-detonates",
     label: "Pocket Inferno detonates",
     blurb:
-      "Cap'n Maud holds Insane. Mad Mary will bang her this round. Reveal the " +
-      "grenade from the phone before the standoff ends — when the bang lands " +
-      "the grenade fires, standing crewmates take 1 wound, awards wipe, round " +
-      "terminates.",
+      "Cap'n Maud holds Insane. Mad Mary will bang her this round. The " +
+      "scenario reveals the grenade at standoff to mimic the holder tapping " +
+      "the phone — when the bang lands the grenade detonates, standing " +
+      "crewmates take 1 wound, awards wipe, round terminates.",
     build: () =>
       scenario({
         seats: 4,
@@ -236,6 +236,16 @@ export const SCENARIOS: Scenario[] = [
           d: { bullet: "clic", target: "c" },
         },
       }),
+    onPhaseEnter: {
+      // Mock the phone-side InsaneRevealButton tap: arms activations.insane
+      // at the start of the standoff so the reveal card plays during the
+      // standoff/withdraw beats, then the resolver fires the grenade at
+      // withdraw → reveal_withdraw and the state machine jumps to the
+      // dedicated `grenade` phase.
+      standoff: store => {
+        store.update("round/activations", { insane: { playerId: "a" } });
+      },
+    },
   },
   {
     id: "six-feet-bonus",
