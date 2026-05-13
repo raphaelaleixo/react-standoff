@@ -85,7 +85,7 @@ export function PhoneShell({ me, roomId, children, introOpen }: PhoneShellProps)
             flexDirection: "column",
             minHeight: 0,
             overflowY: "auto",
-            paddingBottom: "4.6rem",
+            paddingBottom: "6rem",
           }}
         >
           {children}
