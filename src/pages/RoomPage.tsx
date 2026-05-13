@@ -264,7 +264,7 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
         <PowerRevealOverlay
           activations={
             (game.round.resolution.powerActivations ?? []).filter(
-              a => a.kind === "unbreakable" || a.kind === "dragon_skin"
+              a => a.kind === "unbreakable" || a.kind === "dragon_skin" || a.kind === "insane"
             )
           }
           players={game.players}
@@ -277,6 +277,23 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
               a => a.kind === "specialist" || a.kind === "tough"
             )
           }
+          players={game.players}
+        />
+      )}
+      {/* Pocket Inferno reveal: when the holder taps REVEAL GRENADE we get
+          an activations slot but no resolver activation yet — the resolver
+          only pushes one if the grenade actually detonates. Synthesise an
+          activation here so the big screen flashes the card the moment the
+          threat is announced. Hidden once the resolver fires the explosion
+          so the resolution-based overlay above can play the detonation. */}
+      {game.round.activations.insane && !game.round.resolution?.roundTerminated && (
+        <PowerRevealOverlay
+          activations={[
+            {
+              playerId: game.round.activations.insane.playerId,
+              kind: "insane" as const,
+            },
+          ]}
           players={game.players}
         />
       )}
