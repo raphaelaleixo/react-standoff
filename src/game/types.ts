@@ -14,7 +14,9 @@ export type PowerKind =
   | 'super_coward'
   | 'specialist'
   | 'tough'
-  | 'insane';
+  | 'insane'
+  | 'the_kid'
+  | 'the_cunning';
 
 export interface PowerEffect {
   kind: PowerKind;
@@ -44,6 +46,11 @@ export type RoundPhase =
   | 'reveal_withdraw'
   | 'reveal_bbb'
   | 'reveal_others'
+  // The Kid / The Cunning late-pick window. After standoff_hold the
+  // targeting map is fully drawn; holders of those powers fill in their
+  // deferred half (Kid → target, Cunning → bullet). Auto-skips when no
+  // holders are still partial.
+  | 'late_commit'
   // Phantom Pain card is on screen — held between reveal_others and split
   // so the reveal overlay finishes before the loot animation starts.
   | 'tough_reveal'

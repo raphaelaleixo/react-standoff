@@ -44,4 +44,14 @@ export const POWER_REGISTRY: Record<PowerKind, PowerCardDef> = {
     nameKey: 'powers.cards.insane.name',
     descriptionKey: 'powers.cards.insane.description',
   },
+  the_kid: {
+    kind: 'the_kid',
+    nameKey: 'powers.cards.the_kid.name',
+    descriptionKey: 'powers.cards.the_kid.description',
+  },
+  the_cunning: {
+    kind: 'the_cunning',
+    nameKey: 'powers.cards.the_cunning.name',
+    descriptionKey: 'powers.cards.the_cunning.description',
+  },
 };

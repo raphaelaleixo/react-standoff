@@ -75,9 +75,20 @@ function deriveStatus(
 ): CrewStatus | undefined {
   if (p.status === "dead") return "dead";
   const c = game.round.commits[p.id];
+  // Powder Monkey / Wily Bosun split the lock — they're "ready" once
+  // they've filled the half this phase asks for, even though the full
+  // commit isn't complete yet.
+  const hasKid = p.effects.some(e => e.kind === "the_kid");
+  const hasCunning = p.effects.some(e => e.kind === "the_cunning");
+  const partialReady =
+    (hasKid && c?.bullet !== undefined) ||
+    (hasCunning && c?.target !== undefined);
+  const fullyReady = c?.bullet !== undefined && c?.target !== undefined;
   switch (game.round.phase) {
     case "commit":
-      return c?.bullet && c?.target ? "ready" : "choosing";
+      return fullyReady || partialReady ? "ready" : "choosing";
+    case "late_commit":
+      return fullyReady ? "ready" : "choosing";
     case "standoff":
     case "standoff_hold":
     case "withdraw":

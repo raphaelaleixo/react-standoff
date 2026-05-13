@@ -38,10 +38,15 @@ export interface SubmitCommitOpts {
   armInsane?: boolean;
 }
 
+export interface SubmitCommitPartial {
+  bullet?: BulletCard;
+  target?: string;
+}
+
 interface PhaseViewProps {
   game: Game;
   me: Player;
-  submitCommit: (id: string, b: BulletCard, t: string, opts?: SubmitCommitOpts) => Promise<void>;
+  submitCommit: (id: string, partial: SubmitCommitPartial, opts?: SubmitCommitOpts) => Promise<void>;
   submitDuck: (id: string, w: boolean) => Promise<void>;
   // Stable hand layout — slot positions persist across phases/rounds so a
   // card spent earlier stays in its original slot. Hoisted into the parent
@@ -71,6 +76,7 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
     : me.status === "dead" ? "spectator"
     : game.round.phase === "commit" ? "commit"
     : game.round.phase === "standoff" || game.round.phase === "standoff_hold" ? "standoff"
+    : game.round.phase === "late_commit" ? "late_commit"
     : game.round.phase === "withdraw" ? "withdraw"
     : "reveal";
 
@@ -88,7 +94,17 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
   const myCommit = game.round.commits[me.id];
   const opponents = game.players.filter(p => p.id !== me.id && p.status === "alive");
 
-  if (phase === "commit") {
+  // Render the commit picker during the regular commit phase, and also
+  // during late_commit when the holder still has a deferred half to
+  // fill in (Kid → target, Cunning → bullet). The picker reads the
+  // current commit + the holder's power and renders only the missing
+  // half.
+  const myHasKid = me.effects.some(e => e.kind === "the_kid");
+  const myHasCunning = me.effects.some(e => e.kind === "the_cunning");
+  const lateHalfPending =
+    (myHasKid && myCommit?.bullet !== undefined && myCommit.target === undefined) ||
+    (myHasCunning && myCommit?.target !== undefined && myCommit.bullet === undefined);
+  if (phase === "commit" || (phase === "late_commit" && lateHalfPending)) {
     return (
       <PhaseFader phaseKey={phaseKey}>
         <CommitPicker
@@ -98,12 +114,13 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
           onSubmit={submitCommit}
           handSlots={handSlots}
           variantOn={!!game.variants.superPowers}
+          phase={phase}
         />
       </PhaseFader>
     );
   }
 
-  if (phase === "standoff" || phase === "standoff_hold") {
+  if (phase === "standoff" || phase === "standoff_hold" || phase === "late_commit") {
     const target = game.players.find(p => p.id === myCommit?.target);
     // Show the count only during the standoff countdown itself. During the
     // standoff_hold silent beat that follows, the count is hidden (mirrors
@@ -232,13 +249,14 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
   return null;
 }
 
-function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn }: {
+function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn, phase }: {
   me: Player;
   opponents: Player[];
   myCommit?: { bullet?: BulletCard; target?: string };
-  onSubmit: (id: string, b: BulletCard, t: string, opts?: SubmitCommitOpts) => Promise<void>;
+  onSubmit: (id: string, partial: SubmitCommitPartial, opts?: SubmitCommitOpts) => Promise<void>;
   handSlots: HandSlot[];
   variantOn: boolean;
+  phase: Game["round"]["phase"];
 }) {
   const { t } = useTranslation();
   const [pick, setPick] = useState<{ load: BulletCard; slotIndex: number } | null>(null);
@@ -246,7 +264,24 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
   const [armSpecialist, setArmSpecialist] = useState(false);
   const [armTough, setArmTough] = useState(false);
   const [armInsane, setArmInsane] = useState(false);
-  const ready = myCommit?.bullet && myCommit.target;
+  // Powder Monkey (Kid) defers target until late_commit; Wily Bosun
+  // (Cunning) defers bullet. The picker renders only the half the
+  // current phase wants from this holder.
+  const hasKid = variantOn && me.effects.some(
+    e => e.kind === "the_kid" && !e.revealed && !e.used,
+  );
+  const hasCunning = variantOn && me.effects.some(
+    e => e.kind === "the_cunning" && !e.revealed && !e.used,
+  );
+  const showBullet =
+    (phase === "commit" && !hasCunning) ||
+    (phase === "late_commit" && hasCunning);
+  const showTarget =
+    (phase === "commit" && !hasKid) ||
+    (phase === "late_commit" && hasKid);
+  const ready =
+    (!showBullet || myCommit?.bullet !== undefined) &&
+    (!showTarget || myCommit?.target !== undefined);
   const hasSpecialist = variantOn && me.effects.some(
     e => e.kind === "specialist" && !e.revealed && !e.used,
   );
@@ -273,8 +308,15 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
   })();
 
   if (ready) {
-    const target = opponents.find(o => o.id === myCommit?.target);
-    const targetName = target?.displayName ?? myCommit?.target;
+    const targetPlayer = opponents.find(o => o.id === myCommit?.target);
+    const targetName = targetPlayer?.displayName;
+    // Powder Monkey in commit phase has only the bullet locked — the target
+    // gets picked during late_commit. Show a "powder loaded" waiting state
+    // instead of pretending we're aiming at something.
+    const heading = targetName ? "AIMING AT" : "POWDER LOADED";
+    const subline = targetName
+      ? targetName
+      : "Mark to be chosen at the standoff";
     return (
       <Box
         sx={{
@@ -286,7 +328,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
           padding: "5rem 1rem 1rem",
         }}
       >
-        <AimBarrel colorOrAvatar={target?.colorOrAvatar ?? null} size={200} />
+        <AimBarrel colorOrAvatar={targetPlayer?.colorOrAvatar ?? null} size={200} />
         <Box sx={{ textAlign: "center" }}>
           <Box
             sx={{
@@ -297,7 +339,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
               color: palette.paperDim,
             }}
           >
-            AIMING AT
+            {heading}
           </Box>
           <Box
             sx={{
@@ -309,7 +351,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
               marginTop: "0.25rem",
             }}
           >
-            {targetName}
+            {subline}
           </Box>
           <Box sx={{ fontFamily: fonts.body, fontStyle: "italic", fontSize: "0.85rem", color: palette.paperDim, marginTop: "0.5rem" }}>
             {t("phase.commit.waiting")}
@@ -340,31 +382,39 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
           color: palette.paper,
         }}
       >
-        {t("phase.commit.pickTarget")}
+        {showBullet && showTarget
+          ? t("phase.commit.pickTarget")
+          : showTarget
+          ? "Pick your mark"
+          : "Load your powder"}
       </Box>
 
-      <TargetList
-        opponents={opponents}
-        selectedId={target}
-        onPick={(id) => setTarget(id)}
-      />
-
-      <Box sx={{ animation: `${slideUpIn} 450ms ease-out 80ms both` }}>
-        <Hand
-          slots={handSlots}
-          selectedSlotIndex={pick?.slotIndex}
-          onPick={(load, slotIndex) => setPick({ load, slotIndex })}
+      {showTarget && (
+        <TargetList
+          opponents={opponents}
+          selectedId={target}
+          onPick={(id) => setTarget(id)}
         />
-      </Box>
+      )}
 
-      {offerSpecialist && (
+      {showBullet && (
+        <Box sx={{ animation: `${slideUpIn} 450ms ease-out 80ms both` }}>
+          <Hand
+            slots={handSlots}
+            selectedSlotIndex={pick?.slotIndex}
+            onPick={(load, slotIndex) => setPick({ load, slotIndex })}
+          />
+        </Box>
+      )}
+
+      {showBullet && offerSpecialist && (
         <SpecialistCommitChoice armed={armSpecialist} onChange={setArmSpecialist} />
       )}
 
-      {hasTough && (
+      {phase === "commit" && hasTough && (
         <ToughCommitChoice armed={armTough} onChange={setArmTough} />
       )}
-      {hasInsane && (
+      {phase === "commit" && hasInsane && (
         <InsaneCommitChoice armed={armInsane} onChange={setArmInsane} />
       )}
 
@@ -382,22 +432,32 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
       >
         <Button
           fullWidth
-          disabled={!pick || !target}
-          onClick={() =>
-            pick && target &&
-            onSubmit(me.id, pick.load, target, {
+          disabled={(showBullet && !pick) || (showTarget && !target)}
+          onClick={() => {
+            if (showBullet && !pick) return;
+            if (showTarget && !target) return;
+            const partial: SubmitCommitPartial = {};
+            if (showBullet && pick) partial.bullet = pick.load;
+            if (showTarget && target) partial.target = target;
+            onSubmit(me.id, partial, {
               specialistDiscard: specialistDiscard ?? undefined,
               armTough: armTough || undefined,
               armInsane: armInsane || undefined,
-            })
-          }
-          caption={
-            pick && target
-              ? `${t(`load.${pick.load}`)} → ${opponents.find(o => o.id === target)?.displayName ?? "?"}`
-              : t("phase.commit.selectCard")
-          }
+            });
+          }}
+          caption={(() => {
+            const bulletReady = !showBullet || !!pick;
+            const targetReady = !showTarget || !!target;
+            if (!bulletReady || !targetReady) return t("phase.commit.selectCard");
+            const bulletPart = pick ? t(`load.${pick.load}`) : null;
+            const targetPart = target
+              ? opponents.find(o => o.id === target)?.displayName ?? "?"
+              : null;
+            if (bulletPart && targetPart) return `${bulletPart} → ${targetPart}`;
+            return bulletPart ?? targetPart ?? t("phase.commit.selectCard");
+          })()}
         >
-          {pick && target
+          {(showBullet ? pick : true) && (showTarget ? target : true)
             ? t("phase.commit.lockIn").toUpperCase()
             : t("phase.commit.ready").toUpperCase()}
         </Button>

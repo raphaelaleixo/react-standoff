@@ -8,4 +8,6 @@ export const POWER_KINDS: PowerKind[] = [
   'specialist',
   'tough',
   'insane',
+  'the_kid',
+  'the_cunning',
 ];

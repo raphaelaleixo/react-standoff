@@ -175,6 +175,44 @@ export const SCENARIOS: Scenario[] = [
       }),
   },
   {
+    id: "pick-and-play-the-kid",
+    label: "Pick & play — Powder Monkey (Kid)",
+    blurb:
+      "Seat 'a' (Powder Monkey) is the only open commit; b, c, d are " +
+      "pre-filled. Pick your bullet at commit, watch the standoff stamp " +
+      "and aim lines come up — then during late_commit you fill in your " +
+      "mark with everyone else's aim on screen.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "the_kid" },
+        commits: {
+          b: { bullet: "bang", target: "c" },
+          c: { bullet: "clic", target: "d" },
+          d: { bullet: "clic", target: "b" },
+        },
+      }),
+  },
+  {
+    id: "pick-and-play-the-cunning",
+    label: "Pick & play — Wily Bosun (Cunning)",
+    blurb:
+      "Seat 'a' (Wily Bosun) is the only open commit; b, c, d are " +
+      "pre-filled. Pick your mark at commit, watch the standoff stamp " +
+      "and aim lines come up — then during late_commit you load your " +
+      "bullet with everyone else's aim on screen.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "the_cunning" },
+        commits: {
+          b: { bullet: "bang", target: "c" },
+          c: { bullet: "clic", target: "d" },
+          d: { bullet: "clic", target: "b" },
+        },
+      }),
+  },
+  {
     id: "pick-and-play-insane",
     label: "Pick & play — Insane (Pocket Inferno)",
     blurb:

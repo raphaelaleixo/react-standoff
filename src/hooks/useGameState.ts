@@ -28,10 +28,44 @@ function alivePlayers(game: Game): Player[] {
   return game.players.filter(p => p.status === "alive");
 }
 
+// Powder Monkey / Wily Bosun split the commit lock — the holder is
+// considered "committed" at the commit phase with only their early half
+// (Kid → bullet, Cunning → target). They fill the deferred half during
+// the late_commit phase.
+function hasKid(p: Player): boolean {
+  return p.effects.some(e => e.kind === "the_kid");
+}
+function hasCunning(p: Player): boolean {
+  return p.effects.some(e => e.kind === "the_cunning");
+}
+
+// "Has enough to leave commit phase." Kid needs bullet only, Cunning
+// needs target only, everyone else needs both.
+function commitReadyForStandoff(p: Player, c: Commit | undefined): boolean {
+  if (!c) return false;
+  if (hasKid(p)) return c.bullet !== undefined;
+  if (hasCunning(p)) return c.target !== undefined;
+  return c.bullet !== undefined && c.target !== undefined;
+}
+
+// "Has both halves locked in." Used as the gate to leave late_commit.
+function commitFullyLocked(c: Commit | undefined): boolean {
+  return !!c && c.bullet !== undefined && c.target !== undefined;
+}
+
 function allAliveCommitted(game: Game): boolean {
-  return alivePlayers(game).every(p => {
+  return alivePlayers(game).every(p =>
+    commitReadyForStandoff(p, game.round.commits[p.id]),
+  );
+}
+
+function anyLateHalfPending(game: Game): boolean {
+  return alivePlayers(game).some(p => {
     const c = game.round.commits[p.id];
-    return !!c && c.bullet !== undefined && c.target !== undefined;
+    if (!c) return false;
+    if (hasKid(p)) return c.target === undefined;
+    if (hasCunning(p)) return c.bullet === undefined;
+    return false;
   });
 }
 
@@ -104,21 +138,41 @@ export function useGameState(
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
 
-  // standoff_hold → withdraw (timed; lines have drawn in by now, this is the
-  // breath before the yield countdown starts).
+  // standoff_hold → late_commit | withdraw (timed; lines have drawn in
+  // by now). If any Powder Monkey / Wily Bosun is still missing their
+  // deferred half, route through the late_commit phase so they can fill
+  // it in. Otherwise advance straight to withdraw.
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "standoff_hold") return;
     const remaining = STANDOFF_HOLD - (serverNow() - game.round.phaseStartedAt);
+    const next = anyLateHalfPending(game) ? "late_commit" : "withdraw";
     const fire = () => {
       store.update("round", {
-        phase: "withdraw",
+        phase: next,
         phaseStartedAt: store.serverTimestamp(),
       });
     };
     const t = setTimeout(fire, Math.max(0, remaining));
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
+
+  // late_commit → withdraw. Auto-advances the moment every alive seat's
+  // commit has both halves locked in. No timer — we wait on the late
+  // pickers (Kid's target, Cunning's bullet) the same way we wait on the
+  // commit phase to seat everyone in the first place.
+  useEffect(() => {
+    if (!store || !game) return;
+    if (game.round.phase !== "late_commit") return;
+    const allFull = alivePlayers(game).every(p =>
+      commitFullyLocked(game.round.commits[p.id]),
+    );
+    if (!allFull) return;
+    store.update("round", {
+      phase: "withdraw",
+      phaseStartedAt: store.serverTimestamp(),
+    });
+  }, [store, game]);
 
   // withdraw → reveal_withdraw (timed; locks yields and persists the resolution
   // for the reveal-phase visualizations to read).
@@ -339,11 +393,14 @@ export function useGameState(
 
   // ─────────── Player-side write helpers ───────────
 
+  // Accepts partial commits: regular players pass both bullet+target;
+  // Powder Monkey passes bullet-only at commit time and target-only during
+  // late_commit; Wily Bosun does the inverse. Each call writes whichever
+  // fields are present, leaving the others untouched.
   const submitCommit = useCallback(
     async (
       playerId: string,
-      bullet: BulletCard,
-      target: string,
+      partial: { bullet?: BulletCard; target?: string },
       opts?: {
         specialistDiscard?: BulletCard;
         armTough?: boolean;
@@ -351,32 +408,30 @@ export function useGameState(
       },
     ) => {
       if (!store) return;
-      const c: Commit = { bullet, target };
-      if (opts?.armTough) c.armTough = true;
-      // Specialist + Insane both write into activations atomically with the
+      const updates: Record<string, unknown> = {};
+      if (partial.bullet !== undefined) {
+        updates[`commits/${playerId}/bullet`] = partial.bullet;
+      }
+      if (partial.target !== undefined) {
+        updates[`commits/${playerId}/target`] = partial.target;
+      }
+      if (opts?.armTough) {
+        updates[`commits/${playerId}/armTough`] = true;
+      }
+      // Specialist + Insane write into activations atomically with the
       // commit so the big-screen reveal overlay can fire as soon as the
-      // player taps commit. Tough's armTough rides on the commit itself
-      // and is copied into activations.tough at the reveal_others handoff.
-      const roundPatch: Record<string, unknown> = {
-        [`commits/${playerId}`]: c,
-      };
+      // player taps commit.
       if (opts?.specialistDiscard) {
-        roundPatch["activations/specialist"] = {
+        updates["activations/specialist"] = {
           playerId,
           discardedBulletKind: opts.specialistDiscard,
         };
       }
       if (opts?.armInsane) {
-        roundPatch["activations/insane"] = { playerId };
+        updates["activations/insane"] = { playerId };
       }
-      if (Object.keys(roundPatch).length === 1) {
-        await store.update(
-          `round/commits/${playerId}`,
-          c as unknown as Record<string, unknown>,
-        );
-      } else {
-        await store.update("round", roundPatch);
-      }
+      if (Object.keys(updates).length === 0) return;
+      await store.update("round", updates);
     },
     [store],
   );
