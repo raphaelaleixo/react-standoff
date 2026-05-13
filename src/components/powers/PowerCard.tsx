@@ -12,6 +12,10 @@ interface Props {
   kind: PowerKind;
   variant?: PowerCardVariant;
   size?: "sm" | "md" | "lg";
+  // Stamp the X-marks USED slashes regardless of variant — used for the
+  // face-down corner card so the holder sees their power got consumed
+  // without having to flip the card open.
+  used?: boolean;
 }
 
 const SIZES = {
@@ -49,12 +53,12 @@ const SIZES = {
   },
 } as const;
 
-export function PowerCard({ kind, variant = "faceUp", size = "md" }: Props) {
+export function PowerCard({ kind, variant = "faceUp", size = "md", used: usedProp }: Props) {
   const { t } = useTranslation();
   const def = POWER_REGISTRY[kind];
   const dims = SIZES[size];
   const faceDown = variant === "faceDown";
-  const used = variant === "used";
+  const used = variant === "used" || usedProp;
   const revealing = variant === "revealing";
 
   if (faceDown) {
@@ -75,6 +79,8 @@ export function PowerCard({ kind, variant = "faceUp", size = "md" }: Props) {
           alignItems: "center",
           justifyContent: "center",
           transition: "all 0.4s ease",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
         <Box
@@ -89,6 +95,31 @@ export function PowerCard({ kind, variant = "faceUp", size = "md" }: Props) {
         >
           {Icon ? <Icon size={sigilSize} /> : "⚓"}
         </Box>
+        {used && (
+          <Box
+            component="svg"
+            viewBox="-10 -10 120 120"
+            aria-hidden="true"
+            sx={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              overflow: "visible",
+              pointerEvents: "none",
+              "& path": {
+                fill: "none",
+                stroke: palette.blood,
+                strokeWidth: 8,
+                strokeLinecap: "round",
+                filter: "drop-shadow(0 0 1.2px rgba(201, 58, 48, 0.55))",
+              },
+            }}
+          >
+            <path d="M 8 14 L 92 88" />
+            <path d="M 94 10 L 6 90" />
+          </Box>
+        )}
       </Paper>
     );
   }

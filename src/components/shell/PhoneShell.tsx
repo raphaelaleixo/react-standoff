@@ -195,11 +195,10 @@ export function PhoneShell({ me, roomId, children, introOpen, armedThisRound }: 
               }}
             >
               {/* Inner flipper: rotates around its own centre to flip
-                  between back (face-down) and front (face-up) faces.
-                  Once the card is armed or used, it stays face-up in the
-                  corner as well — otherwise the X-stamp would be hidden
-                  behind the card back and the holder wouldn't see their
-                  power got consumed. */}
+                  between back (face-down) and front (face-up) faces. The
+                  X-marks USED stamp is rendered on both faces via the
+                  `used` prop so the corner card reads as consumed even
+                  while it's still face-down in the footer slot. */}
               <Box
                 sx={{
                   width: 300,
@@ -207,10 +206,7 @@ export function PhoneShell({ me, roomId, children, introOpen, armedThisRound }: 
                   position: "relative",
                   transformStyle: "preserve-3d",
                   transition: "transform 0.55s cubic-bezier(0.34, 1.32, 0.64, 1)",
-                  transform:
-                    powerOpen || myPower.used || armedThisRound
-                      ? "rotateY(180deg)"
-                      : "rotateY(0deg)",
+                  transform: powerOpen ? "rotateY(180deg)" : "rotateY(0deg)",
                 }}
               >
                 {/* Back of the card — visible when closed. */}
@@ -222,7 +218,12 @@ export function PhoneShell({ me, roomId, children, introOpen, armedThisRound }: 
                     WebkitBackfaceVisibility: "hidden",
                   }}
                 >
-                  <PowerCard kind={myPower.kind} variant="faceDown" size="lg" />
+                  <PowerCard
+                    kind={myPower.kind}
+                    variant="faceDown"
+                    size="lg"
+                    used={myPower.used || armedThisRound}
+                  />
                 </Box>
                 {/* Front of the card — visible after the flip. */}
                 <Box
