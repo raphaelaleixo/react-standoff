@@ -124,9 +124,14 @@ export function XMarksCheckbox({
             fontFamily: fonts.displayCaps,
             fontFeatureSettings: '"smcp"',
             fontSize: "1.05rem",
+            lineHeight: 1,
             letterSpacing: "0.14em",
             textTransform: "uppercase",
             color: palette.paper,
+            // Pull the cap-height up so it sits flush with the chip's top
+            // edge — without this the line-box's implicit ascent padding
+            // floats the text a few pixels below where the eye expects it.
+            marginTop: "-0.1em",
           }}
         >
           {label}
@@ -139,6 +144,7 @@ export function XMarksCheckbox({
             fontFamily: fonts.body,
             fontStyle: "italic",
             fontSize: "0.85rem",
+            lineHeight: 1.2,
             color: palette.paperDim,
           }}
         >
