@@ -4,6 +4,7 @@ import type {
   Game,
   Player,
   PowerKind,
+  RoundActivations,
 } from "../../game/types";
 import { STARTING_HAND } from "../../game/setup";
 
@@ -75,6 +76,10 @@ interface ScenarioOpts {
   wounds?: Partial<Record<string, 0 | 1 | 2 | 3>>;
   shame?: Partial<Record<string, number>>;
   commits?: Record<string, Commit>;
+  // Pre-set activations the resolver should pick up at the first re-resolve.
+  // Use for cards now bundled into the commit (e.g. Specialist) so the
+  // scenario plays out as if the holder had armed them at commit time.
+  activations?: RoundActivations;
   loot?: Banknote[];
   variant?: boolean;
 }
@@ -88,6 +93,7 @@ function scenario({
   wounds = {},
   shame = {},
   commits = {},
+  activations = {},
   loot = STARTING_LOOT,
   variant = true,
 }: ScenarioOpts): Game {
@@ -113,7 +119,7 @@ function scenario({
       phaseStartedAt: Date.now(),
       loot,
       commits,
-      activations: {},
+      activations,
     },
     bankDeck: [],
     discardedBullets: [],
@@ -163,11 +169,12 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "specialist-saves-bbb",
-    label: "Specialist gets the prompt",
+    label: "Quartermaster's Reload trims a Quickdraw",
     blurb:
-      "Cap'n Maud plays Quickdraw with Quartermaster's Reload in hand. After " +
-      "the broadside reveal, the specialist prompt fires on her phone and she " +
-      "can pick a powder to discard.",
+      "Cap'n Maud plays Quickdraw with Quartermaster's Reload already armed " +
+      "(discarding a CLICK). The specialist card plays on the big screen " +
+      "before the broadside, and the resolved volley shows only the surviving " +
+      "two shots.",
     build: () =>
       scenario({
         seats: 4,
@@ -177,6 +184,9 @@ export const SCENARIOS: Scenario[] = [
           b: { bullet: "clic", target: "a" },
           c: { bullet: "clic", target: "d" },
           d: { bullet: "clic", target: "c" },
+        },
+        activations: {
+          specialist: { playerId: "a", discardedBulletKind: "clic" },
         },
       }),
   },

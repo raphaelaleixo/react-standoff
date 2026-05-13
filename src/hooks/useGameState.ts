@@ -180,7 +180,10 @@ export function useGameState(
     if (!store || !game) return;
     if (game.round.phase !== "reveal_withdraw") return;
     const cards = (game.round.resolution?.powerActivations ?? []).filter(
-      a => a.kind === "dragon_skin" || a.kind === "unbreakable",
+      a =>
+        a.kind === "dragon_skin" ||
+        a.kind === "unbreakable" ||
+        a.kind === "specialist",
     ).length;
     const totalMs = cards > 0
       ? cards * POWER_CARD_MS + REVEAL_WITHDRAW_TAIL_MS
