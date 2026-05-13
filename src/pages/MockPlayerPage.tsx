@@ -1,192 +1,250 @@
-// DEV-only mock for the player phone view. Renders PhoneShell + PhaseView
-// against fixture state so you can iterate on phone layout without a live
-// room. The DevControlsPanel drives the same mock game state used by
-// MockBigScreen — phase, round, individual commits, wounds, etc. — so you
-// can flip between phases (commit / standoff / withdraw / reveal) and see
-// the player surface respond.
-//
-// A floating Seat selector at the top swaps which player is "me", so you
-// can verify the same UI from any seat (including dead).
+// DEV-only mock for the player phone view. Loads a scenario into a local
+// in-memory game store and runs the REAL state machine in useGameState
+// against it, same as MockBigScreen — so the phone UI reacts to phases,
+// resolves, and power activations on real timings. A seat selector
+// chooses which player is "me", a variant toggle flips the Super Powers
+// rules on/off, and the InsaneRevealButton wires to the real
+// submitInsane so the grenade scenario plays through.
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useEffect, useState } from "react";
-import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import type { BulletCard, Game, PowerKind } from "../game/types";
-import { palette } from "../theme/colors";
-import { fonts } from "../theme/typography";
+import { Box, FormControlLabel, Switch, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
+import { PhoneReckoning } from "../components/phone/PhoneReckoning";
 import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
 import { eligibleForInsane } from "../game/powers";
-import { useMockGameState } from "../components/dev/useMockGameState";
+import { useGameState } from "../hooks/useGameState";
 import { useHandSlots } from "../hooks/useHandSlots";
-import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
-import { DevControlsPanel, type DevScreen } from "../components/dev/DevControlsPanel";
-import { useStandoffCount } from "../hooks/useStandoffCount";
-import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS } from "../lib/phaseDurations";
-import {
-  FIXTURE_GAME_PHONE,
-  MOCK_PHONE_PRESPENT,
-  RECKONING_GAME,
-} from "../components/dev/mockFixtures";
+import { createLocalGameStore, type LocalGameStore } from "../components/dev/localGameStore";
+import { SCENARIOS } from "../components/dev/scenarios";
+import { ScenarioDock, type DockSurface } from "../components/dev/ScenarioDock";
+import { palette } from "../theme/colors";
+import { fonts } from "../theme/typography";
+import { RECKONING_GAME } from "../components/dev/mockFixtures";
+
+// Player surface has no muster screen — the lobby join lives on its own
+// route, not the in-game phone.
+const SURFACES: DockSurface[] = ["game", "reckoning"];
 
 export default function MockPlayerPage() {
-  const { game, actions } = useMockGameState(FIXTURE_GAME_PHONE);
-  const { open, setOpen } = useDevPanelToggle(true);
-  // Default to player "a" (Cap'n Maud) so you land on a populated hand. The
-  // selector at the top of the page lets you switch seats live.
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("a");
-  // Dev-screen toggle — mirrors MockBigScreen. "reckoning" swaps the live
-  // mock game for the RECKONING fixture so the phone end-game view can be
-  // previewed without driving an actual game to phase "ended". "muster" has
-  // no player-side surface and just falls through to the in-game ledger.
-  const [screen, setScreen] = useState<DevScreen>("game");
-  const isReckoning = screen === "reckoning";
-  // Super Powers variant toggle + per-seat power injector. Flipping the
-  // variant lights up variant-conditional UI in PhaseView; the power
-  // injector lets the dev preview the start-reveal / power widget paths
-  // without having to actually deal the game.
-  const [variantOn, setVariantOn] = useState(false);
-  const [myPower, setMyPower] = useState<PowerKind | null>(null);
-  // Local armed state for Pocket Inferno — the production page reads this
-  // from `round.activations.insane`, but the mock state machine has no
-  // resolver/submitInsane to drive that slot, so we track it client-side
-  // and synthesize the activation into renderGame for downstream reads.
-  const [grenadeArmed, setGrenadeArmed] = useState(false);
-  // Reset armed when the active power changes (clearing or swapping powers).
-  useEffect(() => { setGrenadeArmed(false); }, [myPower, selectedPlayerId]);
-  const baseRenderGame: Game = isReckoning ? RECKONING_GAME : game;
-  // Apply variant + power injection to whatever game we're rendering. We
-  // only ever push the power into the active seat — other seats stay clean.
-  const renderGame: Game = {
-    ...baseRenderGame,
-    variants: { superPowers: variantOn },
-    players: baseRenderGame.players.map(p =>
-      p.id === selectedPlayerId
-        ? { ...p, effects: myPower ? [{ kind: myPower, revealed: false, used: false }] : p.effects }
-        : p,
-    ),
-    round: {
-      ...baseRenderGame.round,
-      activations: grenadeArmed && myPower === "insane"
-        ? { ...baseRenderGame.round.activations, insane: { playerId: selectedPlayerId } }
-        : baseRenderGame.round.activations,
-    },
-  };
+  const [store] = useState<LocalGameStore>(() => createLocalGameStore(null));
+  const serverNow = useCallback(() => Date.now(), []);
+  const { game, submitCommit, submitDuck, submitInsane } = useGameState(store, serverNow);
 
-  // Mock-only auto-advance through standoff → standoff_hold → withdraw, same
-  // as MockBigScreen so the phone surface previews the production pacing.
-  const standoffCount = useStandoffCount({
-    active: game.round.phase === "standoff",
-    startedAt: game.round.phaseStartedAt,
-    durationMs: STANDOFF_DURATION_MS,
-  });
+  const [scenarioId, setScenarioId] = useState<string>(SCENARIOS[0].id);
+  const [surface, setSurface] = useState<DockSurface>("game");
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("a");
+  // Variant override — toggling this flips the in-progress game's variant
+  // flag so the dev can flick between powered + un-powered UI without
+  // reloading the scenario.
+  const [variantOverride, setVariantOverride] = useState<boolean | null>(null);
+
+  const loadScenario = useCallback(
+    (id: string) => {
+      const def = SCENARIOS.find(s => s.id === id);
+      if (!def) return;
+      store.reset(def.build());
+      setVariantOverride(null);
+    },
+    [store],
+  );
+
+  const handlePlay = () => loadScenario(scenarioId);
+  const handleReset = () => store.reset(null);
+
+  // Fire scenario phase-entry hooks once per phase transition (same as
+  // MockBigScreen). Powers production reads from a phone (tough was here
+  // before bundling, insane today) can be auto-armed by the scenario.
+  const lastPhaseRef = useRef<string | null>(null);
+  const activeScenario = SCENARIOS.find(s => s.id === scenarioId);
   useEffect(() => {
-    if (game.round.phase === "standoff" && standoffCount === 0) {
-      actions.setPhase("standoff_hold");
+    if (!game) {
+      lastPhaseRef.current = null;
       return;
     }
-    if (game.round.phase === "standoff_hold") {
-      const t = setTimeout(() => actions.setPhase("withdraw"), STANDOFF_HOLD_MS);
-      return () => clearTimeout(t);
-    }
-  }, [game.round.phase, standoffCount, actions]);
+    const phase = game.round.phase;
+    if (lastPhaseRef.current === phase) return;
+    lastPhaseRef.current = phase;
+    activeScenario?.onPhaseEnter?.[phase]?.(store);
+  }, [game, activeScenario, store]);
 
-  // Source of seats follows whichever game we're rendering — switching to
-  // reckoning shows the RECKONING_PLAYERS roster in the seat selector.
-  const me =
-    renderGame.players.find(p => p.id === selectedPlayerId) ?? renderGame.players[0];
-  // Pure derivation of the hand layout. Reckoning has no MOCK_PHONE_PRESPENT
-  // overlay; the in-game mock seats use it to demo the spent visual.
-  const handSlots = useHandSlots(
-    me.bullets,
-    isReckoning ? [] : MOCK_PHONE_PRESPENT[me.id] ?? [],
-  );
+  // Pre-compute everything hook-driven up front so the early returns below
+  // don't violate the rules of hooks. When the scenario hasn't been loaded
+  // yet (game === null) we feed the hand-slots derivation an empty bullet
+  // list — the result is unused in the idle/reckoning branches.
+  const renderGame: typeof game =
+    game === null
+      ? null
+      : variantOverride === null
+      ? game
+      : { ...game, variants: { ...game.variants, superPowers: variantOverride } };
+  const me = renderGame?.players.find(p => p.id === selectedPlayerId) ?? renderGame?.players[0];
+  const handSlots = useHandSlots(me?.bullets ?? []);
 
-  // Wire the mock state's setCommit into the submitCommit / submitDuck signature
-  // PhaseView expects, so the commit picker actually persists picks into the
-  // mock game and the DevControlsPanel reflects them.
-  const submitCommit = async (id: string, bullet: BulletCard, target: string) => {
-    actions.setCommit(id, { bullet, target });
-  };
-  const submitDuck = async (id: string, withdrew: boolean) => {
-    actions.setCommit(id, { withdrew });
-  };
+  if (surface === "reckoning") {
+    const reck = RECKONING_GAME;
+    return (
+      <>
+        <PhoneShell me={reck.players[0]} roomId="MOCK">
+          <PhoneReckoning game={reck} me={reck.players[0]} />
+        </PhoneShell>
+        <ScenarioDock
+          surface={surface}
+          onSurfaceChange={setSurface}
+          surfaces={SURFACES}
+          scenarioId={scenarioId}
+          onScenarioChange={setScenarioId}
+          onPlay={handlePlay}
+          onReset={handleReset}
+          playing={false}
+          blurb={activeScenario?.blurb ?? ""}
+        />
+      </>
+    );
+  }
 
-  // For commit phase the dev wants to interact with the picker, so we mask
-  // out the active player's existing commit (if any) before passing the
-  // game through. Other phases need the commits intact for the right UI
-  // (standoff aim target, withdraw aimed-at-list, etc.). In reckoning the
-  // fixture is frozen so we hand it through untouched.
-  const phoneGame: Game = isReckoning
-    ? renderGame
-    : renderGame.round.phase === "commit" && renderGame.round.commits[selectedPlayerId]
-    ? {
-        ...renderGame,
-        round: {
-          ...renderGame.round,
-          commits: { ...renderGame.round.commits, [selectedPlayerId]: {} },
-        },
-      }
-    : renderGame;
+  if (!renderGame || !me) {
+    return (
+      <>
+        <ScenarioIdle scenario={activeScenario} />
+        <ScenarioDock
+          surface={surface}
+          onSurfaceChange={setSurface}
+          surfaces={SURFACES}
+          scenarioId={scenarioId}
+          onScenarioChange={setScenarioId}
+          onPlay={handlePlay}
+          onReset={handleReset}
+          playing={false}
+          blurb={activeScenario?.blurb ?? ""}
+        />
+      </>
+    );
+  }
 
-  // Specialist + Tough are bundled into the commit picker; only Insane
-  // still has a real-time control (the grenade reveal button).
-  const surface = (
-    <PhoneShell
-      me={me}
-      roomId="MOCK"
-      introOpen={
-        !isReckoning &&
-        renderGame.variants.superPowers &&
-        !!myPower &&
-        renderGame.round.phase === "commit"
-      }
-      aboveFooter={
-        myPower === "insane" && !isReckoning &&
-        (eligibleForInsane(renderGame, me.id) || grenadeArmed) ? (
-          <InsaneRevealButton
-            armed={grenadeArmed}
-            onReveal={() => setGrenadeArmed(true)}
-          />
-        ) : undefined
-      }
-    >
-      <PhaseView
-        game={phoneGame}
-        me={me}
-        submitCommit={submitCommit}
-        submitDuck={submitDuck}
-        handSlots={handSlots}
-      />
-    </PhoneShell>
-  );
+  const myPowerKind = me.effects[0]?.kind;
+  const grenadeArmed = !!renderGame.round.activations.insane;
+  const showInsaneReveal =
+    myPowerKind === "insane" &&
+    (eligibleForInsane(renderGame, me.id) || grenadeArmed);
+
+  const introOpen =
+    renderGame.variants.superPowers &&
+    !!myPowerKind &&
+    renderGame.round.number === 1 &&
+    renderGame.round.phase === "commit";
 
   return (
     <>
-      <SeatSelector
-        players={renderGame.players.map(p => ({ id: p.id, displayName: p.displayName }))}
-        selectedId={me.id}
-        onSelect={setSelectedPlayerId}
-      />
-      {surface}
-      <DevControlsPanel
-        open={open}
-        game={game}
-        actions={actions}
-        onClose={() => setOpen(false)}
-        screen={screen}
-        onScreenChange={setScreen}
-        variantSuperPowers={variantOn}
-        onVariantSuperPowersChange={setVariantOn}
-        myPower={myPower}
-        onMyPowerChange={setMyPower}
-      />
+      <PhoneShell
+        me={me}
+        roomId="MOCK"
+        introOpen={introOpen}
+        aboveFooter={
+          showInsaneReveal ? (
+            <InsaneRevealButton
+              armed={grenadeArmed}
+              onReveal={() => submitInsane(me.id)}
+            />
+          ) : undefined
+        }
+      >
+        <PhaseView
+          game={renderGame}
+          me={me}
+          submitCommit={submitCommit}
+          submitDuck={submitDuck}
+          handSlots={handSlots}
+        />
+      </PhoneShell>
+      <ScenarioDock
+        surface={surface}
+        onSurfaceChange={setSurface}
+        surfaces={SURFACES}
+        scenarioId={scenarioId}
+        onScenarioChange={setScenarioId}
+        onPlay={handlePlay}
+        onReset={handleReset}
+        playing={true}
+        blurb={activeScenario?.blurb ?? ""}
+      >
+        <SeatSelector
+          players={renderGame.players.map(p => ({ id: p.id, displayName: p.displayName }))}
+          selectedId={me.id}
+          onSelect={setSelectedPlayerId}
+        />
+        <FormControlLabel
+          sx={{
+            color: palette.paper,
+            marginLeft: 0,
+            "& .MuiTypography-root": { fontFamily: fonts.body, fontSize: "0.85rem" },
+          }}
+          control={
+            <Switch
+              size="small"
+              checked={renderGame.variants.superPowers}
+              onChange={e => setVariantOverride(e.target.checked)}
+            />
+          }
+          label="Super Powers"
+        />
+      </ScenarioDock>
     </>
   );
 }
 
-// Floating seat selector — pinned to the top-left so it doesn't fight the
-// phone canvas. Each chip is a player's id; the active one inverts.
+function ScenarioIdle({ scenario }: { scenario: { label: string; blurb: string } | undefined }) {
+  return (
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        padding: "2rem",
+        color: palette.paper,
+      }}
+    >
+      <Box
+        sx={{
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "0.7rem",
+          letterSpacing: "0.4em",
+          color: palette.paperDim,
+          marginBottom: "0.6rem",
+        }}
+      >
+        SCENARIO
+      </Box>
+      <Box
+        sx={{
+          fontFamily: fonts.blackletter,
+          fontSize: "2.2rem",
+          lineHeight: 1.1,
+          marginBottom: "0.9rem",
+        }}
+      >
+        {scenario?.label ?? "Pick a scenario"}
+      </Box>
+      <Box
+        sx={{
+          fontFamily: fonts.body,
+          fontStyle: "italic",
+          fontSize: "1.05rem",
+          maxWidth: "32rem",
+          color: palette.paperDim,
+        }}
+      >
+        {scenario?.blurb ?? "Press ▶ Play in the dev dock."}
+      </Box>
+    </Box>
+  );
+}
+
 function SeatSelector({
   players,
   selectedId,
@@ -197,18 +255,7 @@ function SeatSelector({
   onSelect(id: string): void;
 }) {
   return (
-    <Box
-      sx={{
-        position: "fixed",
-        top: 12,
-        left: 12,
-        zIndex: 100,
-        background: palette.ink,
-        border: `1.5px solid ${palette.paper}`,
-        padding: "0.35rem 0.5rem",
-        boxShadow: `3px 3px 0 ${palette.inkDeep}`,
-      }}
-    >
+    <Box>
       <Box
         sx={{
           fontFamily: fonts.displayCaps,
@@ -217,7 +264,6 @@ function SeatSelector({
           letterSpacing: "0.32em",
           color: palette.paperDim,
           marginBottom: "0.25rem",
-          textAlign: "center",
         }}
       >
         SEAT
@@ -230,8 +276,7 @@ function SeatSelector({
           if (value) onSelect(value);
         }}
         sx={{
-          // Tighter MUI overrides — these toggle buttons are dev chrome,
-          // not part of the broadside design language.
+          flexWrap: "wrap",
           "& .MuiToggleButton-root": {
             color: palette.paper,
             borderColor: palette.rule,

@@ -137,6 +137,19 @@ function scenario({
 
 export const SCENARIOS: Scenario[] = [
   {
+    id: "commit-loop",
+    label: "Commit picker — all powers armed",
+    blurb:
+      "No pre-filled commits. State machine sits in commit phase. Switch " +
+      "seats with the seat selector to test the commit picker, the " +
+      "specialist + tough toggles, and the insane reveal button.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "specialist", b: "tough", c: "insane", d: "dragon_skin" },
+      }),
+  },
+  {
     id: "krakenscale-double-shot",
     label: "Krakenscale clamps a double shot",
     blurb:

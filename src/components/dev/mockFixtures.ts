@@ -3,7 +3,7 @@
 // shame stay consistent if you flip between them mid-session.
 
 import type { RoomState } from "react-gameroom";
-import type { BulletCard, Game, Player, RoundResolution } from "../../game/types";
+import type { Game, Player, RoundResolution } from "../../game/types";
 
 // Big-screen fixture players. Each player has a small cash stack and a few
 // wounds/shame so the in-game ledger has interesting numbers to render. Only
@@ -17,29 +17,6 @@ export const MOCK_PLAYERS: Player[] = [
   { id: "e", displayName: "Old Salt",   colorOrAvatar: "black_bart",   bullets: [], cash: [{ id: "bn-e1", value: 10000 }], wounds: 0, shame: 0, status: "alive", effects: [] },
   { id: "f", displayName: "Black Sam",  colorOrAvatar: "henry_avery",  bullets: [], cash: [], wounds: 0, shame: 0, status: "alive", effects: [] },
 ];
-
-// Phone-mock players' face-up bullets — what they still hold this round.
-// Combined with MOCK_PHONE_PRESPENT (spent earlier in the game), every seat
-// renders exactly 8 hand slots, with a mix of face-up and face-with-X cards
-// so the spent-card visual treatment is visible regardless of which seat
-// you switch to.
-const PHONE_HAND_FACE_UP: BulletCard[] = ["clic", "clic", "bang", "bang", "bang_bang_bang"];
-export const MOCK_PHONE_PLAYERS: Player[] = MOCK_PLAYERS.map(p => ({
-  ...p,
-  bullets: PHONE_HAND_FACE_UP,
-}));
-
-// Bullets pre-marked as spent for each seat. Counts vary so flipping seats
-// shows different spent loadouts; each total (face-up + prespent) is 8 to
-// match the full starting hand size.
-export const MOCK_PHONE_PRESPENT: Record<string, BulletCard[]> = {
-  a: ["clic", "bang", "bang_bang_bang"],
-  b: ["clic", "bang", "bang_bang_bang"],
-  c: ["clic", "bang", "bang_bang_bang"],
-  d: ["clic", "bang", "bang_bang_bang"],
-  e: ["clic", "bang", "bang_bang_bang"],
-  f: ["clic", "bang", "bang_bang_bang"],
-};
 
 export const RESOLUTION_BROADSIDE: RoundResolution = {
   shots: [
@@ -158,47 +135,3 @@ export const FIXTURE_GAME: Game = {
   variants: { superPowers: false },
 };
 
-// Phone-mock fixture: same shape as FIXTURE_GAME but seats every player with
-// a four-card face-up hand so the Hand grid is interactive from any seat.
-// Round starts on `commit` so the picker is the default surface; the dev can
-// flip to other phases via DevControlsPanel.
-//
-// Commits match FIXTURE_GAME so flipping to withdraw / standoff exercises a
-// realistic threat readout. Per-seat attacker counts are:
-//   a — II MARKS ON YE (b, f)
-//   b — MARK ON YE (d)
-//   c — MARK ON YE (a)
-//   d — MARK ON YE (c)
-//   e — AT EASE
-//   f — MARK ON YE (e)
-// MockPlayerPage masks the active seat's commit during the commit phase, so
-// the picker remains interactive regardless of these defaults.
-export const FIXTURE_GAME_PHONE: Game = {
-  seed: "mock-phone",
-  players: MOCK_PHONE_PLAYERS,
-  round: {
-    number: 3,
-    phase: "commit",
-    phaseStartedAt: Date.now(),
-    loot: [
-      { id: "loot-1", value: 20000 },
-      { id: "loot-2", value: 10000 },
-      { id: "loot-3", value: 10000 },
-      { id: "loot-4", value: 5000 },
-      { id: "loot-5", value: 5000 },
-    ],
-    commits: {
-      a: { bullet: "bang", target: "c" },
-      b: { bullet: "bang_bang_bang", target: "a" },
-      c: { bullet: "bang", target: "d" },
-      d: { bullet: "bang", target: "b" },
-      e: { bullet: "clic", target: "f" },
-      f: { withdrew: true, bullet: "clic", target: "a" },
-    },
-    activations: {},
-  },
-  bankDeck: [],
-  discardedBullets: [],
-  phase: "in_progress",
-  variants: { superPowers: false },
-};

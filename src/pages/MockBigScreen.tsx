@@ -6,7 +6,7 @@
 // rehearse, Reset to restart from the beginning, and the muster/reckoning
 // toggle to switch surfaces.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Box, Button, MenuItem, Select, Stack, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { FullscreenButton } from "../components/shell/FullscreenButton";
 import { PageCanvas } from "../components/shell/PageCanvas";
@@ -21,6 +21,7 @@ import { useGameState } from "../hooks/useGameState";
 import { useBigScreenZoom } from "../hooks/useBigScreenZoom";
 import { createLocalGameStore, type LocalGameStore } from "../components/dev/localGameStore";
 import { SCENARIOS } from "../components/dev/scenarios";
+import { ScenarioDock, type DockSurface } from "../components/dev/ScenarioDock";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import {
@@ -29,24 +30,19 @@ import {
   RECKONING_ELIMINATED_BY_ROUND,
 } from "../components/dev/mockFixtures";
 
-type Surface = "game" | "muster" | "reckoning";
-const SURFACES: Surface[] = ["game", "muster", "reckoning"];
+const SURFACES: DockSurface[] = ["game", "muster", "reckoning"];
 
 export default function MockBigScreen() {
   const { t } = useTranslation();
   useBigScreenZoom();
   // One in-memory store for the whole page lifetime. Scenarios load via
   // store.reset(); useGameState's effects then drive the state machine.
-  const storeRef = useRef<LocalGameStore | null>(null);
-  if (storeRef.current === null) {
-    storeRef.current = createLocalGameStore(null);
-  }
-  const store = storeRef.current;
+  const [store] = useState<LocalGameStore>(() => createLocalGameStore(null));
   const serverNow = useCallback(() => Date.now(), []);
   const { game } = useGameState(store, serverNow);
 
   const [scenarioId, setScenarioId] = useState<string>(SCENARIOS[0].id);
-  const [surface, setSurface] = useState<Surface>("game");
+  const [surface, setSurface] = useState<DockSurface>("game");
 
   const loadScenario = useCallback(
     (id: string) => {
@@ -140,9 +136,10 @@ export default function MockBigScreen() {
       ) : (
         <ScenarioIdle scenario={activeScenario} />
       )}
-      <Dock
+      <ScenarioDock
         surface={surface}
         onSurfaceChange={setSurface}
+        surfaces={SURFACES}
         scenarioId={scenarioId}
         onScenarioChange={setScenarioId}
         onPlay={handlePlay}
@@ -206,106 +203,3 @@ function ScenarioIdle({ scenario }: { scenario: { label: string; blurb: string }
   );
 }
 
-interface DockProps {
-  surface: Surface;
-  onSurfaceChange(s: Surface): void;
-  scenarioId: string;
-  onScenarioChange(id: string): void;
-  onPlay(): void;
-  onReset(): void;
-  playing: boolean;
-  blurb: string;
-}
-
-function Dock({
-  surface,
-  onSurfaceChange,
-  scenarioId,
-  onScenarioChange,
-  onPlay,
-  onReset,
-  playing,
-  blurb,
-}: DockProps) {
-  return (
-    <Box
-      sx={{
-        position: "fixed",
-        top: 12,
-        left: 12,
-        zIndex: 100,
-        background: palette.ink,
-        border: `1.5px solid ${palette.paper}`,
-        padding: "0.6rem 0.75rem",
-        boxShadow: `3px 3px 0 ${palette.inkDeep}`,
-        maxWidth: 360,
-      }}
-    >
-      <Stack spacing={1}>
-        <Stack direction="row" spacing={0.5}>
-          {SURFACES.map(s => (
-            <Button
-              key={s}
-              size="small"
-              variant={surface === s ? "contained" : "outlined"}
-              onClick={() => onSurfaceChange(s)}
-              sx={{ textTransform: "none", flex: 1 }}
-            >
-              {s}
-            </Button>
-          ))}
-        </Stack>
-        {surface === "game" && (
-          <>
-            <Select
-              size="small"
-              value={scenarioId}
-              onChange={e => onScenarioChange(e.target.value)}
-              sx={{
-                color: palette.paper,
-                "& .MuiSelect-icon": { color: palette.paper },
-                "& fieldset": { borderColor: palette.paper },
-              }}
-            >
-              {SCENARIOS.map(s => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.label}
-                </MenuItem>
-              ))}
-            </Select>
-            <Typography
-              variant="caption"
-              sx={{
-                color: palette.paperDim,
-                fontStyle: "italic",
-                lineHeight: 1.3,
-              }}
-            >
-              {blurb}
-            </Typography>
-            <Stack direction="row" spacing={1}>
-              <Button
-                size="small"
-                variant="contained"
-                color="primary"
-                onClick={onPlay}
-                sx={{ textTransform: "none", flex: 1 }}
-              >
-                ▶ Play
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={onReset}
-                disabled={!playing}
-                sx={{ textTransform: "none" }}
-              >
-                Reset
-              </Button>
-            </Stack>
-          </>
-        )}
-      </Stack>
-    </Box>
-  );
-}
