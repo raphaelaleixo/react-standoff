@@ -99,9 +99,25 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
       clearTimeout(t);
     };
   }, [showLines]);
+  // Phases at and after each reveal beat — once a beat lands, its state
+  // (ducked / BBB struck / shots fired) stays on screen through the rest
+  // of the round, including specialist_prompt and tough_prompt which sit
+  // between the visual reveals.
+  const FROM_WITHDRAW_REVEAL = new Set([
+    "reveal_withdraw", "reveal_bbb", "specialist_prompt",
+    "reveal_others", "tough_prompt", "split", "grenade",
+  ]);
+  const FROM_BBB_REVEAL = new Set([
+    "reveal_bbb", "specialist_prompt",
+    "reveal_others", "tough_prompt", "split", "grenade",
+  ]);
+  const FROM_OTHERS_REVEAL = new Set([
+    "reveal_others", "tough_prompt", "split", "grenade",
+  ]);
+
   const ducked = (id: string) =>
     !!game.round.commits[id]?.withdrew &&
-    (game.round.phase === "reveal_withdraw" || game.round.phase === "reveal_bbb" || game.round.phase === "reveal_others" || game.round.phase === "split");
+    FROM_WITHDRAW_REVEAL.has(game.round.phase);
 
   // BBB victims: anyone targeted by a non-yielded BBB shooter where the target
   // themselves didn't yield (ducking voids the incoming BBB per the gangster
@@ -118,7 +134,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   // Bang victims: from reveal_others on, any non-yielded non-BBB-victim bang
   // shooter lands a wound on a non-yielded non-BBB-victim target.
   const bangVictims = new Set<string>();
-  if (game.round.phase === "reveal_others" || game.round.phase === "split") {
+  if (FROM_OTHERS_REVEAL.has(game.round.phase)) {
     for (const p of players) {
       const c = game.round.commits[p.id];
       if (c?.bullet === "bang" && !c.withdrew && c.target) {
@@ -134,8 +150,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   // stay laid down (struck visual) through the rest of the round.
   const wounded = new Set<string>([...bbbVictims, ...bangVictims]);
   const struck = (id: string) =>
-    wounded.has(id) &&
-    (game.round.phase === "reveal_bbb" || game.round.phase === "reveal_others" || game.round.phase === "split");
+    wounded.has(id) && FROM_BBB_REVEAL.has(game.round.phase);
   const center = CANVAS / 2;
 
   return (
@@ -198,7 +213,7 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
           ) => {
             if (phase === "standoff_hold" || phase === "withdraw") return true;
             if (shooter?.withdrew || target?.withdrew) return false;
-            if (phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
+            if (FROM_BBB_REVEAL.has(phase)) {
               const isBbbLine = shooter?.bullet === "bang_bang_bang";
               if (!isBbbLine && (bbbVictims.has(shooterId) || bbbVictims.has(targetId))) {
                 return false;
@@ -207,13 +222,17 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
             return true;
           };
           // A line "fires" — gets ink-filled with blood-red + glow — when its
-          // bullet lands a wound. BBB lines fire from reveal_bbb on (and stay
-          // red through reveal_others). Bang lines join in reveal_others. Clic
-          // shots are revealed too but don't hit anything, so they stay in the
-          // provisional beige style (a "click" sigh-of-relief, not an ink fill).
+          // bullet lands a wound. BBB lines fire from reveal_bbb on, bangs
+          // join at reveal_others. Once fired, stays fired through the
+          // prompt phases (specialist_prompt / tough_prompt) so the visual
+          // doesn't snap back to beige between reveals.
           const lineFired = (bullet?: string) => {
-            if (phase === "reveal_bbb") return bullet === "bang_bang_bang";
-            if (phase === "reveal_others") return bullet === "bang" || bullet === "bang_bang_bang";
+            if (FROM_OTHERS_REVEAL.has(phase)) {
+              return bullet === "bang" || bullet === "bang_bang_bang";
+            }
+            if (FROM_BBB_REVEAL.has(phase)) {
+              return bullet === "bang_bang_bang";
+            }
             return false;
           };
           const FIRE_FILL_DURATION = 0.35; // seconds to fill the line source→target
