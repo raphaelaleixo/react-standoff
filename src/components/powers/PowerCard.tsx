@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { PowerKind } from "../../game/types";
 import { palette } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
+import { slashDraw } from "../../theme/animations";
 import { POWER_REGISTRY } from "./registry";
 import { POWER_ICONS } from "./icons";
 
@@ -112,12 +113,25 @@ export function PowerCard({ kind, variant = "faceUp", size = "md", used: usedPro
                 stroke: palette.blood,
                 strokeWidth: 8,
                 strokeLinecap: "round",
+                strokeDasharray: 100,
                 filter: "drop-shadow(0 0 1.2px rgba(201, 58, 48, 0.55))",
               },
             }}
           >
-            <path d="M 8 14 L 92 88" />
-            <path d="M 94 10 L 6 90" />
+            <path
+              d="M 8 14 L 92 88"
+              pathLength={100}
+              style={{
+                animation: `${slashDraw} 240ms cubic-bezier(0.7, 0, 0.3, 1) both`,
+              }}
+            />
+            <path
+              d="M 94 10 L 6 90"
+              pathLength={100}
+              style={{
+                animation: `${slashDraw} 260ms cubic-bezier(0.7, 0, 0.3, 1) 200ms both`,
+              }}
+            />
           </Box>
         )}
       </Paper>
@@ -218,8 +232,9 @@ export function PowerCard({ kind, variant = "faceUp", size = "md", used: usedPro
       {used && (
         // Two blood-red slashes across the card — same X-marks-the-spot
         // visual the commit-time checkboxes use, scaled to the card. The
-        // SVG viewBox is over-extended so the strokes peek past the card's
-        // edges for the hand-stamped feel.
+        // strokes draw in one at a time (left slash, then right) via the
+        // shared slashDraw keyframe. SVG viewBox is over-extended so the
+        // strokes peek past the card's edges for the hand-stamped feel.
         <Box
           component="svg"
           viewBox="-10 -10 120 120"
@@ -237,12 +252,25 @@ export function PowerCard({ kind, variant = "faceUp", size = "md", used: usedPro
               stroke: palette.blood,
               strokeWidth: 8,
               strokeLinecap: "round",
+              strokeDasharray: 100,
               filter: "drop-shadow(0 0 1.2px rgba(201, 58, 48, 0.55))",
             },
           }}
         >
-          <path d="M 8 14 L 92 88" />
-          <path d="M 94 10 L 6 90" />
+          <path
+            d="M 8 14 L 92 88"
+            pathLength={100}
+            style={{
+              animation: `${slashDraw} 240ms cubic-bezier(0.7, 0, 0.3, 1) both`,
+            }}
+          />
+          <path
+            d="M 94 10 L 6 90"
+            pathLength={100}
+            style={{
+              animation: `${slashDraw} 260ms cubic-bezier(0.7, 0, 0.3, 1) 200ms both`,
+            }}
+          />
         </Box>
       )}
     </Paper>
