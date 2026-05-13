@@ -35,6 +35,7 @@ import { YieldRibbon } from "./YieldRibbon";
 export interface SubmitCommitOpts {
   specialistDiscard?: BulletCard;
   armTough?: boolean;
+  armInsane?: boolean;
 }
 
 interface PhaseViewProps {
@@ -244,12 +245,16 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
   const [target, setTarget] = useState<string | null>(null);
   const [specialistDiscard, setSpecialistDiscard] = useState<BulletCard | null>(null);
   const [armTough, setArmTough] = useState(false);
+  const [armInsane, setArmInsane] = useState(false);
   const ready = myCommit?.bullet && myCommit.target;
   const hasSpecialist = variantOn && me.effects.some(
     e => e.kind === "specialist" && !e.revealed && !e.used,
   );
   const hasTough = variantOn && me.effects.some(
     e => e.kind === "tough" && !e.revealed && !e.used,
+  );
+  const hasInsane = variantOn && me.effects.some(
+    e => e.kind === "insane" && !e.revealed && !e.used,
   );
   const offerSpecialist = hasSpecialist && pick?.load === "bang_bang_bang";
   // Reset the discard pick if the user changes their bullet away from B!B!B!.
@@ -354,6 +359,9 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
       {hasTough && (
         <ToughCommitChoice armed={armTough} onChange={setArmTough} />
       )}
+      {hasInsane && (
+        <InsaneCommitChoice armed={armInsane} onChange={setArmInsane} />
+      )}
 
       {/* Push the commit button to the bottom of the available space so
           it stays under the thumb regardless of how much room the picker +
@@ -375,6 +383,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
             onSubmit(me.id, pick.load, target, {
               specialistDiscard: specialistDiscard ?? undefined,
               armTough: armTough || undefined,
+              armInsane: armInsane || undefined,
             })
           }
           caption={
@@ -521,6 +530,36 @@ function ToughCommitChoice({
         onChange={onChange}
         label="Arm Phantom Pain"
         hint="Claim a share this round even if ye take a wound or duck."
+      />
+    </Box>
+  );
+}
+
+// Pocket Inferno (Insane) arm: commit-time toggle. Same place + visual as
+// Phantom Pain so the player's power-card selections all sit together. If
+// the holder takes a wound this round, the grenade detonates and the
+// round terminates.
+function InsaneCommitChoice({
+  armed,
+  onChange,
+}: {
+  armed: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <Box
+      sx={{
+        marginTop: "0.6rem",
+        marginInline: "auto",
+        maxWidth: "calc(4 * 75px + 3 * 0.45rem)",
+        animation: `${fadeIn} 320ms ease-out both`,
+      }}
+    >
+      <XMarksCheckbox
+        checked={armed}
+        onChange={onChange}
+        label="Arm Pocket Inferno"
+        hint="Pull the pin. If ye take a wound this round, it goes off."
       />
     </Box>
   );

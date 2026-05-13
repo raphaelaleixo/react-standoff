@@ -344,27 +344,38 @@ export function useGameState(
       playerId: string,
       bullet: BulletCard,
       target: string,
-      opts?: { specialistDiscard?: BulletCard; armTough?: boolean },
+      opts?: {
+        specialistDiscard?: BulletCard;
+        armTough?: boolean;
+        armInsane?: boolean;
+      },
     ) => {
       if (!store) return;
       const c: Commit = { bullet, target };
       if (opts?.armTough) c.armTough = true;
-      // Specialist (Quartermaster's Reload) and Tough (Phantom Pain) both
-      // get armed at commit time. Write the activation/arm atomically with
-      // the commit so a partial state never lands.
+      // Specialist + Insane both write into activations atomically with the
+      // commit so the big-screen reveal overlay can fire as soon as the
+      // player taps commit. Tough's armTough rides on the commit itself
+      // and is copied into activations.tough at the reveal_others handoff.
+      const roundPatch: Record<string, unknown> = {
+        [`commits/${playerId}`]: c,
+      };
       if (opts?.specialistDiscard) {
-        await store.update("round", {
-          [`commits/${playerId}`]: c,
-          "activations/specialist": {
-            playerId,
-            discardedBulletKind: opts.specialistDiscard,
-          },
-        });
-      } else {
+        roundPatch["activations/specialist"] = {
+          playerId,
+          discardedBulletKind: opts.specialistDiscard,
+        };
+      }
+      if (opts?.armInsane) {
+        roundPatch["activations/insane"] = { playerId };
+      }
+      if (Object.keys(roundPatch).length === 1) {
         await store.update(
           `round/commits/${playerId}`,
           c as unknown as Record<string, unknown>,
         );
+      } else {
+        await store.update("round", roundPatch);
       }
     },
     [store],
@@ -394,15 +405,7 @@ export function useGameState(
     [store],
   );
 
-  const submitInsane = useCallback(
-    async (playerId: string) => {
-      if (!store) return;
-      await store.update("round/activations", { insane: { playerId } });
-    },
-    [store],
-  );
-
   const loading = store !== null && !loaded;
 
-  return { game, loading, submitCommit, submitDuck, submitSpecialist, submitInsane };
+  return { game, loading, submitCommit, submitDuck, submitSpecialist };
 }

@@ -16,10 +16,6 @@ interface PhoneShellProps {
   /** Room code for the header. */
   roomId: string;
   children: React.ReactNode;
-  /** Optional content floated just above the footer (e.g. the Insane reveal
-   *  pill). Anchored to the footer's top edge so the body content underneath
-   *  isn't pushed up. */
-  aboveFooter?: React.ReactNode;
   /** Open the power card face-up on mount and show the "Tap to start" hint
    *  below it. When the player taps to dismiss, the card flips + shrinks
    *  into its footer corner — one element animating, not a separate intro
@@ -31,7 +27,7 @@ interface PhoneShellProps {
 // flag tile), the phase body in the middle, and a footer strip showing
 // cash, wounds, and shame markers — the stash bookkeeping that used to sit
 // inline with the header.
-export function PhoneShell({ me, roomId, children, aboveFooter, introOpen }: PhoneShellProps) {
+export function PhoneShell({ me, roomId, children, introOpen }: PhoneShellProps) {
   const { t } = useTranslation();
   const cash = cashTotal(me);
   const myPower = me.effects[0];
@@ -83,8 +79,7 @@ export function PhoneShell({ me, roomId, children, aboveFooter, introOpen }: Pho
           {children}
         </Box>
 
-        {/* Footer — stash + wound/shame pips. Power widget floats above the
-            footer's top edge so it doesn't push the footer down. */}
+        {/* Footer — stash + wound/shame pips. */}
         <Box
           sx={{
             position: "relative",
@@ -96,19 +91,6 @@ export function PhoneShell({ me, roomId, children, aboveFooter, introOpen }: Pho
             flexShrink: 0,
           }}
         >
-          {aboveFooter && (
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: "100%",
-                left: "0.95rem",
-                paddingBottom: "0.5rem",
-                zIndex: 4,
-              }}
-            >
-              {aboveFooter}
-            </Box>
-          )}
           <Box
             sx={{
               fontFamily: fonts.blackletter,

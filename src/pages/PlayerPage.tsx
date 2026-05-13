@@ -21,8 +21,6 @@ import { PageCanvas } from "../components/shell/PageCanvas";
 import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
-import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
-import { eligibleForInsane } from "../game/powers";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
@@ -30,7 +28,7 @@ export default function PlayerPage() {
   const { roomState, loading, error } = useFirebaseRoom(id);
   const store = useMemo(() => (id ? createFirebaseGameStore(id) : null), [id]);
   const { serverNow } = useServerTime();
-  const { game, submitCommit, submitDuck, submitInsane } = useGameState(store, serverNow);
+  const { game, submitCommit, submitDuck } = useGameState(store, serverNow);
   // Compute hand layout from current bullets. Pure derivation against
   // STARTING_HAND — no cached state, so it's reload-stable.
   const slotIdNum = Number(playerId);
@@ -157,30 +155,11 @@ export default function PlayerPage() {
     game.round.number === 1 &&
     game.round.phase === "commit";
 
-  // Insane holder context: the reveal pill should appear for the holder when
-  // the window is open OR while the grenade is armed (between reveal and
-  // resolution).
-  const insaneHolder = game.players.find(p =>
-    p.effects.some(e => e.kind === "insane"),
-  );
-  const insaneIsMe = insaneHolder?.id === me.id;
-  const grenadeArmed = !!game.round.activations.insane;
-
-  const showInsaneReveal = insaneIsMe && (eligibleForInsane(game, me.id) || grenadeArmed);
-
   return (
     <PhoneShell
       me={me}
       roomId={roomState.roomId}
       introOpen={introOpen}
-      aboveFooter={
-        showInsaneReveal ? (
-          <InsaneRevealButton
-            armed={grenadeArmed}
-            onReveal={() => submitInsane(me.id)}
-          />
-        ) : undefined
-      }
     >
       <PhaseView
         game={game}

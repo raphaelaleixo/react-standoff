@@ -11,8 +11,6 @@ import { Box, FormControlLabel, Switch, ToggleButton, ToggleButtonGroup } from "
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { PhoneReckoning } from "../components/phone/PhoneReckoning";
-import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
-import { eligibleForInsane } from "../game/powers";
 import { useGameState } from "../hooks/useGameState";
 import { useHandSlots } from "../hooks/useHandSlots";
 import { createLocalGameStore, type LocalGameStore } from "../components/dev/localGameStore";
@@ -29,7 +27,7 @@ const SURFACES: DockSurface[] = ["game", "reckoning"];
 export default function MockPlayerPage() {
   const [store] = useState<LocalGameStore>(() => createLocalGameStore(null));
   const serverNow = useCallback(() => Date.now(), []);
-  const { game, submitCommit, submitDuck, submitInsane } = useGameState(store, serverNow);
+  const { game, submitCommit, submitDuck } = useGameState(store, serverNow);
 
   const [scenarioId, setScenarioId] = useState<string>(SCENARIOS[0].id);
   const [surface, setSurface] = useState<DockSurface>("game");
@@ -123,10 +121,6 @@ export default function MockPlayerPage() {
   }
 
   const myPowerKind = me.effects[0]?.kind;
-  const grenadeArmed = !!renderGame.round.activations.insane;
-  const showInsaneReveal =
-    myPowerKind === "insane" &&
-    (eligibleForInsane(renderGame, me.id) || grenadeArmed);
 
   const introOpen =
     renderGame.variants.superPowers &&
@@ -140,14 +134,6 @@ export default function MockPlayerPage() {
         me={me}
         roomId="MOCK"
         introOpen={introOpen}
-        aboveFooter={
-          showInsaneReveal ? (
-            <InsaneRevealButton
-              armed={grenadeArmed}
-              onReveal={() => submitInsane(me.id)}
-            />
-          ) : undefined
-        }
       >
         <PhaseView
           game={renderGame}
