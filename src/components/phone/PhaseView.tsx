@@ -243,7 +243,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
   const { t } = useTranslation();
   const [pick, setPick] = useState<{ load: BulletCard; slotIndex: number } | null>(null);
   const [target, setTarget] = useState<string | null>(null);
-  const [specialistDiscard, setSpecialistDiscard] = useState<BulletCard | null>(null);
+  const [armSpecialist, setArmSpecialist] = useState(false);
   const [armTough, setArmTough] = useState(false);
   const [armInsane, setArmInsane] = useState(false);
   const ready = myCommit?.bullet && myCommit.target;
@@ -256,11 +256,21 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
   const hasInsane = variantOn && me.effects.some(
     e => e.kind === "insane" && !e.revealed && !e.used,
   );
+  // Quartermaster's Reload only fires when the holder plays B!B!B!. Auto-
+  // resolve the discard at submit time: a CLICK if any remain after the
+  // played B!B!B! is removed, otherwise a SHOT. The toggle clears when the
+  // pick changes off B!B!B!.
   const offerSpecialist = hasSpecialist && pick?.load === "bang_bang_bang";
-  // Reset the discard pick if the user changes their bullet away from B!B!B!.
-  if (!offerSpecialist && specialistDiscard !== null) {
-    setSpecialistDiscard(null);
+  if (!offerSpecialist && armSpecialist) {
+    setArmSpecialist(false);
   }
+  const specialistDiscard: BulletCard | null = (() => {
+    if (!offerSpecialist || !armSpecialist || !pick) return null;
+    const remaining = me.bullets.filter((_, i) => i !== pick.slotIndex);
+    if (remaining.includes("clic")) return "clic";
+    if (remaining.includes("bang")) return "bang";
+    return null;
+  })();
 
   if (ready) {
     const target = opponents.find(o => o.id === myCommit?.target);
@@ -348,12 +358,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
       </Box>
 
       {offerSpecialist && (
-        <SpecialistCommitChoice
-          me={me}
-          playedSlotIndex={pick?.slotIndex ?? null}
-          selected={specialistDiscard}
-          onChange={setSpecialistDiscard}
-        />
+        <SpecialistCommitChoice armed={armSpecialist} onChange={setArmSpecialist} />
       )}
 
       {hasTough && (
@@ -406,101 +411,32 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
 // arms the save (it'll be discarded so the B!B!B! stays in the holder's hand
 // after the round); tapping again clears it. The choice rides on the same
 // Lock In button as the commit — no separate phase, no prompt, no wait.
+// Quartermaster's Reload (Specialist) arm — only offered when the holder
+// has picked B!B!B!. Auto-resolves the discarded kind at submit time
+// (CLICK if any remain in hand, else SHOT), so the player only has to
+// decide whether to save the Quickdraw at all.
 function SpecialistCommitChoice({
-  me,
-  playedSlotIndex,
-  selected,
+  armed,
   onChange,
 }: {
-  me: Player;
-  playedSlotIndex: number | null;
-  selected: BulletCard | null;
-  onChange: (b: BulletCard | null) => void;
+  armed: boolean;
+  onChange: (v: boolean) => void;
 }) {
-  // Discard candidates: every kind still in the player's hand except the
-  // played B!B!B! itself. Dedupe by kind — clic and bang are interchangeable
-  // within a kind, so the player picks the kind, not the slot.
-  const kinds = new Set<BulletCard>();
-  me.bullets.forEach((b, i) => {
-    if (i === playedSlotIndex) return; // exclude the played B!B!B!
-    if (b === "bang_bang_bang") return; // and any other quickdraws too
-    kinds.add(b);
-  });
-  const choices = Array.from(kinds);
   return (
     <Box
       sx={{
-        marginTop: "0.7rem",
-        padding: "0.55rem 0.9rem 0.65rem",
+        marginBlock: "1.4rem",
         marginInline: "auto",
         maxWidth: "calc(4 * 75px + 3 * 0.45rem)",
-        border: `1.5px solid ${palette.bloodDeep}`,
-        background: "rgba(201, 58, 48, 0.08)",
         animation: `${fadeIn} 320ms ease-out both`,
       }}
     >
-      <Box
-        sx={{
-          textAlign: "center",
-          fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "0.7rem",
-          letterSpacing: "0.32em",
-          color: palette.paperDim,
-          marginBottom: "0.3rem",
-        }}
-      >
-        SAVE YOUR QUICKDRAW?
-      </Box>
-      <Box
-        sx={{
-          textAlign: "center",
-          fontFamily: fonts.body,
-          fontStyle: "italic",
-          fontSize: "0.82rem",
-          color: palette.paperDim,
-          marginBottom: "0.55rem",
-        }}
-      >
-        Discard another powder to take your Quickdraw back.
-      </Box>
-      <Box sx={{ display: "flex", justifyContent: "center", gap: "0.45rem", flexWrap: "wrap" }}>
-        {choices.map(kind => {
-          const isSelected = selected === kind;
-          return (
-            <Box
-              key={kind}
-              role="button"
-              tabIndex={0}
-              onClick={() => onChange(isSelected ? null : kind)}
-              onKeyDown={e => {
-                if (e.key === " " || e.key === "Enter") {
-                  e.preventDefault();
-                  onChange(isSelected ? null : kind);
-                }
-              }}
-              sx={{
-                padding: "0.35rem 0.7rem",
-                fontFamily: fonts.displayCaps,
-                fontFeatureSettings: '"smcp"',
-                fontSize: "0.78rem",
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                userSelect: "none",
-                border: `1.5px solid ${palette.paper}`,
-                background: isSelected ? palette.blood : "transparent",
-                color: palette.paper,
-                boxShadow: isSelected ? `2px 2px 0 ${palette.inkDeep}` : "none",
-                transform: isSelected ? "translateY(-2px)" : "none",
-                transition: "transform 0.1s ease, background 0.1s ease",
-              }}
-            >
-              {kind === "clic" ? "CLICK" : kind === "bang" ? "SHOT" : "QUICKDRAW"}
-            </Box>
-          );
-        })}
-      </Box>
+      <XMarksCheckbox
+        checked={armed}
+        onChange={onChange}
+        label="Arm Quartermaster's Reload"
+        hint="Save your Quickdraw — discard a click instead (or a shot if none remain)."
+      />
     </Box>
   );
 }
