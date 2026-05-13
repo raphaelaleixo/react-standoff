@@ -114,24 +114,19 @@ export function PowerCard({ kind, variant = "faceUp", size = "md", used: usedPro
                 strokeWidth: 8,
                 strokeLinecap: "round",
                 strokeDasharray: 100,
+                strokeDashoffset: 100,
                 filter: "drop-shadow(0 0 1.2px rgba(201, 58, 48, 0.55))",
+              },
+              "& path:nth-of-type(1)": {
+                animation: `${slashDraw} 360ms cubic-bezier(0.7, 0, 0.3, 1) forwards`,
+              },
+              "& path:nth-of-type(2)": {
+                animation: `${slashDraw} 380ms cubic-bezier(0.7, 0, 0.3, 1) 280ms forwards`,
               },
             }}
           >
-            <path
-              d="M 8 14 L 92 88"
-              pathLength={100}
-              style={{
-                animation: `${slashDraw} 240ms cubic-bezier(0.7, 0, 0.3, 1) both`,
-              }}
-            />
-            <path
-              d="M 94 10 L 6 90"
-              pathLength={100}
-              style={{
-                animation: `${slashDraw} 260ms cubic-bezier(0.7, 0, 0.3, 1) 200ms both`,
-              }}
-            />
+            <path d="M 8 14 L 92 88" pathLength={100} />
+            <path d="M 94 10 L 6 90" pathLength={100} />
           </Box>
         )}
       </Paper>
@@ -253,24 +248,19 @@ export function PowerCard({ kind, variant = "faceUp", size = "md", used: usedPro
               strokeWidth: 8,
               strokeLinecap: "round",
               strokeDasharray: 100,
+              strokeDashoffset: 100,
               filter: "drop-shadow(0 0 1.2px rgba(201, 58, 48, 0.55))",
+            },
+            "& path:nth-of-type(1)": {
+              animation: `${slashDraw} 360ms cubic-bezier(0.7, 0, 0.3, 1) forwards`,
+            },
+            "& path:nth-of-type(2)": {
+              animation: `${slashDraw} 380ms cubic-bezier(0.7, 0, 0.3, 1) 280ms forwards`,
             },
           }}
         >
-          <path
-            d="M 8 14 L 92 88"
-            pathLength={100}
-            style={{
-              animation: `${slashDraw} 240ms cubic-bezier(0.7, 0, 0.3, 1) both`,
-            }}
-          />
-          <path
-            d="M 94 10 L 6 90"
-            pathLength={100}
-            style={{
-              animation: `${slashDraw} 260ms cubic-bezier(0.7, 0, 0.3, 1) 200ms both`,
-            }}
-          />
+          <path d="M 8 14 L 92 88" pathLength={100} />
+          <path d="M 94 10 L 6 90" pathLength={100} />
         </Box>
       )}
     </Paper>
