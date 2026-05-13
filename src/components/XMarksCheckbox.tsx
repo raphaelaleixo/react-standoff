@@ -51,7 +51,7 @@ export function XMarksCheckbox({
         }}
         sx={{
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           gap: "0.7rem",
           cursor: interactive ? "pointer" : "default",
           userSelect: "none",
@@ -135,7 +135,6 @@ export function XMarksCheckbox({
       {hint && (
         <Box
           sx={{
-            marginTop: "0.35rem",
             marginLeft: "calc(32px + 0.7rem)",
             fontFamily: fonts.body,
             fontStyle: "italic",
