@@ -185,31 +185,33 @@ export function PowerCard({ kind, variant = "faceUp", size = "md" }: Props) {
       )}
 
       {used && (
+        // Two blood-red slashes across the card — same X-marks-the-spot
+        // visual the commit-time checkboxes use, scaled to the card. The
+        // SVG viewBox is over-extended so the strokes peek past the card's
+        // edges for the hand-stamped feel.
         <Box
+          component="svg"
+          viewBox="-10 -10 120 120"
+          aria-hidden="true"
           sx={{
             position: "absolute",
             inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transform: "rotate(-18deg)",
+            width: "100%",
+            height: "100%",
+            overflow: "visible",
             pointerEvents: "none",
             zIndex: 2,
+            "& path": {
+              fill: "none",
+              stroke: palette.blood,
+              strokeWidth: 8,
+              strokeLinecap: "round",
+              filter: "drop-shadow(0 0 1.2px rgba(201, 58, 48, 0.55))",
+            },
           }}
         >
-          <Typography
-            sx={{
-              fontFamily: fonts.displayCaps,
-              fontSize: dims.width * 0.18,
-              letterSpacing: "0.3em",
-              color: palette.blood,
-              border: `3px solid ${palette.blood}`,
-              padding: "0.12em 0.35em",
-              textTransform: "uppercase",
-            }}
-          >
-            {t("powers.used")}
-          </Typography>
+          <path d="M 8 14 L 92 88" />
+          <path d="M 94 10 L 6 90" />
         </Box>
       )}
     </Paper>
