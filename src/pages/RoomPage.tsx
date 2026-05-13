@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -21,6 +21,8 @@ import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
+import { createFirebaseGameStore } from "../hooks/gameStore";
+import { useServerTime } from "../hooks/useServerTime";
 import { useBigScreenZoom } from "../hooks/useBigScreenZoom";
 import { database } from "../firebase";
 import { PageCanvas } from "../components/shell/PageCanvas";
@@ -40,7 +42,9 @@ export default function RoomPage() {
   const { t } = useTranslation();
   const { id } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
-  const { game } = useGameState(id);
+  const store = useMemo(() => (id ? createFirebaseGameStore(id) : null), [id]);
+  const { serverNow } = useServerTime();
+  const { game } = useGameState(store, serverNow);
   const derived = useRoomState(roomState ?? EMPTY_ROOM);
   const [variantSuperPowers, setVariantSuperPowers] = useState(false);
 

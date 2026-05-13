@@ -6,8 +6,11 @@ import {
   CircularProgress,
   Container,
 } from "@mui/material";
+import { useMemo } from "react";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
+import { createFirebaseGameStore } from "../hooks/gameStore";
+import { useServerTime } from "../hooks/useServerTime";
 import { useHandSlots } from "../hooks/useHandSlots";
 import { FlagFor } from "../components/flags";
 import { jollyRogerForColor } from "../components/flags/jollyRogerForColor";
@@ -27,7 +30,9 @@ export default function PlayerPage() {
   const { t } = useTranslation();
   const { id, playerId } = useParams();
   const { roomState, loading, error } = useFirebaseRoom(id);
-  const { game, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane } = useGameState(id);
+  const store = useMemo(() => (id ? createFirebaseGameStore(id) : null), [id]);
+  const { serverNow } = useServerTime();
+  const { game, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane } = useGameState(store, serverNow);
   // Compute hand layout from current bullets. Pure derivation against
   // STARTING_HAND — no cached state, so it's reload-stable.
   const slotIdNum = Number(playerId);
