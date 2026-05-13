@@ -140,9 +140,10 @@ export const SCENARIOS: Scenario[] = [
     id: "commit-loop",
     label: "Commit picker — all powers armed",
     blurb:
-      "No pre-filled commits. State machine sits in commit phase. Switch " +
-      "seats with the seat selector to test the commit picker, the " +
-      "specialist + tough toggles, and the insane reveal button.",
+      "No pre-filled commits — state machine sits in commit phase. Use the " +
+      "seat selector: 'a' has Specialist (tap B!B!B! to see Quartermaster's " +
+      "Reload), 'b' has Tough (Phantom Pain chip), 'c' has Insane (Pocket " +
+      "Inferno chip), 'd' has Dragon Skin (passive, no chip).",
     build: () =>
       scenario({
         seats: 4,
