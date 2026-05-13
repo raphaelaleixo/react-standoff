@@ -23,7 +23,7 @@ const CLIC_OPACITY = 0.4;
 // Lines first appear during the silent `standoff_hold` beat — they draw in
 // while the standoff stamp has already faded and before the yield countdown
 // starts — then stay through withdraw and the reveal sequence.
-const PHASES_WITH_LINES: RoundPhase[] = ["standoff_hold", "withdraw", "reveal_withdraw", "reveal_bbb", "reveal_others", "split"];
+const PHASES_WITH_LINES: RoundPhase[] = ["standoff_hold", "withdraw", "reveal_withdraw", "reveal_bbb", "reveal_others", "tough_reveal", "split"];
 
 interface TargetingMapProps {
   game: Game;
@@ -109,14 +109,14 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   // and split.
   const FROM_WITHDRAW_REVEAL = new Set([
     "reveal_withdraw", "reveal_bbb",
-    "reveal_others", "tough_prompt", "split", "grenade",
+    "reveal_others", "tough_prompt", "tough_reveal", "split", "grenade",
   ]);
   const FROM_BBB_REVEAL = new Set([
     "reveal_bbb",
-    "reveal_others", "tough_prompt", "split", "grenade",
+    "reveal_others", "tough_prompt", "tough_reveal", "split", "grenade",
   ]);
   const FROM_OTHERS_REVEAL = new Set([
-    "reveal_others", "tough_prompt", "split", "grenade",
+    "reveal_others", "tough_prompt", "tough_reveal", "split", "grenade",
   ]);
 
   const ducked = (id: string) =>

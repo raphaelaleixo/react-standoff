@@ -246,10 +246,10 @@ export function useGameState(
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
 
-  // tough_prompt → split
+  // tough_prompt → tough_reveal (if cards fired) | split (if not)
   // Auto-skips when the variant is off or no eligible player; otherwise waits
   // up to TOUGH_PROMPT_MS for an activation, then re-resolves so any submitted
-  // activation lands in `round/resolution` before split.
+  // activation lands in `round/resolution` before the next phase.
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "tough_prompt") return;
@@ -277,8 +277,14 @@ export function useGameState(
         );
         return;
       }
+      const before = game.round.resolution?.powerActivations.length ?? 0;
+      const after = result.resolution.powerActivations.length;
+      const newCards = after - before;
+      // If a Tough activation landed, route through the tough_reveal phase
+      // so the Phantom Pain card plays in full before the split visual
+      // starts. Otherwise advance straight to split.
       store.update("", {
-        "round/phase": "split",
+        "round/phase": newCards > 0 ? "tough_reveal" : "split",
         "round/phaseStartedAt": store.serverTimestamp(),
         "round/resolution": result.resolution,
       });
@@ -288,6 +294,24 @@ export function useGameState(
       return;
     }
     const remaining = TOUGH_PROMPT_MS - (serverNow() - game.round.phaseStartedAt);
+    const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [store, game, serverNow]);
+
+  // tough_reveal → split (timed hold so the Phantom Pain card finishes
+  // playing before the split loot animation begins).
+  useEffect(() => {
+    if (!store || !game) return;
+    if (game.round.phase !== "tough_reveal") return;
+    const cards = (game.round.resolution?.powerActivations ?? []).filter(
+      a => a.kind === "tough",
+    ).length;
+    const totalMs = Math.max(1, cards) * POWER_CARD_MS + REVEAL_WITHDRAW_TAIL_MS;
+    const remaining = totalMs - (serverNow() - game.round.phaseStartedAt);
+    const fire = () => store.update("round", {
+      phase: "split",
+      phaseStartedAt: store.serverTimestamp(),
+    });
     const t = setTimeout(fire, Math.max(0, remaining));
     return () => clearTimeout(t);
   }, [store, game, serverNow]);

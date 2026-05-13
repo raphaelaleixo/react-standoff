@@ -29,6 +29,7 @@ const PHASES: RoundPhase[] = [
   "reveal_bbb",
   "reveal_others",
   "tough_prompt",
+  "tough_reveal",
   "split",
 ];
 
@@ -49,6 +50,7 @@ const PHASE_HOLD_MS: Record<RoundPhase, number> = {
   reveal_bbb: 2500,
   reveal_others: 2500,
   tough_prompt: 2500,
+  tough_reveal: 0,
   split: 0, // terminal — no hold; round ends here
   // Grenade is a short-circuit terminator. "Play round" doesn't walk
   // through it — the dev panel's force-grenade button drops the mock

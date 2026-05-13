@@ -45,6 +45,9 @@ export type RoundPhase =
   | 'reveal_bbb'
   | 'reveal_others'
   | 'tough_prompt'
+  // Phantom Pain card is on screen — held between tough_prompt and split
+  // so the reveal overlay finishes before the loot animation starts.
+  | 'tough_reveal'
   | 'split'
   // Pocket Inferno (Insane) detonated. Round terminates after a short
   // linger — no further reveals, no split.
