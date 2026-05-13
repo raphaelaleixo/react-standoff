@@ -6,6 +6,7 @@ import { TargetingMap } from "./standoff/TargetingMap";
 import { StandoffStamp } from "./standoff/StandoffStamp";
 import { WithdrawStamp } from "./standoff/WithdrawStamp";
 import { RevealStamp } from "./standoff/RevealStamp";
+import { SplitRolloverStamp } from "./standoff/SplitRolloverStamp";
 import { CrewRoster } from "./crew/CrewRoster";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 import { useSecondsRemaining } from "../hooks/useSecondsRemaining";
@@ -101,6 +102,16 @@ export function GameBoard({ game: rawGame, freshlyStruck }: GameBoardProps) {
   if (revealLabel) lastRevealLabelRef.current = revealLabel;
   const showReveal = !!revealLabel;
 
+  // Split-phase rollover stamp: shows when the bag can't be evenly split
+  // across the standing crew (splitLoot returned no awards). Carryover
+  // stays in the HoardList — the stamp tells the audience it's intentional.
+  const inSplit = game.round.phase === "split" && !!game.round.resolution;
+  const splitAwardCount = inSplit
+    ? Object.values(game.round.resolution!.awards).filter(a => a && a.length > 0).length
+    : 0;
+  const splitHasLoot = inSplit && game.round.resolution!.carryover.length > 0;
+  const showRollover = inSplit && splitAwardCount === 0 && splitHasLoot;
+
   return (
     <Box
       sx={{
@@ -152,6 +163,11 @@ export function GameBoard({ game: rawGame, freshlyStruck }: GameBoardProps) {
                   <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
                     {/* eslint-disable-next-line react-hooks/refs */}
                     <RevealStamp label={lastRevealLabelRef.current} />
+                  </Box>
+                </Fade>
+                <Fade in={showRollover} timeout={{ enter: 0, exit: durations.base }} unmountOnExit>
+                  <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                    <SplitRolloverStamp />
                   </Box>
                 </Fade>
               </>

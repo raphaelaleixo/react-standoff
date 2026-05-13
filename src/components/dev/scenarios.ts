@@ -199,25 +199,16 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "tough-saves-struck",
-    label: "Phantom Pain claims a share anyway",
+    label: "Phantom Pain joins standing",
     blurb:
       "Mad Mary holds Tough and pre-arms it on her commit. Wet Match " +
-      "shoots her — she's struck this round, but the reveal beat plays " +
-      "Phantom Pain and Mary joins standing for the split.",
+      "shoots her — she's struck this round, but Phantom Pain lands at " +
+      "the reveal beat and Mary joins standing. The standard bag can't " +
+      "be cleanly split 4 ways, so the Rollover stamp follows.",
     build: () =>
       scenario({
         seats: 4,
         powers: { b: "tough" },
-        // Curated to split cleanly across 4 standing — 4 × $10k with a
-        // $5k carryover — so the audience can see Mary's saved share
-        // hit the table after Phantom Pain lands.
-        loot: [
-          { id: "loot-1", value: 10000 },
-          { id: "loot-2", value: 10000 },
-          { id: "loot-3", value: 10000 },
-          { id: "loot-4", value: 10000 },
-          { id: "loot-5", value: 5000 },
-        ],
         commits: {
           a: { bullet: "clic", target: "c" },
           b: { bullet: "clic", target: "d", armTough: true },
