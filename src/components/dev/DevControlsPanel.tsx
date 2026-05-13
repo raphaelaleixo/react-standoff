@@ -52,6 +52,10 @@ const PHASE_HOLD_MS: Record<RoundPhase, number> = {
   reveal_others: 2500,
   tough_prompt: 2500,
   split: 0, // terminal — no hold; round ends here
+  // Grenade is a short-circuit terminator. "Play round" doesn't walk
+  // through it — the dev panel's force-grenade button drops the mock
+  // directly into this phase.
+  grenade: 0,
 };
 
 const BULLETS: Array<BulletCard | "none"> = ["none", "clic", "bang", "bang_bang_bang"];

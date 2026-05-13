@@ -138,10 +138,12 @@ export function useGameState(roomId: string | undefined) {
         game.round.activations,
       );
       if (result.resolution.roundTerminated) {
-        // Insane grenade fired. Write the resolution + advance phase so the
-        // PowerRevealOverlay can play, then end the round after the linger.
+        // Insane grenade fired. Jump to the dedicated `grenade` phase so the
+        // big screen renders the explosion choreography (and so the normal
+        // reveal_withdraw → reveal_bbb chain can't bleed in during the
+        // linger window).
         update(ref(database, `rooms/${roomId}/game`), {
-          "round/phase": "reveal_withdraw",
+          "round/phase": "grenade",
           "round/phaseStartedAt": serverTimestamp(),
           "round/resolution": result.resolution,
           discardedBullets: [...game.discardedBullets, ...result.discardedBullets],
@@ -209,8 +211,10 @@ export function useGameState(roomId: string | undefined) {
         game.round.commits, game.players, game.round.loot, game.round.activations,
       );
       if (result.resolution.roundTerminated) {
-        update(ref(database, `rooms/${roomId}/game/round`), {
-          resolution: result.resolution,
+        update(ref(database, `rooms/${roomId}/game`), {
+          "round/phase": "grenade",
+          "round/phaseStartedAt": serverTimestamp(),
+          "round/resolution": result.resolution,
         });
         setTimeout(
           () => endRoundFromGrenade(roomId, game, result, serverNow()),
@@ -266,8 +270,10 @@ export function useGameState(roomId: string | undefined) {
         game.round.commits, game.players, game.round.loot, game.round.activations,
       );
       if (result.resolution.roundTerminated) {
-        update(ref(database, `rooms/${roomId}/game/round`), {
-          resolution: result.resolution,
+        update(ref(database, `rooms/${roomId}/game`), {
+          "round/phase": "grenade",
+          "round/phaseStartedAt": serverTimestamp(),
+          "round/resolution": result.resolution,
         });
         setTimeout(
           () => endRoundFromGrenade(roomId, game, result, serverNow()),

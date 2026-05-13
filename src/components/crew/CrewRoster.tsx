@@ -15,6 +15,16 @@ interface CrewRosterProps {
 function computeStruck(game: Game): Set<string> {
   const struck = new Set<string>();
   const phase = game.round.phase;
+  // Grenade phase short-circuits the normal reveal chain. Light up every
+  // player who took a wound this round (from the resolver's woundedThisRound)
+  // so the crew rail shows the explosion's victims.
+  if (phase === "grenade") {
+    const wounded = game.round.resolution?.woundedThisRound ?? {};
+    for (const id of Object.keys(wounded)) {
+      if ((wounded[id] ?? 0) > 0) struck.add(id);
+    }
+    return struck;
+  }
   if (phase !== "reveal_bbb" && phase !== "reveal_others" && phase !== "split") {
     return struck;
   }
@@ -56,7 +66,8 @@ function effectiveShame(p: Player, game: Game): number {
     phase === "reveal_withdraw" ||
     phase === "reveal_bbb" ||
     phase === "reveal_others" ||
-    phase === "split";
+    phase === "split" ||
+    phase === "grenade";
   return yieldRevealed && game.round.commits[p.id]?.withdrew ? p.shame + 1 : p.shame;
 }
 
@@ -79,6 +90,7 @@ function deriveStatus(
     case "reveal_bbb":
     case "reveal_others":
     case "split":
+    case "grenade":
       if (struck.has(p.id)) return "struck";
       if (c?.withdrew) return "yielded";
       // No pill for standing players — they're alive and (in split) get the take.

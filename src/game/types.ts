@@ -46,7 +46,10 @@ export type RoundPhase =
   | 'specialist_prompt'
   | 'reveal_others'
   | 'tough_prompt'
-  | 'split';
+  | 'split'
+  // Pocket Inferno (Insane) detonated. Round terminates after a short
+  // linger — no further reveals, no split.
+  | 'grenade';
 
 export interface Commit {
   bullet?: BulletCard;

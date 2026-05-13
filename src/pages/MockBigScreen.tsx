@@ -75,8 +75,19 @@ export default function MockBigScreen() {
     if (grenadeOverride) {
       const firstAlive = game.players.find(p => p.status === "alive");
       const holderId = firstAlive?.id ?? firstPlayerId;
+      // Synthesise some grenade victims so the wound-pulse choreography
+      // has something to light up — every alive crewmate except the holder
+      // takes a +1 wound (mirrors the resolver's standing-set behaviour
+      // without re-running the resolver here).
+      const victims: Record<string, number> = {};
+      for (const p of game.players) {
+        if (p.id === holderId) continue;
+        if (p.status !== "alive") continue;
+        victims[p.id] = 1;
+      }
+      victims[holderId] = 1;
       resolution = {
-        shots: [], ducks: [], standing: [], woundedThisRound: {},
+        shots: [], ducks: [], standing: [], woundedThisRound: victims,
         eliminated: [], awards: {}, carryover: [],
         powerActivations: [{ playerId: holderId, kind: "insane" }],
         roundTerminated: { reason: "grenade", playerId: holderId },
@@ -100,7 +111,13 @@ export default function MockBigScreen() {
       ...game,
       players,
       variants: { superPowers: variantOn },
-      round: { ...game.round, resolution },
+      round: {
+        ...game.round,
+        // Force the phase into 'grenade' when the dev override is on so the
+        // crew rail + overlays behave exactly like a real detonation.
+        phase: grenadeOverride ? "grenade" : game.round.phase,
+        resolution,
+      },
     };
   }, [game, variantOn, forcedActivations, revealAllBadges, grenadeOverride]);
 

@@ -215,7 +215,13 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
     );
   }
 
-  if (phase === "reveal_withdraw" || phase === "reveal_bbb" || phase === "reveal_others" || phase === "split") {
+  if (
+    phase === "reveal_withdraw" ||
+    phase === "reveal_bbb" ||
+    phase === "reveal_others" ||
+    phase === "split" ||
+    phase === "grenade"
+  ) {
     return <PhaseFader phaseKey={phaseKey}><Spectator game={game} /></PhaseFader>;
   }
 
