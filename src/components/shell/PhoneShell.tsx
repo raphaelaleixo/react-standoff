@@ -74,21 +74,39 @@ export function PhoneShell({ me, roomId, children, introOpen }: PhoneShellProps)
       >
         <PhoneHeader roomId={roomId} flagId={me.colorOrAvatar} />
 
-        {/* Body. */}
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        {/* Body. Scrolls vertically when its content overflows, with
+            bottom padding that matches the (absolute-positioned) footer's
+            footprint so the last bit of content can scroll into view above
+            the footer rather than being permanently hidden under it. */}
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+            overflowY: "auto",
+            paddingBottom: "4.6rem",
+          }}
+        >
           {children}
         </Box>
 
-        {/* Footer — stash + wound/shame pips. */}
+        {/* Footer — stash + wound/shame pips. Anchored to the bottom of
+            the canvas so body content scrolls behind it; the opaque ink
+            background hides anything passing underneath. */}
         <Box
           sx={{
-            position: "relative",
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
             display: "flex",
             flexDirection: "column",
             gap: "0.4rem",
             padding: "0.7rem 0.95rem 0.8rem",
             borderTop: `1px solid ${palette.rule}`,
-            flexShrink: 0,
+            background: palette.ink,
+            zIndex: 3,
           }}
         >
           <Box
