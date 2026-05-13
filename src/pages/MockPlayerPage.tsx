@@ -41,8 +41,20 @@ export default function MockPlayerPage() {
     (id: string) => {
       const def = SCENARIOS.find(s => s.id === id);
       if (!def) return;
-      store.reset(def.build());
+      const built = def.build();
+      store.reset(built);
       setVariantOverride(null);
+      // Auto-select the first alive seat that hasn't committed yet so the
+      // commit picker shows on load (scenarios pre-fill 3-of-4 commits to
+      // leave a single open seat for the dev to drive).
+      const openSeat = built.players.find(
+        p =>
+          p.status === "alive" &&
+          (!built.round.commits[p.id] ||
+            built.round.commits[p.id].bullet === undefined ||
+            built.round.commits[p.id].target === undefined),
+      );
+      if (openSeat) setSelectedPlayerId(openSeat.id);
     },
     [store],
   );
