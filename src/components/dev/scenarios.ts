@@ -137,27 +137,13 @@ function scenario({
 
 export const SCENARIOS: Scenario[] = [
   {
-    id: "commit-loop",
-    label: "Commit picker — all powers armed",
-    blurb:
-      "No pre-filled commits — state machine sits in commit phase. Use the " +
-      "seat selector: 'a' has Specialist (tap B!B!B! to see Quartermaster's " +
-      "Reload), 'b' has Tough (Phantom Pain chip), 'c' has Insane (Pocket " +
-      "Inferno chip), 'd' has Dragon Skin (passive, no chip).",
-    build: () =>
-      scenario({
-        seats: 4,
-        powers: { a: "specialist", b: "tough", c: "insane", d: "dragon_skin" },
-      }),
-  },
-  {
     id: "pick-and-play-specialist",
     label: "Pick & play — Specialist (Quartermaster's Reload)",
     blurb:
       "Seat 'a' (Specialist) is the only open commit; b, c, d are pre-filled. " +
-      "Mad Mary is banging Maud. Pick B!B!B! to surface the discard chips, " +
-      "tap a CLICK to save the Quickdraw, commit, watch the round resolve " +
-      "— then round 2 opens with the card stamped USED.",
+      "Mad Mary is banging Maud. Pick B!B!B!, tick the Quartermaster's " +
+      "Reload chip, commit. Wait through standoff → withdraw → reveals " +
+      "(~30s). Round 2 opens with the Specialist card stamped USED.",
     build: () =>
       scenario({
         seats: 4,
@@ -175,8 +161,8 @@ export const SCENARIOS: Scenario[] = [
     blurb:
       "Seat 'a' (Tough) is the only open commit; b, c, d are pre-filled. " +
       "Mad Mary is banging Maud. Tick the Phantom Pain chip, commit any " +
-      "bullet, and at the split the card joins standing and stamps USED " +
-      "for round 2.",
+      "bullet, wait ~30s. The save lands at the split and round 2 opens " +
+      "with the card stamped USED.",
     build: () =>
       scenario({
         seats: 4,
@@ -193,9 +179,9 @@ export const SCENARIOS: Scenario[] = [
     label: "Pick & play — Insane (Pocket Inferno)",
     blurb:
       "Seat 'a' (Insane) is the only open commit; b, c, d are pre-filled. " +
-      "Mad Mary is banging Maud. Tick Pocket Inferno, commit, and watch the " +
-      "shots fire — the wound trips the grenade, BOOM detonates, card stamps " +
-      "USED at round 2.",
+      "Mad Mary is banging Maud. Tick Pocket Inferno, commit, wait through " +
+      "the shots — the wound trips the grenade, BOOM detonates, and round 2 " +
+      "opens with the card stamped USED.",
     build: () =>
       scenario({
         seats: 4,
@@ -205,6 +191,22 @@ export const SCENARIOS: Scenario[] = [
           c: { bullet: "clic", target: "d" },
           d: { bullet: "clic", target: "c" },
         },
+      }),
+  },
+  {
+    id: "commit-loop",
+    label: "Commit picker — all powers armed",
+    blurb:
+      "No pre-filled commits — state machine sits in commit phase. Use the " +
+      "seat selector: 'a' has Specialist (tap B!B!B! to see Quartermaster's " +
+      "Reload), 'b' has Tough (Phantom Pain chip), 'c' has Insane (Pocket " +
+      "Inferno chip), 'd' has Dragon Skin (passive, no chip). Round doesn't " +
+      "advance until all four seats commit — use this for picker layout, " +
+      "not for end-to-end power testing.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "specialist", b: "tough", c: "insane", d: "dragon_skin" },
       }),
   },
   {
