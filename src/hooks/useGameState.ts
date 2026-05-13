@@ -293,6 +293,13 @@ export function useGameState(
       fire();
       return;
     }
+    // If a tough activation has already been submitted (production: player
+    // tapped USE; scenarios: onPhaseEnter wrote it), there's nothing left
+    // to wait for. Resolve and advance.
+    if ((game.round.activations.tough ?? []).length > 0) {
+      fire();
+      return;
+    }
     const remaining = TOUGH_PROMPT_MS - (serverNow() - game.round.phaseStartedAt);
     const t = setTimeout(fire, Math.max(0, remaining));
     return () => clearTimeout(t);
