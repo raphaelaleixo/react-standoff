@@ -201,25 +201,20 @@ export const SCENARIOS: Scenario[] = [
     id: "tough-saves-struck",
     label: "Phantom Pain claims a share anyway",
     blurb:
-      "Mad Mary holds Tough. Wet Match shoots her — she's struck this round. " +
-      "At the tough_prompt beat the scenario auto-claims for her, so the " +
-      "Phantom Pain card plays and Mary joins standing for the split.",
+      "Mad Mary holds Tough and pre-arms it on her commit. Wet Match " +
+      "shoots her — she's struck this round, but the reveal beat plays " +
+      "Phantom Pain and Mary joins standing for the split.",
     build: () =>
       scenario({
         seats: 4,
         powers: { b: "tough" },
         commits: {
           a: { bullet: "clic", target: "c" },
-          b: { bullet: "clic", target: "d" },
+          b: { bullet: "clic", target: "d", armTough: true },
           c: { bullet: "bang", target: "b" },
           d: { bullet: "clic", target: "a" },
         },
       }),
-    onPhaseEnter: {
-      tough_prompt: store => {
-        store.update("round/activations", { tough: ["b"] });
-      },
-    },
   },
   {
     id: "insane-detonates",

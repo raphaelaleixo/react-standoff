@@ -44,8 +44,7 @@ export type RoundPhase =
   | 'reveal_withdraw'
   | 'reveal_bbb'
   | 'reveal_others'
-  | 'tough_prompt'
-  // Phantom Pain card is on screen — held between tough_prompt and split
+  // Phantom Pain card is on screen — held between reveal_others and split
   // so the reveal overlay finishes before the loot animation starts.
   | 'tough_reveal'
   | 'split'
@@ -57,6 +56,12 @@ export interface Commit {
   bullet?: BulletCard;
   target?: string;
   withdrew?: boolean;
+  // Phantom Pain (Tough) arm: set at commit time. If the player ends up
+  // struck or ducked this round, the resolver auto-claims their share.
+  // The state machine copies this into `round.activations.tough` only at
+  // the reveal_others handoff so the card doesn't fire during the early
+  // resolves.
+  armTough?: boolean;
 }
 
 export type ShotOutcome =

@@ -279,8 +279,8 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
         />
       )}
       {/* Phantom Pain card plays during tough_reveal — the hold beat we
-          insert between tough_prompt and split so the card finishes before
-          the loot animation begins. */}
+          insert between reveal_others and split so the card finishes
+          before the loot animation begins. */}
       {game.round.phase === "tough_reveal" && game.round.resolution && (
         <PowerRevealOverlay
           activations={

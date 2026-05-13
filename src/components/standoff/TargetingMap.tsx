@@ -105,18 +105,18 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   }, [showLines]);
   // Phases at and after each reveal beat — once a beat lands, its state
   // (ducked / BBB struck / shots fired) stays on screen through the rest
-  // of the round, including tough_prompt which sits between reveal_others
-  // and split.
+  // of the round, including tough_reveal which holds the Phantom Pain
+  // card between reveal_others and split.
   const FROM_WITHDRAW_REVEAL = new Set([
     "reveal_withdraw", "reveal_bbb",
-    "reveal_others", "tough_prompt", "tough_reveal", "split", "grenade",
+    "reveal_others", "tough_reveal", "split", "grenade",
   ]);
   const FROM_BBB_REVEAL = new Set([
     "reveal_bbb",
-    "reveal_others", "tough_prompt", "tough_reveal", "split", "grenade",
+    "reveal_others", "tough_reveal", "split", "grenade",
   ]);
   const FROM_OTHERS_REVEAL = new Set([
-    "reveal_others", "tough_prompt", "tough_reveal", "split", "grenade",
+    "reveal_others", "tough_reveal", "split", "grenade",
   ]);
 
   const ducked = (id: string) =>
@@ -227,9 +227,9 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
           };
           // A line "fires" — gets ink-filled with blood-red + glow — when its
           // bullet lands a wound. BBB lines fire from reveal_bbb on, bangs
-          // join at reveal_others. Once fired, stays fired through the
-          // prompt phase (tough_prompt) so the visual
-          // doesn't snap back to beige between reveals.
+          // join at reveal_others. Once fired, stays fired through
+          // tough_reveal so the visual doesn't snap back to beige between
+          // reveals.
           const lineFired = (bullet?: string) => {
             if (FROM_OTHERS_REVEAL.has(phase)) {
               return bullet === "bang" || bullet === "bang_bang_bang";

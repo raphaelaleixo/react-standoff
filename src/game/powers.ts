@@ -29,17 +29,15 @@ export function eligibleForSpecialist(game: Game, playerId: string): boolean {
   return true;
 }
 
-export function eligibleForTough(game: Game, playerId: string): boolean {
+// Commit-time gate: can this player pre-arm Tough on their commit? Tough
+// is now bundled into the commit picker instead of a mid-resolve prompt,
+// so the only thing we need to check is that the holder is alive and the
+// card is still unused.
+export function canArmTough(game: Game, playerId: string): boolean {
   const player = game.players.find(p => p.id === playerId);
   if (!player || player.status !== 'alive') return false;
   if (!hasUnusedPower(player, 'tough')) return false;
-  const resolution = game.round.resolution;
-  if (!resolution) return false;
-  if (resolution.eliminated.includes(playerId)) return false;
-  if (resolution.standing.includes(playerId)) return false;
-  const ducked = resolution.ducks.includes(playerId);
-  const wounded = (resolution.woundedThisRound[playerId] ?? 0) > 0;
-  return ducked || wounded;
+  return true;
 }
 
 export function eligibleForInsane(game: Game, playerId: string): boolean {

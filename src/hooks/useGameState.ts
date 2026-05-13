@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import type { BulletCard, Commit, Game, Player } from "../game/types";
 import { resolveRound, type ResolveRoundResult } from "../game/resolver";
 import { startNextRound, endGameStatus } from "../game/transitions";
-import { eligibleForTough } from "../game/powers";
 import type { GameStore } from "./gameStore";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
 
@@ -18,7 +17,6 @@ const POWER_CARD_MS = 4420;
 const REVEAL_WITHDRAW_TAIL_MS = 320;
 const REVEAL_BBB_MS = 5000;
 const REVEAL_OTHERS_MS = 5000;
-const TOUGH_PROMPT_MS = 10000;
 const GRENADE_EXPLOSION_MS = 2800;
 // Split-phase budget: notes-leave-table fade (~300ms) → small beat → cash
 // tickers (~700ms) → small beat → next round draws in. GameBoard runs the
@@ -233,37 +231,26 @@ export function useGameState(
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
 
-  // reveal_others → tough_prompt (animation pace; pure phase handoff)
+  // reveal_others → tough_reveal (if Tough fired) | split (if not)
+  //
+  // Tough is now armed at commit time (commits[pid].armTough). We hold the
+  // copy-into-activations until this handoff so the resolver doesn't fire
+  // the card during earlier resolves (which would land the Phantom Pain
+  // reveal before the strike animation). Read armed seats, write
+  // activations.tough, then re-resolve.
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "reveal_others") return;
     const remaining = REVEAL_OTHERS_MS - (serverNow() - game.round.phaseStartedAt);
-    const fire = () => store.update("round", {
-      phase: "tough_prompt",
-      phaseStartedAt: store.serverTimestamp(),
-    });
-    const t = setTimeout(fire, Math.max(0, remaining));
-    return () => clearTimeout(t);
-  }, [store, game, serverNow]);
-
-  // tough_prompt → tough_reveal (if cards fired) | split (if not)
-  // Auto-skips when the variant is off or no eligible player; otherwise waits
-  // up to TOUGH_PROMPT_MS for an activation, then re-resolves so any submitted
-  // activation lands in `round/resolution` before the next phase.
-  useEffect(() => {
-    if (!store || !game) return;
-    if (game.round.phase !== "tough_prompt") return;
-    if (!game.variants.superPowers) {
-      store.update("round", {
-        phase: "split",
-        phaseStartedAt: store.serverTimestamp(),
-      });
-      return;
-    }
-    const eligible = game.players.find(p => eligibleForTough(game, p.id));
     const fire = () => {
+      const armed = Object.entries(game.round.commits)
+        .filter(([, c]) => c.armTough)
+        .map(([pid]) => pid);
+      const activations = armed.length > 0
+        ? { ...game.round.activations, tough: armed }
+        : game.round.activations;
       const result = resolveRound(
-        game.round.commits, game.players, game.round.loot, game.round.activations,
+        game.round.commits, game.players, game.round.loot, activations,
       );
       if (result.resolution.roundTerminated) {
         store.update("", {
@@ -280,27 +267,16 @@ export function useGameState(
       const before = game.round.resolution?.powerActivations.length ?? 0;
       const after = result.resolution.powerActivations.length;
       const newCards = after - before;
-      // If a Tough activation landed, route through the tough_reveal phase
-      // so the Phantom Pain card plays in full before the split visual
-      // starts. Otherwise advance straight to split.
-      store.update("", {
+      const updates: Record<string, unknown> = {
         "round/phase": newCards > 0 ? "tough_reveal" : "split",
         "round/phaseStartedAt": store.serverTimestamp(),
         "round/resolution": result.resolution,
-      });
+      };
+      if (armed.length > 0) {
+        updates["round/activations/tough"] = armed;
+      }
+      store.update("", updates);
     };
-    if (!eligible) {
-      fire();
-      return;
-    }
-    // If a tough activation has already been submitted (production: player
-    // tapped USE; scenarios: onPhaseEnter wrote it), there's nothing left
-    // to wait for. Resolve and advance.
-    if ((game.round.activations.tough ?? []).length > 0) {
-      fire();
-      return;
-    }
-    const remaining = TOUGH_PROMPT_MS - (serverNow() - game.round.phaseStartedAt);
     const t = setTimeout(fire, Math.max(0, remaining));
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
@@ -361,19 +337,20 @@ export function useGameState(
       playerId: string,
       bullet: BulletCard,
       target: string,
-      specialistDiscard?: BulletCard,
+      opts?: { specialistDiscard?: BulletCard; armTough?: boolean },
     ) => {
       if (!store) return;
       const c: Commit = { bullet, target };
-      // When the holder of Specialist + B!B!B! chooses to save their
-      // Quickdraw at commit time, write the activation atomically alongside
-      // the commit. Otherwise just the commit.
-      if (specialistDiscard) {
+      if (opts?.armTough) c.armTough = true;
+      // Specialist (Quartermaster's Reload) and Tough (Phantom Pain) both
+      // get armed at commit time. Write the activation/arm atomically with
+      // the commit so a partial state never lands.
+      if (opts?.specialistDiscard) {
         await store.update("round", {
           [`commits/${playerId}`]: c,
           "activations/specialist": {
             playerId,
-            discardedBulletKind: specialistDiscard,
+            discardedBulletKind: opts.specialistDiscard,
           },
         });
       } else {
@@ -410,14 +387,6 @@ export function useGameState(
     [store],
   );
 
-  const submitTough = useCallback(
-    async (playerId: string) => {
-      if (!store) return;
-      await store.update("round/activations", { tough: [playerId] });
-    },
-    [store],
-  );
-
   const submitInsane = useCallback(
     async (playerId: string) => {
       if (!store) return;
@@ -428,5 +397,5 @@ export function useGameState(
 
   const loading = store !== null && !loaded;
 
-  return { game, loading, submitCommit, submitDuck, submitSpecialist, submitTough, submitInsane };
+  return { game, loading, submitCommit, submitDuck, submitSpecialist, submitInsane };
 }

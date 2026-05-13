@@ -46,7 +46,7 @@ describe('normalizeGame variant fields', () => {
       phase: 'in_progress',
       players: [],
       round: {
-        number: 2, phase: 'tough_prompt', phaseStartedAt: 100, loot: [],
+        number: 2, phase: 'tough_reveal', phaseStartedAt: 100, loot: [],
         commits: {},
         activations: { tough: ['p1', 'p2'], specialist: { playerId: 'p3', discardedBulletKind: 'clic' } },
       },

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dealPowers, eligibleForInsane, eligibleForSpecialist, eligibleForTough } from './powers';
+import { canArmTough, dealPowers, eligibleForInsane, eligibleForSpecialist } from './powers';
 import { POWER_KINDS } from './powerKinds';
 import { makeRng } from './random';
 import type { Game, Player } from './types';
@@ -133,77 +133,40 @@ describe('eligibleForSpecialist', () => {
   });
 });
 
-describe('eligibleForTough', () => {
-  it('true: holder alive, in ducks, unused', () => {
+describe('canArmTough', () => {
+  it('true: holder alive with unused unrevealed tough', () => {
     const game = makeGame({
       players: [makePlayer('p1', {
         effects: [{ kind: 'tough', revealed: false, used: false }],
       })],
-      round: {
-        number: 1, phase: 'tough_prompt', phaseStartedAt: 0, loot: [],
-        commits: { p1: { withdrew: true } },
-        activations: {},
-        resolution: {
-          shots: [], ducks: ['p1'], standing: [], woundedThisRound: {},
-          eliminated: [], awards: {}, carryover: [], powerActivations: [],
-        },
-      },
     });
-    expect(eligibleForTough(game, 'p1')).toBe(true);
+    expect(canArmTough(game, 'p1')).toBe(true);
   });
 
-  it('true: holder alive, wounded this round, unused', () => {
+  it('false: tough already used', () => {
     const game = makeGame({
       players: [makePlayer('p1', {
+        effects: [{ kind: 'tough', revealed: true, used: true }],
+      })],
+    });
+    expect(canArmTough(game, 'p1')).toBe(false);
+  });
+
+  it('false: holder is dead', () => {
+    const game = makeGame({
+      players: [makePlayer('p1', {
+        status: 'dead',
         effects: [{ kind: 'tough', revealed: false, used: false }],
       })],
-      round: {
-        number: 1, phase: 'tough_prompt', phaseStartedAt: 0, loot: [],
-        commits: { p1: { bullet: 'bang', target: 'p2' } },
-        activations: {},
-        resolution: {
-          shots: [], ducks: [], standing: [], woundedThisRound: { p1: 1 },
-          eliminated: [], awards: {}, carryover: [], powerActivations: [],
-        },
-      },
     });
-    expect(eligibleForTough(game, 'p1')).toBe(true);
+    expect(canArmTough(game, 'p1')).toBe(false);
   });
 
-  it('false: holder already in standing (no need)', () => {
+  it('false: holder does not have tough', () => {
     const game = makeGame({
-      players: [makePlayer('p1', {
-        effects: [{ kind: 'tough', revealed: false }],
-      })],
-      round: {
-        number: 1, phase: 'tough_prompt', phaseStartedAt: 0, loot: [],
-        commits: { p1: { bullet: 'bang', target: 'p2' } },
-        activations: {},
-        resolution: {
-          shots: [], ducks: [], standing: ['p1'], woundedThisRound: {},
-          eliminated: [], awards: {}, carryover: [], powerActivations: [],
-        },
-      },
+      players: [makePlayer('p1', { effects: [] })],
     });
-    expect(eligibleForTough(game, 'p1')).toBe(false);
-  });
-
-  it('false: holder eliminated this round', () => {
-    const game = makeGame({
-      players: [makePlayer('p1', {
-        effects: [{ kind: 'tough', revealed: false }],
-      })],
-      round: {
-        number: 1, phase: 'tough_prompt', phaseStartedAt: 0, loot: [],
-        commits: { p1: { bullet: 'bang', target: 'p2' } },
-        activations: {},
-        resolution: {
-          shots: [], ducks: [], standing: [], woundedThisRound: { p1: 3 },
-          eliminated: ['p1'], awards: {}, carryover: [], powerActivations: [],
-        },
-      },
-    });
-    expect(eligibleForTough(game, 'p1')).toBe(false);
+    expect(canArmTough(game, 'p1')).toBe(false);
   });
 });
 

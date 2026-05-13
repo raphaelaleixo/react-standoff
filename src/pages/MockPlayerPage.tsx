@@ -16,8 +16,7 @@ import { fonts } from "../theme/typography";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
-import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
-import { eligibleForInsane, eligibleForTough } from "../game/powers";
+import { eligibleForInsane } from "../game/powers";
 import { useMockGameState } from "../components/dev/useMockGameState";
 import { useHandSlots } from "../hooks/useHandSlots";
 import { useDevPanelToggle } from "../components/dev/useDevPanelToggle";
@@ -130,59 +129,37 @@ export default function MockPlayerPage() {
       }
     : renderGame;
 
-  // Tough prompt takes over the phone canvas the same way PlayerPage does
-  // in production — replaces the surface, but the dev panel + seat
-  // selector stay mounted so the dev can step out. Specialist is bundled
-  // into the commit picker, so no prompt phase for it.
-  const showToughPrompt =
-    !isReckoning &&
-    renderGame.variants.superPowers &&
-    renderGame.round.phase === "tough_prompt" &&
-    eligibleForTough(renderGame, me.id);
-  const promptExpiresAtMs = renderGame.round.phaseStartedAt + 10000;
-
-  let surface: React.ReactNode;
-  if (showToughPrompt) {
-    surface = (
-      <PhoneShell me={me} roomId="MOCK">
-        <ToughPromptScreen
-          onUse={() => { /* mock: no-op, dev advances phase manually */ }}
-          onSkip={() => { /* mock: no-op */ }}
-          expiresAtMs={promptExpiresAtMs}
-        />
-      </PhoneShell>
-    );
-  } else {
-    surface = (
-      <PhoneShell
+  // Specialist + Tough are bundled into the commit picker; only Insane
+  // still has a real-time control (the grenade reveal button).
+  const surface = (
+    <PhoneShell
+      me={me}
+      roomId="MOCK"
+      introOpen={
+        !isReckoning &&
+        renderGame.variants.superPowers &&
+        !!myPower &&
+        renderGame.round.phase === "commit"
+      }
+      aboveFooter={
+        myPower === "insane" && !isReckoning &&
+        (eligibleForInsane(renderGame, me.id) || grenadeArmed) ? (
+          <InsaneRevealButton
+            armed={grenadeArmed}
+            onReveal={() => setGrenadeArmed(true)}
+          />
+        ) : undefined
+      }
+    >
+      <PhaseView
+        game={phoneGame}
         me={me}
-        roomId="MOCK"
-        introOpen={
-          !isReckoning &&
-          renderGame.variants.superPowers &&
-          !!myPower &&
-          renderGame.round.phase === "commit"
-        }
-        aboveFooter={
-          myPower === "insane" && !isReckoning &&
-          (eligibleForInsane(renderGame, me.id) || grenadeArmed) ? (
-            <InsaneRevealButton
-              armed={grenadeArmed}
-              onReveal={() => setGrenadeArmed(true)}
-            />
-          ) : undefined
-        }
-      >
-        <PhaseView
-          game={phoneGame}
-          me={me}
-          submitCommit={submitCommit}
-          submitDuck={submitDuck}
-          handSlots={handSlots}
-        />
-      </PhoneShell>
-    );
-  }
+        submitCommit={submitCommit}
+        submitDuck={submitDuck}
+        handSlots={handSlots}
+      />
+    </PhoneShell>
+  );
 
   return (
     <>

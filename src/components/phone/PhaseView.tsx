@@ -31,18 +31,19 @@ import { Spectator } from "./Spectator";
 import { TargetList } from "./TargetList";
 import { YieldRibbon } from "./YieldRibbon";
 
+export interface SubmitCommitOpts {
+  specialistDiscard?: BulletCard;
+  armTough?: boolean;
+}
+
 interface PhaseViewProps {
   game: Game;
   me: Player;
-  submitCommit: (id: string, b: BulletCard, t: string, specialistDiscard?: BulletCard) => Promise<void>;
+  submitCommit: (id: string, b: BulletCard, t: string, opts?: SubmitCommitOpts) => Promise<void>;
   submitDuck: (id: string, w: boolean) => Promise<void>;
-  /**
-   * Stable hand layout — slot positions persist across phases/rounds so a
-   * card spent earlier stays in its original slot. Hoisted into the parent
-   * page so the cache survives PlayerPage's branch switches (e.g. when the
-   * tough_prompt screen takes over and PhaseView would otherwise be
-   * unmounted, the cached slot positions would be lost on remount).
-   */
+  // Stable hand layout — slot positions persist across phases/rounds so a
+  // card spent earlier stays in its original slot. Hoisted into the parent
+  // page so the cache survives branch switches.
   handSlots: HandSlot[];
 }
 
@@ -233,7 +234,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
   me: Player;
   opponents: Player[];
   myCommit?: { bullet?: BulletCard; target?: string };
-  onSubmit: (id: string, b: BulletCard, t: string, specialistDiscard?: BulletCard) => Promise<void>;
+  onSubmit: (id: string, b: BulletCard, t: string, opts?: SubmitCommitOpts) => Promise<void>;
   handSlots: HandSlot[];
   variantOn: boolean;
 }) {
@@ -241,9 +242,13 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
   const [pick, setPick] = useState<{ load: BulletCard; slotIndex: number } | null>(null);
   const [target, setTarget] = useState<string | null>(null);
   const [specialistDiscard, setSpecialistDiscard] = useState<BulletCard | null>(null);
+  const [armTough, setArmTough] = useState(false);
   const ready = myCommit?.bullet && myCommit.target;
   const hasSpecialist = variantOn && me.effects.some(
     e => e.kind === "specialist" && !e.revealed && !e.used,
+  );
+  const hasTough = variantOn && me.effects.some(
+    e => e.kind === "tough" && !e.revealed && !e.used,
   );
   const offerSpecialist = hasSpecialist && pick?.load === "bang_bang_bang";
   // Reset the discard pick if the user changes their bullet away from B!B!B!.
@@ -345,6 +350,10 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
         />
       )}
 
+      {hasTough && (
+        <ToughCommitChoice armed={armTough} onChange={setArmTough} />
+      )}
+
       {/* Push the commit button to the bottom of the available space so
           it stays under the thumb regardless of how much room the picker +
           hand take above. */}
@@ -362,7 +371,10 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn 
           disabled={!pick || !target}
           onClick={() =>
             pick && target &&
-            onSubmit(me.id, pick.load, target, specialistDiscard ?? undefined)
+            onSubmit(me.id, pick.load, target, {
+              specialistDiscard: specialistDiscard ?? undefined,
+              armTough: armTough || undefined,
+            })
           }
           caption={
             pick && target
@@ -478,6 +490,71 @@ function SpecialistCommitChoice({
             </Box>
           );
         })}
+      </Box>
+    </Box>
+  );
+}
+
+// Phantom Pain (Tough) arm: optional commit-time toggle. Lets the holder
+// pre-claim their share if they end up struck or ducked this round.
+// Resolver only consumes the power if the save actually fires — armed-
+// but-not-needed stays in hand.
+function ToughCommitChoice({
+  armed,
+  onChange,
+}: {
+  armed: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <Box
+      role="button"
+      tabIndex={0}
+      onClick={() => onChange(!armed)}
+      onKeyDown={e => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          onChange(!armed);
+        }
+      }}
+      sx={{
+        marginTop: "0.7rem",
+        padding: "0.55rem 0.9rem 0.65rem",
+        marginInline: "auto",
+        maxWidth: "calc(4 * 75px + 3 * 0.45rem)",
+        border: `1.5px solid ${armed ? palette.blood : palette.bloodDeep}`,
+        background: armed ? "rgba(201, 58, 48, 0.18)" : "rgba(201, 58, 48, 0.08)",
+        cursor: "pointer",
+        userSelect: "none",
+        boxShadow: armed ? `2px 2px 0 ${palette.inkDeep}` : "none",
+        transform: armed ? "translateY(-1px)" : "none",
+        transition: "transform 0.1s ease, background 0.1s ease, border-color 0.1s ease",
+        animation: `${fadeIn} 320ms ease-out both`,
+      }}
+    >
+      <Box
+        sx={{
+          textAlign: "center",
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "0.7rem",
+          letterSpacing: "0.32em",
+          color: palette.paperDim,
+          marginBottom: "0.3rem",
+        }}
+      >
+        {armed ? "PHANTOM PAIN ARMED" : "ARM PHANTOM PAIN?"}
+      </Box>
+      <Box
+        sx={{
+          textAlign: "center",
+          fontFamily: fonts.body,
+          fontStyle: "italic",
+          fontSize: "0.82rem",
+          color: palette.paperDim,
+        }}
+      >
+        Claim a share this round even if ye take a wound or duck.
       </Box>
     </Box>
   );

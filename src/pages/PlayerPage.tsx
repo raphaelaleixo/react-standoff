@@ -21,9 +21,8 @@ import { PageCanvas } from "../components/shell/PageCanvas";
 import { PhoneHeader } from "../components/shell/PhoneHeader";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
-import { ToughPromptScreen } from "../components/screens/ToughPromptScreen";
 import { InsaneRevealButton } from "../components/screens/InsaneRevealButton";
-import { eligibleForInsane, eligibleForTough } from "../game/powers";
+import { eligibleForInsane } from "../game/powers";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
@@ -31,7 +30,7 @@ export default function PlayerPage() {
   const { roomState, loading, error } = useFirebaseRoom(id);
   const store = useMemo(() => (id ? createFirebaseGameStore(id) : null), [id]);
   const { serverNow } = useServerTime();
-  const { game, submitCommit, submitDuck, submitTough, submitInsane } = useGameState(store, serverNow);
+  const { game, submitCommit, submitDuck, submitInsane } = useGameState(store, serverNow);
   // Compute hand layout from current bullets. Pure derivation against
   // STARTING_HAND — no cached state, so it's reload-stable.
   const slotIdNum = Number(playerId);
@@ -157,22 +156,6 @@ export default function PlayerPage() {
     game.phase === "in_progress" &&
     game.round.number === 1 &&
     game.round.phase === "commit";
-
-  if (
-    game.variants.superPowers &&
-    game.round.phase === "tough_prompt" &&
-    eligibleForTough(game, me.id)
-  ) {
-    return (
-      <PhoneShell me={me} roomId={roomState.roomId}>
-        <ToughPromptScreen
-          onUse={() => submitTough(me.id)}
-          onSkip={() => { /* no-op; phase auto-advances on timeout */ }}
-          expiresAtMs={game.round.phaseStartedAt + 10000}
-        />
-      </PhoneShell>
-    );
-  }
 
   // Insane holder context: the reveal pill should appear for the holder when
   // the window is open OR while the grenade is armed (between reveal and
