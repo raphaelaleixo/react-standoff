@@ -26,7 +26,7 @@ export function PowerRevealOverlay({ activations, players }: Props) {
     // How long each card sits on screen before the next one steps in (or
     // the overlay fades out). Long enough for the audience to read the
     // card name + see who owns it.
-    const stepMs = 2600;
+    const stepMs = 3800;
     const i = setInterval(() => {
       setIdx(cur => {
         const next = cur + 1;
