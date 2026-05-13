@@ -57,13 +57,22 @@ export default function MockBigScreen() {
   const handleReset = () => store.reset(null);
 
   const activeScenario = SCENARIOS.find(s => s.id === scenarioId);
-  // Mirror RoomPage: filter insane out of the resolution-based overlay
-  // (the audience already saw the card from the synthetic reveal when the
-  // holder armed it — the detonation is told via the BOOM stamp + wound
-  // pips, not a replay).
-  const overlayActivations =
+  // Mirror RoomPage: split the resolution-based overlay into "early" (plays
+  // during reveal_withdraw alongside the strike animations) and "late"
+  // (held until tough_reveal, after the kills land). Insane is excluded —
+  // the audience already saw the card from the synthetic reveal when the
+  // holder armed it; the detonation is told via the BOOM stamp + wound pips.
+  const earlyActivations =
     (game?.round.resolution?.powerActivations ?? []).filter(
-      a => a.kind !== "insane",
+      a =>
+        a.kind === "unbreakable" ||
+        a.kind === "dragon_skin" ||
+        a.kind === "specialist" ||
+        a.kind === "super_coward",
+    );
+  const lateActivations =
+    (game?.round.resolution?.powerActivations ?? []).filter(
+      a => a.kind === "tough" || a.kind === "six_feet_under",
     );
 
   // Fire scenario phase-entry hooks once per phase transition. This is how
@@ -115,9 +124,15 @@ export default function MockBigScreen() {
               }
             />
             <PowerRevealOverlay
-              activations={overlayActivations}
+              activations={earlyActivations}
               players={game.players}
             />
+            {game.round.phase === "tough_reveal" && (
+              <PowerRevealOverlay
+                activations={lateActivations}
+                players={game.players}
+              />
+            )}
             {/* Synthetic insane reveal overlay — same trick RoomPage uses. */}
             {game.round.activations.insane &&
               !game.round.resolution?.roundTerminated && (

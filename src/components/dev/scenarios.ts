@@ -317,8 +317,9 @@ export const SCENARIOS: Scenario[] = [
     id: "six-feet-bonus",
     label: "Davy Jones's Cut earns from a kill",
     blurb:
-      "Cap'n Maud holds Six Feet Under. Wet Match enters at 2 wounds and gets " +
-      "shot to death — the bonus lands at the next reckoning.",
+      "Cap'n Maud holds Davy Jones's Cut. Wet Match enters at 2 wounds and " +
+      "gets shot to death — the card flashes at tough_reveal (the late-card " +
+      "hold) and the $10k bonus lands at the next reckoning.",
     build: () =>
       scenario({
         seats: 4,
@@ -329,6 +330,25 @@ export const SCENARIOS: Scenario[] = [
           b: { bullet: "bang", target: "c" },
           c: { bullet: "clic", target: "d" },
           d: { bullet: "bang", target: "c" },
+        },
+      }),
+  },
+  {
+    id: "super-coward-ducks",
+    label: "Yellow-Belly's Purse on a yield",
+    blurb:
+      "Cap'n Maud holds Yellow-Belly's Purse and yields this round. Shame " +
+      "marker still lands, but the card flashes during reveal_withdraw and " +
+      "the +$5k swap shows up on her endgame ledger.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "super_coward" },
+        commits: {
+          a: { withdrew: true, bullet: "clic", target: "b" },
+          b: { bullet: "bang", target: "a" },
+          c: { bullet: "clic", target: "d" },
+          d: { bullet: "clic", target: "c" },
         },
       }),
   },

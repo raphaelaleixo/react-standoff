@@ -133,6 +133,17 @@ export function resolveRound(
     }
   }
 
+  // Yellow-Belly's Purse (super_coward): shame becomes a bonus instead of
+  // a penalty at the reckoning. The card has no mid-round mechanical
+  // effect, but flash it the first round the holder ducks so the audience
+  // sees the bonus path engage. Reveal-only; never marks `used`.
+  for (const pl of players) {
+    if (!hasPower(pl, 'super_coward')) continue;
+    if (!ducks.has(pl.id)) continue;
+    if (!hasUnrevealedPower(pl, 'super_coward')) continue;
+    powerActivations.push({ playerId: pl.id, kind: 'super_coward' });
+  }
+
   const eliminated: string[] = [];
   const newPlayers: Player[] = players.map(pl => {
     const c = commits[pl.id];
@@ -157,9 +168,18 @@ export function resolveRound(
     if (willDie) eliminated.push(pl.id);
 
     let effects = pl.effects;
-    if (powerActivations.some(a => a.playerId === pl.id && (a.kind === 'dragon_skin' || a.kind === 'unbreakable'))) {
+    // Reveal-only passive cards: flip `revealed` whenever the round
+    // pushed an activation for them. Never marks `used` — these are
+    // permanent passives that keep firing every round.
+    const revealedKinds = new Set(
+      powerActivations
+        .filter(a => a.playerId === pl.id)
+        .filter(a => a.kind === 'dragon_skin' || a.kind === 'unbreakable' || a.kind === 'super_coward')
+        .map(a => a.kind),
+    );
+    if (revealedKinds.size > 0) {
       effects = effects.map(e =>
-        (e.kind === 'dragon_skin' || e.kind === 'unbreakable') ? { ...e, revealed: true } : e,
+        revealedKinds.has(e.kind) ? { ...e, revealed: true } : e,
       );
     }
     if (specialistFires) {
@@ -185,6 +205,30 @@ export function resolveRound(
     .filter(pl => pl.status === 'alive' && !ducks.has(pl.id) && !(woundedThisRound[pl.id] > 0))
     .filter(pl => commits[pl.id])
     .map(pl => pl.id);
+
+  // Davy Jones's Cut (six_feet_under): the holder earns $10k per voyage
+  // kill at the reckoning (folded into scoring.finalScore). Flash the
+  // card the first round a kill happens so the audience knows the cut
+  // is engaged. Reveal-only; never marks `used` (kills keep accruing).
+  if (eliminated.length > 0) {
+    const holder = newPlayers.find(
+      p => hasPower(p, 'six_feet_under') && p.status === 'alive',
+    );
+    if (holder && hasUnrevealedPower(holder, 'six_feet_under')) {
+      powerActivations.push({
+        playerId: holder.id,
+        kind: 'six_feet_under',
+        context: { kills: eliminated.length },
+      });
+      const idx = newPlayers.findIndex(p => p.id === holder.id);
+      newPlayers[idx] = {
+        ...holder,
+        effects: holder.effects.map(e =>
+          e.kind === 'six_feet_under' ? { ...e, revealed: true } : e,
+        ),
+      };
+    }
+  }
 
   // Tough: add activated players back to standing (must still be alive).
   if (activations.tough && activations.tough.length > 0) {
