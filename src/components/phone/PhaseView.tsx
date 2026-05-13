@@ -8,6 +8,7 @@ import { fadeIn, slideUpIn } from "../../theme/animations";
 import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { Button } from "../shell/Button";
+import { XMarksCheckbox } from "../XMarksCheckbox";
 // Spelled-out small counts for headline copy (e.g. "TWO BARRELS ON YE").
 // Falls back to the numeral string for anything we don't have a word for.
 const COUNT_WORDS: Record<number, string> = {
@@ -508,54 +509,19 @@ function ToughCommitChoice({
 }) {
   return (
     <Box
-      role="button"
-      tabIndex={0}
-      onClick={() => onChange(!armed)}
-      onKeyDown={e => {
-        if (e.key === " " || e.key === "Enter") {
-          e.preventDefault();
-          onChange(!armed);
-        }
-      }}
       sx={{
         marginTop: "0.7rem",
-        padding: "0.55rem 0.9rem 0.65rem",
         marginInline: "auto",
         maxWidth: "calc(4 * 75px + 3 * 0.45rem)",
-        border: `1.5px solid ${armed ? palette.blood : palette.bloodDeep}`,
-        background: armed ? "rgba(201, 58, 48, 0.18)" : "rgba(201, 58, 48, 0.08)",
-        cursor: "pointer",
-        userSelect: "none",
-        boxShadow: armed ? `2px 2px 0 ${palette.inkDeep}` : "none",
-        transform: armed ? "translateY(-1px)" : "none",
-        transition: "transform 0.1s ease, background 0.1s ease, border-color 0.1s ease",
         animation: `${fadeIn} 320ms ease-out both`,
       }}
     >
-      <Box
-        sx={{
-          textAlign: "center",
-          fontFamily: fonts.displayCaps,
-          fontFeatureSettings: '"smcp"',
-          fontSize: "0.7rem",
-          letterSpacing: "0.32em",
-          color: palette.paperDim,
-          marginBottom: "0.3rem",
-        }}
-      >
-        {armed ? "PHANTOM PAIN ARMED" : "ARM PHANTOM PAIN?"}
-      </Box>
-      <Box
-        sx={{
-          textAlign: "center",
-          fontFamily: fonts.body,
-          fontStyle: "italic",
-          fontSize: "0.82rem",
-          color: palette.paperDim,
-        }}
-      >
-        Claim a share this round even if ye take a wound or duck.
-      </Box>
+      <XMarksCheckbox
+        checked={armed}
+        onChange={onChange}
+        label="Arm Phantom Pain"
+        hint="Claim a share this round even if ye take a wound or duck."
+      />
     </Box>
   );
 }
