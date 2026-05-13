@@ -7,13 +7,38 @@ import type {
 } from "../../game/types";
 import { STARTING_HAND } from "../../game/setup";
 
-// A scenario seeds the in-memory game store with a specific opening
-// position (players + powers + wounds + commits + variants) so the real
-// state machine can run it from `commit` phase forward — no manual phase
+// =============================================================================
+// Scenarios for the dev MockBigScreen.
+//
+// A scenario seeds the in-memory game store with a specific opening position
+// (players + powers + wounds + commits + variants). The real state machine in
+// useGameState then ticks through every phase on real timings — no manual
 // stepping, no synthesised resolutions.
 //
-// Each scenario builds a fresh Game on demand. Reset → Play replays it
-// from the start; useGameState then handles every transition naturally.
+// Adding a new scenario:
+//
+//   {
+//     id: "my-scenario",
+//     label: "Pick a short verb-phrase title",
+//     blurb: "1–2 sentences describing what you should see happen.",
+//     build: () => scenario({
+//       seats: 4,                                  // use CREW[0..3]
+//       powers: { a: "tough" },                    // optional; keyed by seat id
+//       wounds: { a: 2 },                          // optional; 0|1|2|3
+//       shame:  { a: 1 },                          // optional
+//       commits: {                                 // optional; if all alive
+//         a: { bullet: "clic", target: "b" },      //   players commit, the
+//         b: { bullet: "bang", target: "a" },      //   state machine
+//         c: { bullet: "clic", target: "d" },      //   auto-advances to
+//         d: { bullet: "clic", target: "c" },      //   standoff immediately.
+//       },
+//       variant: true,                             // defaults to true
+//     }),
+//   },
+//
+// Seat ids run a, b, c, d, e, f and map to the CREW roster below.
+// =============================================================================
+
 export interface Scenario {
   id: string;
   label: string;
@@ -25,35 +50,16 @@ interface CrewMember {
   id: string;
   displayName: string;
   colorOrAvatar: string;
-  power?: PowerKind;
-  wounds?: 0 | 1 | 2 | 3;
-  shame?: number;
 }
 
 const CREW: CrewMember[] = [
-  { id: "a", displayName: "Cap'n Maud",  colorOrAvatar: "calico_jack"  },
-  { id: "b", displayName: "Mad Mary",    colorOrAvatar: "blackbeard"   },
-  { id: "c", displayName: "Wet Match",   colorOrAvatar: "edward_low"   },
-  { id: "d", displayName: "One-Eye",     colorOrAvatar: "stede_bonnet" },
-  { id: "e", displayName: "Old Salt",    colorOrAvatar: "black_bart"   },
-  { id: "f", displayName: "Black Sam",   colorOrAvatar: "henry_avery"  },
+  { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack"  },
+  { id: "b", displayName: "Mad Mary",   colorOrAvatar: "blackbeard"   },
+  { id: "c", displayName: "Wet Match",  colorOrAvatar: "edward_low"   },
+  { id: "d", displayName: "One-Eye",    colorOrAvatar: "stede_bonnet" },
+  { id: "e", displayName: "Old Salt",   colorOrAvatar: "black_bart"   },
+  { id: "f", displayName: "Black Sam",  colorOrAvatar: "henry_avery"  },
 ];
-
-function makePlayer(crew: CrewMember): Player {
-  return {
-    id: crew.id,
-    displayName: crew.displayName,
-    colorOrAvatar: crew.colorOrAvatar,
-    bullets: [...STARTING_HAND],
-    cash: [],
-    wounds: crew.wounds ?? 0,
-    shame: crew.shame ?? 0,
-    status: "alive",
-    effects: crew.power
-      ? [{ kind: crew.power, revealed: false, used: false }]
-      : [],
-  };
-}
 
 const STARTING_LOOT: Banknote[] = [
   { id: "loot-1", value: 20000 },
@@ -63,20 +69,44 @@ const STARTING_LOOT: Banknote[] = [
   { id: "loot-5", value: 5000 },
 ];
 
-interface BuildOpts {
-  crew: CrewMember[];
+interface ScenarioOpts {
+  seats: number;
+  powers?: Partial<Record<string, PowerKind>>;
+  wounds?: Partial<Record<string, 0 | 1 | 2 | 3>>;
+  shame?: Partial<Record<string, number>>;
   commits?: Record<string, Commit>;
   loot?: Banknote[];
   variant?: boolean;
 }
 
-// Build a Game in `commit` phase with the listed crew + pre-filled commits.
+// Build a Game in `commit` phase with the requested crew + opening position.
 // If every alive player has a complete commit (bullet + target), the state
 // machine in useGameState advances to `standoff` as soon as it boots.
-function build({ crew, commits = {}, loot = STARTING_LOOT, variant = true }: BuildOpts): Game {
+function scenario({
+  seats,
+  powers = {},
+  wounds = {},
+  shame = {},
+  commits = {},
+  loot = STARTING_LOOT,
+  variant = true,
+}: ScenarioOpts): Game {
+  const players: Player[] = CREW.slice(0, seats).map(c => ({
+    id: c.id,
+    displayName: c.displayName,
+    colorOrAvatar: c.colorOrAvatar,
+    bullets: [...STARTING_HAND],
+    cash: [],
+    wounds: wounds[c.id] ?? 0,
+    shame: shame[c.id] ?? 0,
+    status: "alive",
+    effects: powers[c.id]
+      ? [{ kind: powers[c.id]!, revealed: false, used: false }]
+      : [],
+  }));
   return {
     phase: "in_progress",
-    players: crew.map(makePlayer),
+    players,
     round: {
       number: 1,
       phase: "commit",
@@ -98,16 +128,12 @@ export const SCENARIOS: Scenario[] = [
     label: "Krakenscale clamps a double shot",
     blurb:
       "Cap'n Maud holds Krakenscale (unrevealed). Mad Mary and Wet Match both " +
-      "shoot her. The clamp should drop her wounds-this-round to 1, the reveal " +
-      "overlay should play, and the round should split normally.",
+      "shoot her. The clamp drops her wounds-this-round to 1, the reveal " +
+      "overlay plays, and the round splits normally.",
     build: () =>
-      build({
-        crew: [
-          { ...CREW[0], power: "dragon_skin" },
-          CREW[1],
-          CREW[2],
-          CREW[3],
-        ],
+      scenario({
+        seats: 4,
+        powers: { a: "dragon_skin" },
         commits: {
           a: { bullet: "clic", target: "b" },
           b: { bullet: "bang", target: "a" },
@@ -120,16 +146,13 @@ export const SCENARIOS: Scenario[] = [
     id: "ironhide-saves",
     label: "Ironhide saves at 3 wounds",
     blurb:
-      "Cap'n Maud holds Ironhide and starts at 2 wounds. Three banglands her — " +
+      "Cap'n Maud holds Ironhide and starts at 2 wounds. Three bangs land — " +
       "the threshold raise should kick in, she survives at 3, Ironhide reveals.",
     build: () =>
-      build({
-        crew: [
-          { ...CREW[0], power: "unbreakable", wounds: 2 },
-          CREW[1],
-          CREW[2],
-          CREW[3],
-        ],
+      scenario({
+        seats: 4,
+        powers: { a: "unbreakable" },
+        wounds: { a: 2 },
         commits: {
           a: { bullet: "clic", target: "b" },
           b: { bullet: "bang", target: "a" },
@@ -143,16 +166,12 @@ export const SCENARIOS: Scenario[] = [
     label: "Specialist gets the prompt",
     blurb:
       "Cap'n Maud plays Quickdraw with Quartermaster's Reload in hand. After " +
-      "the broadside reveal, the specialist prompt should fire on her phone " +
-      "and she can pick a powder to discard.",
+      "the broadside reveal, the specialist prompt fires on her phone and she " +
+      "can pick a powder to discard.",
     build: () =>
-      build({
-        crew: [
-          { ...CREW[0], power: "specialist" },
-          CREW[1],
-          CREW[2],
-          CREW[3],
-        ],
+      scenario({
+        seats: 4,
+        powers: { a: "specialist" },
         commits: {
           a: { bullet: "bang_bang_bang", target: "b" },
           b: { bullet: "clic", target: "a" },
@@ -169,13 +188,9 @@ export const SCENARIOS: Scenario[] = [
       "struck this round. After reveal_others lands, her phone gets the " +
       "tough prompt and she can claim a share anyway.",
     build: () =>
-      build({
-        crew: [
-          CREW[0],
-          { ...CREW[1], power: "tough" },
-          CREW[2],
-          CREW[3],
-        ],
+      scenario({
+        seats: 4,
+        powers: { b: "tough" },
         commits: {
           a: { bullet: "clic", target: "c" },
           b: { bullet: "clic", target: "d" },
@@ -188,18 +203,14 @@ export const SCENARIOS: Scenario[] = [
     id: "insane-detonates",
     label: "Pocket Inferno detonates",
     blurb:
-      "Cap'n Maud holds Insane. Mad Mary will bang her this round, triggering " +
-      "the grenade. Standing crewmates take 1 wound, awards wipe, round " +
-      "terminates. (Reveal the grenade from the phone before the standoff " +
-      "ends to arm it.)",
+      "Cap'n Maud holds Insane. Mad Mary will bang her this round. Reveal the " +
+      "grenade from the phone before the standoff ends — when the bang lands " +
+      "the grenade fires, standing crewmates take 1 wound, awards wipe, round " +
+      "terminates.",
     build: () =>
-      build({
-        crew: [
-          { ...CREW[0], power: "insane" },
-          CREW[1],
-          CREW[2],
-          CREW[3],
-        ],
+      scenario({
+        seats: 4,
+        powers: { a: "insane" },
         commits: {
           a: { bullet: "clic", target: "b" },
           b: { bullet: "bang", target: "a" },
@@ -215,13 +226,10 @@ export const SCENARIOS: Scenario[] = [
       "Cap'n Maud holds Six Feet Under. Wet Match enters at 2 wounds and gets " +
       "shot to death — the bonus lands at the next reckoning.",
     build: () =>
-      build({
-        crew: [
-          { ...CREW[0], power: "six_feet_under" },
-          CREW[1],
-          { ...CREW[2], wounds: 2 },
-          CREW[3],
-        ],
+      scenario({
+        seats: 4,
+        powers: { a: "six_feet_under" },
+        wounds: { c: 2 },
         commits: {
           a: { bullet: "clic", target: "b" },
           b: { bullet: "bang", target: "c" },
