@@ -146,13 +146,13 @@ export const SCENARIOS: Scenario[] = [
     id: "ironhide-saves",
     label: "Ironhide saves at 3 wounds",
     blurb:
-      "Cap'n Maud holds Ironhide and starts at 2 wounds. Three bangs land — " +
-      "the threshold raise should kick in, she survives at 3, Ironhide reveals.",
+      "Cap'n Maud holds Ironhide and enters healthy. Three bangs land this " +
+      "round — without Ironhide she'd die at 3 wounds, but the threshold " +
+      "raises to 4 and she survives at 3.",
     build: () =>
       scenario({
         seats: 4,
         powers: { a: "unbreakable" },
-        wounds: { a: 2 },
         commits: {
           a: { bullet: "clic", target: "b" },
           b: { bullet: "bang", target: "a" },
