@@ -169,8 +169,7 @@ export function useGameState(
       a =>
         a.kind === "dragon_skin" ||
         a.kind === "unbreakable" ||
-        a.kind === "specialist" ||
-        a.kind === "super_coward",
+        a.kind === "specialist",
     ).length;
     const totalMs = cards > 0
       ? cards * POWER_CARD_MS + REVEAL_WITHDRAW_TAIL_MS
@@ -272,15 +271,11 @@ export function useGameState(
         );
         return;
       }
-      // Route through tough_reveal whenever the final resolution carries a
-      // late-reveal card (Phantom Pain or Davy Jones's Cut). These play
-      // after the strike / kill animations rather than alongside the
-      // earlier cards in the reveal_withdraw overlay.
-      const lateCards = result.resolution.powerActivations.filter(
-        a => a.kind === "tough" || a.kind === "six_feet_under",
-      ).length;
+      const before = game.round.resolution?.powerActivations.length ?? 0;
+      const after = result.resolution.powerActivations.length;
+      const newCards = after - before;
       const updates: Record<string, unknown> = {
-        "round/phase": lateCards > 0 ? "tough_reveal" : "split",
+        "round/phase": newCards > 0 ? "tough_reveal" : "split",
         "round/phaseStartedAt": store.serverTimestamp(),
         "round/resolution": result.resolution,
       };
@@ -294,14 +289,12 @@ export function useGameState(
   }, [store, game, serverNow]);
 
   // tough_reveal → split (timed hold so the Phantom Pain card finishes
-  // playing before the split loot animation begins). Davy Jones's Cut
-  // (six_feet_under) also plays here when a kill landed this round, so
-  // the hold accommodates both cards.
+  // playing before the split loot animation begins).
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "tough_reveal") return;
     const cards = (game.round.resolution?.powerActivations ?? []).filter(
-      a => a.kind === "tough" || a.kind === "six_feet_under",
+      a => a.kind === "tough",
     ).length;
     const totalMs = Math.max(1, cards) * POWER_CARD_MS + REVEAL_WITHDRAW_TAIL_MS;
     const remaining = totalMs - (serverNow() - game.round.phaseStartedAt);

@@ -163,33 +163,25 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
               a =>
                 a.kind === "unbreakable" ||
                 a.kind === "dragon_skin" ||
-                a.kind === "specialist" ||
-                a.kind === "super_coward"
+                a.kind === "specialist"
               // `insane` is intentionally excluded — when the grenade
               // detonates the audience already saw the card via the
               // synthetic reveal that fired when the holder armed it.
               // The detonation is told via the BOOM stamp + wound pips,
               // not by replaying the card.
-              //
-              // `tough` and `six_feet_under` are also excluded — they
-              // play in tough_reveal (the hold inserted between
-              // reveal_others and split) so the card lands after the
-              // strike / kill animations.
             )
           }
           players={game.players}
         />
       )}
-      {/* Late-reveal cards play during tough_reveal — the hold beat we
-          insert between reveal_others and split so the card lands after
-          the strike / kill animations. Phantom Pain fires when the holder
-          rejoined standing; Davy Jones's Cut fires when a kill happened
-          this round. */}
+      {/* Phantom Pain card plays during tough_reveal — the hold beat we
+          insert between reveal_others and split so the card finishes
+          before the loot animation begins. */}
       {game.round.phase === "tough_reveal" && game.round.resolution && (
         <PowerRevealOverlay
           activations={
             (game.round.resolution.powerActivations ?? []).filter(
-              a => a.kind === "tough" || a.kind === "six_feet_under"
+              a => a.kind === "tough"
             )
           }
           players={game.players}
