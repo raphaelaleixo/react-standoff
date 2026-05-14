@@ -1,7 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import type { BulletCard, Commit, Game, Player } from "../game/types";
-import { resolveRound, type ResolveRoundResult } from "../game/resolver";
-import { startNextRound, endGameStatus } from "../game/transitions";
+import { applyTelephoneCall, resolveRound, type ResolveRoundResult } from "../game/resolver";
+import {
+  endGameStatus,
+  shouldRunTelephonePhase,
+  startNextRound,
+  telephoneHolderOrder,
+} from "../game/transitions";
 import { PUBLIC_POWER_KINDS } from "../game/powerKinds";
 import type { GameStore } from "./gameStore";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
@@ -24,9 +29,27 @@ const GRENADE_EXPLOSION_MS = 2800;
 // orchestration off `phaseStartedAt`; this is the timer that finally writes
 // the resolved players + opens the next round.
 const SPLIT_MS = 1800;
+// Telephone-phase linger after the pass finalises. Longer when the cop
+// CALL went through (the on-screen switchboard card flips and animates the
+// reinforcement countdown) so it gets to play before the next round opens.
+const TELEPHONE_LINGER_USED_MS = 3500;
+const TELEPHONE_LINGER_IDLE_MS = 1200;
 
 function alivePlayers(game: Game): Player[] {
   return game.players.filter(p => p.status === "alive");
+}
+
+// Builds the cop-variant context passed into resolveRound so shame markers
+// pushed *after* the reinforcement call lands get tagged flashing. Off when
+// the variant is disabled — the resolver then defaults all markers to
+// non-flashing, preserving the no-cop game's behavior bit-for-bit.
+function copContextFor(game: Game): Parameters<typeof resolveRound>[4] {
+  if (!game.variants.cop) return undefined;
+  return {
+    variantCop: true,
+    roundNumber: game.round.number,
+    reinforcementsRoundOnTheWay: game.cop?.reinforcementsRoundOnTheWay,
+  };
 }
 
 // Dead Eye / Bloodhound split the commit lock — the holder is
@@ -228,6 +251,7 @@ export function useGameState(
         game.players,
         game.round.loot,
         { ...game.round.activations, insane: undefined },
+        copContextFor(game),
       );
       store.update("", {
         "round/phase": "reveal_withdraw",
@@ -291,7 +315,11 @@ export function useGameState(
         bbbOnlyCommits[pid] = c.bullet === "bang" ? { ...c, bullet: undefined } : c;
       }
       const bbbResult = resolveRound(
-        bbbOnlyCommits, game.players, game.round.loot, game.round.activations,
+        bbbOnlyCommits,
+        game.players,
+        game.round.loot,
+        game.round.activations,
+        copContextFor(game),
       );
       if (bbbResult.resolution.roundTerminated) {
         store.update("", {
@@ -311,6 +339,7 @@ export function useGameState(
         game.players,
         game.round.loot,
         { ...game.round.activations, insane: undefined },
+        copContextFor(game),
       );
       store.update("", {
         "round/phase": "reveal_others",
@@ -341,7 +370,11 @@ export function useGameState(
         ? { ...game.round.activations, tough: armed }
         : game.round.activations;
       const result = resolveRound(
-        game.round.commits, game.players, game.round.loot, activations,
+        game.round.commits,
+        game.players,
+        game.round.loot,
+        activations,
+        copContextFor(game),
       );
       if (result.resolution.roundTerminated) {
         store.update("", {
@@ -390,20 +423,28 @@ export function useGameState(
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
 
-  // split → next round (commit) OR ended (no recap pause; commit phase is itself
-  // untimed and serves as the disconnect-pause boundary).
+  // split → telephone | next round (commit) | ended
   //
-  // This is also where the round's resolution actually lands on player state:
+  // This is where the round's resolution actually lands on player state:
   // wounds, shame, status (eliminations), and cash awards. Holding the apply
   // until now lets the reveal phases animate visual deltas on top of the
   // pre-resolution baseline without double-counting.
+  //
+  // Cop variant: if there's still a telephone pass to run this round
+  // (rounds 1–6, ≥1 standing split participant, variant on), route into the
+  // 'telephone' phase instead of straight to the next round. The telephone
+  // phase has its own init effect + finalisation effect below.
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "split") return;
     const remaining = SPLIT_MS - (serverNow() - game.round.phaseStartedAt);
     const fire = () => {
       const result = resolveRound(
-        game.round.commits, game.players, game.round.loot, game.round.activations,
+        game.round.commits,
+        game.players,
+        game.round.loot,
+        game.round.activations,
+        copContextFor(game),
       );
       const resolved = { ...game, players: result.players };
       const status = endGameStatus(resolved);
@@ -414,10 +455,65 @@ export function useGameState(
         });
         return;
       }
+      if (shouldRunTelephonePhase(resolved)) {
+        // Persist the resolved players + carry the telephone phase open.
+        // Round.telephone is initialised in the dedicated effect below.
+        store.update("", {
+          players: result.players,
+          "round/phase": "telephone",
+          "round/phaseStartedAt": store.serverTimestamp(),
+        });
+        return;
+      }
       const nextGame = startNextRound(resolved, serverNow());
       store.set(nextGame);
     };
     const t = setTimeout(fire, Math.max(0, remaining));
+    return () => clearTimeout(t);
+  }, [store, game, serverNow]);
+
+  // telephone init — once the phase opens, write Round.telephone with the
+  // pass order + the first holder so phones can render the holder UI.
+  useEffect(() => {
+    if (!store || !game) return;
+    if (game.round.phase !== "telephone") return;
+    if (game.round.telephone) return; // Already initialised.
+    const order = telephoneHolderOrder(game);
+    if (order.length === 0) return; // Defensive — gated by shouldRunTelephonePhase.
+    store.update("round", {
+      telephone: {
+        used: false,
+        holderOrder: order,
+        currentHolderId: order[0],
+      },
+    });
+  }, [store, game]);
+
+  // telephone → next round | ended. Triggers once the last holder finalises
+  // the pass (applyTelephoneCall clears currentHolderId by omitting it). We
+  // linger so the switchboard / hung-up animation can play to completion
+  // before the screen flips to the next commit phase. The linger runs from
+  // the moment finalisation is observed (this effect re-fires when
+  // currentHolderId drops to undefined) — not from telephone phase entry,
+  // since the pass itself may have taken many seconds.
+  useEffect(() => {
+    if (!store || !game) return;
+    if (game.round.phase !== "telephone") return;
+    if (!game.round.telephone) return; // Awaiting init.
+    if (game.round.telephone.currentHolderId) return; // Pass still in progress.
+    const lingerMs = game.round.telephone.used
+      ? TELEPHONE_LINGER_USED_MS
+      : TELEPHONE_LINGER_IDLE_MS;
+    const fire = () => {
+      const status = endGameStatus(game);
+      if (status.ended) {
+        store.update("", { phase: "ended" });
+        return;
+      }
+      const nextGame = startNextRound(game, serverNow());
+      store.set(nextGame);
+    };
+    const t = setTimeout(fire, lingerMs);
     return () => clearTimeout(t);
   }, [store, game, serverNow]);
 
@@ -490,7 +586,81 @@ export function useGameState(
     [store],
   );
 
+  // Roles-dealt one-shot. Flips true the first time we observe the cop
+  // variant in round 1 / commit phase. The parent page reads this to
+  // mount the RolesDealtOverlay exactly once at game start. Resets to
+  // false when the store unloads so a fresh game can fire the overlay
+  // again.
+  const [rolesDealtSeen, setRolesDealtSeen] = useState(false);
+  useEffect(() => {
+    if (!game) {
+      setRolesDealtSeen(false);
+      return;
+    }
+    if (rolesDealtSeen) return;
+    if (!game.variants.cop) return;
+    if (game.round.number !== 1 || game.round.phase !== "commit") return;
+    setRolesDealtSeen(true);
+  }, [game, rolesDealtSeen]);
+
   const loading = store !== null && !loaded;
 
-  return { game, loading, submitCommit, submitDuck, submitSpecialist };
+  return {
+    game,
+    loading,
+    submitCommit,
+    submitDuck,
+    submitSpecialist,
+    rolesDealtSeen,
+  };
+}
+
+// ─────────── Telephone-phase phone-side writers ───────────
+//
+// Module-level so PhaseView (Task 19) can call them from the holder
+// screen without threading through the hook return. Both wrap atomic
+// multi-path writes against the same GameStore the hook is bound to.
+
+// Finalises the telephone pass via applyTelephoneCall: writes
+// Round.telephone (used + holderOrder, no currentHolderId), bumps
+// cop.callsMade when `used`, and stamps reinforcementsRoundOnTheWay the
+// first time callsMade reaches 3. Called when the last holder finalises
+// the pass, or when the cop taps CALL to short-circuit the pass.
+//
+// `game` is the current game snapshot (so we can compute the post-call
+// cop state once and ship a single atomic patch). Variant-off games are
+// no-ops at the applyTelephoneCall level — the patch then collapses to
+// nothing and we return without writing.
+export function writeTelephoneAction(
+  store: GameStore,
+  game: Game,
+  used: boolean,
+  holderOrder: string[],
+): Promise<void> {
+  const next = applyTelephoneCall(game, used, holderOrder);
+  if (next === game) return Promise.resolve(); // Variant off; no-op.
+  const patch: Record<string, unknown> = {
+    "round/telephone": next.round.telephone,
+  };
+  if (next.cop) patch["cop"] = next.cop;
+  return store.update("", patch);
+}
+
+// Advances the pass to the next holder in order. If the current holder
+// is the last one, finalises the pass via writeTelephoneAction with the
+// pass's existing `used` value (false if no cop ever called, true if the
+// cop already tapped CALL).
+export function advanceTelephoneHolder(
+  store: GameStore,
+  game: Game,
+  currentHolderId: string,
+  order: string[],
+): Promise<void> {
+  const idx = order.indexOf(currentHolderId);
+  const nextHolderId = order[idx + 1];
+  if (nextHolderId) {
+    return store.update("round/telephone", { currentHolderId: nextHolderId });
+  }
+  const used = game.round.telephone?.used ?? false;
+  return writeTelephoneAction(store, game, used, order);
 }
