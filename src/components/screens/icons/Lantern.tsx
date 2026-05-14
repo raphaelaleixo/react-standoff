@@ -32,7 +32,7 @@ const GLASS_R = 780;
 // frame doesn't disappear into the canvas. When unlit, a faint
 // translucent white keeps it visible against the same background.
 const SILHOUETTE_UNLIT = "rgba(255, 255, 255, 0.32)";
-const SILHOUETTE_LIT = "rgba(70, 52, 30, 1)";
+const SILHOUETTE_LIT = "rgba(0, 0, 0, 1)";
 
 export function Lantern({ lit, size = 64 }: Props) {
   const id = useId();
