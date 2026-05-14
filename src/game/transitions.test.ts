@@ -305,3 +305,25 @@ describe('revealAllEffects', () => {
     expect(out[0].effects).not.toBe(players[0].effects);
   });
 });
+
+describe('revealAllEffects across a wave-2 game shape', () => {
+  it('reveals unrevealed powers held by both cop and mafia', () => {
+    const players: Player[] = [
+      { id: 'cop', displayName: '', colorOrAvatar: '', bullets: [], cash: [], wounds: 0, shame: [],
+        status: 'alive' as const, role: 'cop' as const,
+        effects: [{ kind: 'super_coward' as const, revealed: false, used: false }] },
+      { id: 'm1', displayName: '', colorOrAvatar: '', bullets: [], cash: [], wounds: 0, shame: [],
+        status: 'alive' as const, role: 'mafia' as const,
+        effects: [{ kind: 'tough' as const, revealed: false, used: false }] },
+      { id: 'm2', displayName: '', colorOrAvatar: '', bullets: [], cash: [], wounds: 0, shame: [],
+        status: 'dead' as const, role: 'mafia' as const,
+        effects: [{ kind: 'insane' as const, revealed: true, used: true }] },
+    ];
+    const out = revealAllEffects(players);
+    expect(out.every(p => p.effects.every(e => e.revealed))).toBe(true);
+    // Roles untouched.
+    expect(out.map(p => p.role)).toEqual(['cop', 'mafia', 'mafia']);
+    // Status untouched.
+    expect(out.map(p => p.status)).toEqual(['alive', 'alive', 'dead']);
+  });
+});
