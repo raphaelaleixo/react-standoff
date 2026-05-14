@@ -36,6 +36,9 @@ const GLASS_R = 780;
 // objects sitting against the slightly-darker ink page background.
 const SILHOUETTE_UNLIT = "#2a2118";
 const SILHOUETTE_LIT = "rgba(0, 0, 0, 1)";
+// Matches the ruleStrong stroke that traces the loot notes — gives the
+// lantern silhouette a thin highlight along every sub-path edge.
+const STROKE = "rgba(237, 224, 196, 0.45)";
 
 export function Lantern({ lit, size = 64 }: Props) {
   const id = useId();
@@ -96,6 +99,9 @@ export function Lantern({ lit, size = 64 }: Props) {
             d={LANTERN_D}
             fill={lit ? SILHOUETTE_LIT : SILHOUETTE_UNLIT}
             fillRule="nonzero"
+            stroke={STROKE}
+            strokeWidth={1.25}
+            vectorEffect="non-scaling-stroke"
             style={{ transition: "fill 480ms ease" }}
           />
         </g>
