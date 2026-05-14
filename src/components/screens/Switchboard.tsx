@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { SectionHeader } from "../shell/SectionHeader";
+import { palette } from "../../theme/colors";
 import { Lantern } from "./icons/Lantern";
 
 interface Props {
@@ -21,8 +22,16 @@ export function Switchboard({ callsMade }: Props) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
       <SectionHeader
-        title={navySails ? "The Navy Sails" : "On the Shore"}
-        subtitle={navySails ? "every blink is counted" : "the lookouts' lanterns"}
+        title={
+          navySails ? (
+            <Box component="span" sx={{ color: palette.blood }}>
+              The Navy Sails
+            </Box>
+          ) : (
+            "On the Shore"
+          )
+        }
+        subtitle={navySails ? "All eyes on the Privateer" : "the lookouts' lanterns"}
       />
       <Box
         sx={{
