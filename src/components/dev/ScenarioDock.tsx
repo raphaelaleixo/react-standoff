@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Box, Button, MenuItem, Select, Stack, Typography } from "@mui/material";
 import { SCENARIOS, type ScenarioKind } from "./scenarios";
 import { palette } from "../../theme/colors";
@@ -43,6 +44,48 @@ export function ScenarioDock({
   blurb,
   children,
 }: ScenarioDockProps) {
+  // Auto-collapse the dock when a scenario starts playing so the big-screen
+  // view isn't obscured. Re-expands when reset is hit or when the user
+  // clicks the collapsed pill.
+  const [collapsed, setCollapsed] = useState(false);
+
+  const handlePlay = () => {
+    onPlay();
+    setCollapsed(true);
+  };
+  const handleReset = () => {
+    onReset();
+    setCollapsed(false);
+  };
+
+  if (collapsed) {
+    return (
+      <Box
+        onClick={() => setCollapsed(false)}
+        sx={{
+          position: "fixed",
+          top: 12,
+          left: 12,
+          zIndex: 100,
+          background: palette.ink,
+          border: `1.5px solid ${palette.paper}`,
+          padding: "0.35rem 0.7rem",
+          boxShadow: `3px 3px 0 ${palette.inkDeep}`,
+          cursor: "pointer",
+          color: palette.paperDim,
+          fontFamily: "inherit",
+          fontSize: "0.7rem",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          "&:hover": { color: palette.paper },
+        }}
+        title="Show dev dock"
+      >
+        Dev ▾
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -136,7 +179,7 @@ export function ScenarioDock({
                 size="small"
                 variant="contained"
                 color="primary"
-                onClick={onPlay}
+                onClick={handlePlay}
                 sx={{ textTransform: "none", flex: 1 }}
               >
                 ▶ Play
@@ -144,11 +187,20 @@ export function ScenarioDock({
               <Button
                 size="small"
                 variant="outlined"
-                onClick={onReset}
+                onClick={handleReset}
                 disabled={!playing}
                 sx={{ textTransform: "none" }}
               >
                 Reset
+              </Button>
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => setCollapsed(true)}
+                sx={{ textTransform: "none", color: palette.paperDim, minWidth: 0 }}
+                title="Hide dev dock"
+              >
+                ✕
               </Button>
             </Stack>
             {children}
