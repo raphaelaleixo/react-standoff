@@ -656,10 +656,20 @@ export function writeTelephoneAction(
 ): Promise<void> {
   const next = applyTelephoneCall(game, used, holderOrder);
   if (next === game) return Promise.resolve(); // Variant off; no-op.
+  // Path-based writes for the cop fields rather than a whole-object replace.
+  // Firebase RTDB throws on any undefined value in update() patches, and
+  // reinforcementsRoundOnTheWay is optional — only ever written when the
+  // 3rd call lands. Always-write callsMade; conditionally write the
+  // reinforcement-round only when it has a value.
   const patch: Record<string, unknown> = {
     "round/telephone": next.round.telephone,
   };
-  if (next.cop) patch["cop"] = next.cop;
+  if (next.cop) {
+    patch["cop/callsMade"] = next.cop.callsMade;
+    if (next.cop.reinforcementsRoundOnTheWay !== undefined) {
+      patch["cop/reinforcementsRoundOnTheWay"] = next.cop.reinforcementsRoundOnTheWay;
+    }
+  }
   return store.update("", patch);
 }
 

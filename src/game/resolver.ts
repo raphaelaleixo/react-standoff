@@ -331,18 +331,25 @@ export function applyTelephoneCall(
   const nextCallsMade = used ? Math.min(3, prev.callsMade + 1) as 0 | 1 | 2 | 3 : prev.callsMade;
   const newlyReinforced =
     prev.reinforcementsRoundOnTheWay === undefined && nextCallsMade === 3;
+  const reinforcementsRoundOnTheWay = newlyReinforced
+    ? game.round.number
+    : prev.reinforcementsRoundOnTheWay;
+  // Omit reinforcementsRoundOnTheWay when it's undefined rather than setting
+  // the key to undefined. Firebase RTDB rejects update() patches containing
+  // any undefined value, so an object with `reinforcementsRoundOnTheWay:
+  // undefined` would brick the entire write — see writeTelephoneAction for
+  // the second defensive layer.
+  const cop: NonNullable<Game['cop']> = { callsMade: nextCallsMade };
+  if (reinforcementsRoundOnTheWay !== undefined) {
+    cop.reinforcementsRoundOnTheWay = reinforcementsRoundOnTheWay;
+  }
   return {
     ...game,
     round: {
       ...game.round,
       telephone: { used, holderOrder },
     },
-    cop: {
-      callsMade: nextCallsMade,
-      reinforcementsRoundOnTheWay: newlyReinforced
-        ? game.round.number
-        : prev.reinforcementsRoundOnTheWay,
-    },
+    cop,
   };
 }
 

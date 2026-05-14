@@ -744,6 +744,24 @@ describe('applyTelephoneCall', () => {
     expect(next.cop).toBeUndefined();
     expect(next.round.telephone).toBeUndefined();
   });
+
+  // Firebase RTDB rejects update() patches containing undefined values.
+  // applyTelephoneCall must therefore OMIT reinforcementsRoundOnTheWay
+  // (not set it to undefined) when no 3rd call has landed — otherwise the
+  // last-holder pass throws when the resulting cop object is written.
+  it('omits reinforcementsRoundOnTheWay from cop when no 3rd call has landed', () => {
+    const g = baseCopGame(0, 1);
+    const next = applyTelephoneCall(g, false, ['a', 'b']);
+    expect(next.cop).toBeDefined();
+    expect('reinforcementsRoundOnTheWay' in next.cop!).toBe(false);
+  });
+
+  it('includes reinforcementsRoundOnTheWay when the 3rd call lands', () => {
+    const g = baseCopGame(2, 4);
+    const next = applyTelephoneCall(g, true, ['a']);
+    expect('reinforcementsRoundOnTheWay' in next.cop!).toBe(true);
+    expect(next.cop?.reinforcementsRoundOnTheWay).toBe(4);
+  });
 });
 
 describe('applyDuckShame', () => {
