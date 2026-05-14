@@ -244,7 +244,7 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
                   : {
                       bottom: "0.8rem",
                       right: "0.95rem",
-                      transform: bothCards ? "scale(0.35)" : "scale(0.24)",
+                      transform: "scale(0.24)",
                     }),
               }}
             >
@@ -359,11 +359,11 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
                   : bothCards
                     ? {
                         // Tuck just to the left of the power card, both at
-                        // the bottom-right corner. scale(0.35) of 300px =
-                        // 105px wide; offset by 120px to leave a small gap.
+                        // the bottom-right corner. scale(0.24) of 300px =
+                        // 72px wide; offset by ~80px to leave a small gap.
                         bottom: "0.8rem",
-                        right: "calc(0.95rem + 120px)",
-                        transform: "scale(0.35)",
+                        right: "calc(0.95rem + 80px)",
+                        transform: "scale(0.24)",
                       }
                     : {
                         bottom: "0.8rem",
