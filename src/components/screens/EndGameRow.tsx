@@ -6,7 +6,6 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { PowerBadge } from "../powers/PowerBadge";
-import { Crown } from "./icons/Crown";
 import { Lantern } from "./icons/Lantern";
 import type { Player } from "../../game/types";
 import { cashTotal } from "../../lib/score";
@@ -120,24 +119,12 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
             ))}
           </Box>
         )}
-        {isPrivateer && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: -10,
-              right: -10,
-              pointerEvents: "none",
-            }}
-          >
-            <Crown size={24} />
-          </Box>
-        )}
       </Box>
       {/* Name (+ optional planked-round suffix). Privateer rows get a small
           lit lantern before the name, mirroring the in-game shore-lanterns
           motif. */}
       <Box sx={{ minWidth: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        {isPrivateer && <Lantern lit size={22} />}
+        {isPrivateer && <Lantern lit size={20} />}
         <Box
           sx={{
             fontFamily: fonts.displayCaps,

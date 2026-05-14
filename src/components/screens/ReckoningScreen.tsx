@@ -12,7 +12,6 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
-import { Crown } from "./icons/Crown";
 import { Lantern } from "./icons/Lantern";
 import { PowerBadge } from "../powers/PowerBadge";
 import { PowerRevealOverlay } from "../powers/PowerRevealOverlay";
@@ -423,19 +422,6 @@ function PrivateerVictoryEnthronement({
           }}
         >
           <FlagFor id={jollyRogerForColor(cop.colorOrAvatar)} size={84} />
-          {/* Crown lives in the top-right corner so it doesn't fight the
-              top-left PowerBadge slot when wave 2 lets a Privateer also
-              hold a super-power. */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: -18,
-              right: -18,
-              animation: `${popIn} 500ms cubic-bezier(.2,.7,.2,1.4) ${medallionDelayMs + 160}ms both`,
-            }}
-          >
-            <Crown size={48} />
-          </Box>
         </Box>
         <Box sx={{ textAlign: "left" }}>
           <Box
@@ -449,7 +435,7 @@ function PrivateerVictoryEnthronement({
               color: palette.paper,
             }}
           >
-            <Lantern lit size={56} />
+            <Lantern lit size={40} />
             {cop.displayName}
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.45rem" }}>
