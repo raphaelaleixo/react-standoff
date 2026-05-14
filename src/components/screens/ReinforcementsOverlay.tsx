@@ -11,12 +11,16 @@ interface Props {
 
 // One-shot full-screen overlay that fires the first time
 // Game.cop.reinforcementsRoundOnTheWay transitions from undefined to a
-// number. ~3s linger; unmounts to null afterward. Pirate copy:
-// "SAILS ON THE HORIZON" — the King's Navy is on its way.
+// number *during this mount*. ~3s linger; unmounts to null afterward.
+// Pirate copy: "SAILS ON THE HORIZON" — the King's Navy is on its way.
+//
+// If we mount with reinforcements already on the way (e.g. a dev scenario
+// pre-seeds a post-call state, or the page reloads mid-game), seed `shown`
+// to true so the overlay does NOT replay — it's not "news" anymore.
 export function ReinforcementsOverlay({ game }: Props) {
   const { t } = useTranslation();
   const round = game.cop?.reinforcementsRoundOnTheWay;
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(round !== undefined);
   const [active, setActive] = useState(false);
 
   useEffect(() => {

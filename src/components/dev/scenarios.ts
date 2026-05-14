@@ -474,13 +474,23 @@ export const SCENARIOS: Scenario[] = [
   {
     id: "cop-calls-early",
     kind: "cop",
-    label: "Cop calls early — cruises to win",
+    label: "Pick & play — Privateer calls round 1",
     blurb:
-      "Cop drops the call in round 1. Reinforcements arrive by round 3. " +
-      "Cop ducks once, survives, wins.",
+      "Round 1 commit, cop variant on. Seat 'a' (Privateer) is the only " +
+      "open commit; b–e are pre-filled with peaceful clics. Play through " +
+      "to phase 8 — when the bottle reaches you, tap SEND. The Tide " +
+      "advances 0/3 → 1/3.",
     build: () => buildCopScenario("cop-calls-early", game => {
-      game.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 3 };
-      game.round.number = 4;
+      // Pre-fill the four pirates with peaceful clics so seat 'a' (the
+      // Privateer) is the only open commit. The cop walks through commit
+      // → standoff → reveals → split → phase 8, and the bottle arrives
+      // at their phone for the SEND action.
+      game.round.commits = {
+        b: { bullet: "clic", target: "c" },
+        c: { bullet: "clic", target: "b" },
+        d: { bullet: "clic", target: "e" },
+        e: { bullet: "clic", target: "d" },
+      };
     }),
   },
   {
