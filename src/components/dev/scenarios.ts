@@ -7,7 +7,7 @@ import type {
   RoundActivations,
   RoundPhase,
 } from "../../game/types";
-import { STARTING_HAND } from "../../game/setup";
+import { STARTING_HAND, initGame } from "../../game/setup";
 import { PUBLIC_POWER_KINDS } from "../../game/powerKinds";
 import type { GameStore } from "../../hooks/gameStore";
 
@@ -449,4 +449,108 @@ export const SCENARIOS: Scenario[] = [
         },
       }),
   },
+  // ===========================================================================
+  // Cop variant scenarios. Built via initGame (which handles role-deal +
+  // game.cop init), then specific fields are pinned for reproducibility.
+  // ===========================================================================
+  {
+    id: "cop-calls-early",
+    label: "Cop calls early — cruises to win",
+    blurb:
+      "Cop drops the call in round 1. Reinforcements arrive by round 3. " +
+      "Cop ducks once, survives, wins.",
+    build: () => buildCopScenario("cop-calls-early", game => {
+      game.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 3 };
+      game.round.number = 4;
+    }),
+  },
+  {
+    id: "cop-never-calls",
+    label: "Cop never calls — mafia wins",
+    blurb:
+      "Cop sits on the call. Round 7 begins — too late. Mafia wins " +
+      "regardless of survival.",
+    build: () => buildCopScenario("cop-never-calls", game => {
+      game.cop = { callsMade: 0 };
+      game.round.number = 7;
+    }),
+  },
+  {
+    id: "cop-killed-before-call",
+    label: "Cop killed in round 2",
+    blurb:
+      "Mafia drops the cop before any call. Phase 8 keeps running as " +
+      "theater for the remaining rounds; mafia wins at reckoning.",
+    build: () => buildCopScenario("cop-killed-before-call", game => {
+      game.players[0].status = "dead";
+      game.players[0].wounds = 3;
+      game.cop = { callsMade: 0 };
+      game.round.number = 3;
+    }),
+  },
+  {
+    id: "cop-overducks",
+    label: "Cop calls but overducks",
+    blurb:
+      "Cop lands the call in round 4 but ducks twice after — too cautious. " +
+      "Mafia wins.",
+    build: () => buildCopScenario("cop-overducks", game => {
+      game.players[0].shame = [{ flashing: true }, { flashing: true }];
+      game.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 4 };
+      game.round.number = 8;
+    }),
+  },
+  {
+    id: "mafia-rich-cop-loses",
+    label: "Cop barely loses, mafia gets paid",
+    blurb:
+      "Reinforcements land but cop took 2 flashing-light shames. " +
+      "Richest mafia takes the crown.",
+    build: () => buildCopScenario("mafia-rich-cop-loses", game => {
+      game.players[0].shame = [
+        { flashing: false },
+        { flashing: true },
+        { flashing: true },
+      ];
+      game.players[0].cash = [{ id: "cop-cash-1", value: 10000 }];
+      // Richest mafia at seat 1 — 50k via 20+20+10.
+      game.players[1].cash = [
+        { id: "mafia-cash-1", value: 20000 },
+        { id: "mafia-cash-2", value: 20000 },
+        { id: "mafia-cash-3", value: 10000 },
+      ];
+      game.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 5 };
+      game.round.number = 8;
+    }),
+  },
 ];
+
+// 5-seat crew template used for cop-variant scenarios. initGame fills in
+// bullets/cash/wounds/shame/status, then the scenario's mutator pins the
+// fields it cares about (cop state, round number, role assignments).
+function copScenarioPlayers(): Player[] {
+  return CREW.slice(0, 5).map(c => ({
+    id: c.id,
+    displayName: c.displayName,
+    colorOrAvatar: c.colorOrAvatar,
+    bullets: [],
+    cash: [],
+    wounds: 0,
+    shame: [],
+    status: "alive",
+    effects: [],
+  }));
+}
+
+function buildCopScenario(seed: string, mutate: (game: Game) => void): Game {
+  const game = initGame(copScenarioPlayers(), seed, Date.now(), {
+    superPowers: false,
+    cop: true,
+  });
+  // Pin roles to specific seats so each scenario is reproducible regardless
+  // of the deal RNG. Seat 0 is always the cop; the rest are mafia.
+  game.players[0].role = "cop";
+  game.players.slice(1).forEach(p => (p.role = "mafia"));
+  mutate(game);
+  return game;
+}
