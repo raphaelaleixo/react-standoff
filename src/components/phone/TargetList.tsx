@@ -152,7 +152,7 @@ export function TargetList({ opponents, selectedId, onPick }: TargetListProps) {
           {selected.shame.length > 0 ? (
             <>
               <ColumnRule />
-              <ShamePips count={selected.shame.length} size={9} />
+              <ShamePips markers={selected.shame} size={9} />
             </>
           ) : null}
         </Box>

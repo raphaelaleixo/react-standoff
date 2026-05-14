@@ -1,4 +1,6 @@
 import { Box } from "@mui/material";
+import { keyframes } from "@emotion/react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { palette, flagColor } from "../../theme/colors";
 import { fonts } from "../../theme/typography";
@@ -12,9 +14,17 @@ import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
 import { PowerBadge } from "../powers/PowerBadge";
 import { PowerRevealOverlay } from "../powers/PowerRevealOverlay";
-import { finalScore, rankPlayers } from "../../game/scoring";
+import { finalScore, rankPlayers, gameOutcome, type GameOutcome } from "../../game/scoring";
 import { popIn, fadeIn } from "../../theme/animations";
 import type { Game, Player, PowerActivation } from "../../game/types";
+
+// Cop-variant reckoning prefix: roles flip → narrated investigation →
+// verdict, then the existing ledger choreography kicks in unchanged. Base
+// game skips the prefix entirely (prefixStage starts at 'done').
+type PrefixStage = 'roles' | 'investigation' | 'verdict' | 'done';
+const PREFIX_ROLES_MS = 2200;
+const PREFIX_INVESTIGATION_MS = 4800;
+const PREFIX_VERDICT_MS = 2800;
 
 // Stagger budget for the entrance choreography. Rows announce in reverse —
 // last place first — at ROW_STAGGER_MS apart, then a beat of silence, then
@@ -50,6 +60,54 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
   const ranked = rankPlayers(game.players, totalKills);
   const winner = ranked[0];
   const rest = ranked.slice(1);
+
+  // Cop variant: a three-beat prefix runs before the ledger choreography.
+  // Base game starts at 'done' so behavior is byte-identical to before.
+  const [prefixStage, setPrefixStage] = useState<PrefixStage>(
+    game.variants.cop ? 'roles' : 'done',
+  );
+  useEffect(() => {
+    if (prefixStage === 'roles') {
+      const id = window.setTimeout(() => setPrefixStage('investigation'), PREFIX_ROLES_MS);
+      return () => clearTimeout(id);
+    }
+    if (prefixStage === 'investigation') {
+      const id = window.setTimeout(() => setPrefixStage('verdict'), PREFIX_INVESTIGATION_MS);
+      return () => clearTimeout(id);
+    }
+    if (prefixStage === 'verdict') {
+      const id = window.setTimeout(() => setPrefixStage('done'), PREFIX_VERDICT_MS);
+      return () => clearTimeout(id);
+    }
+  }, [prefixStage]);
+
+  if (game.variants.cop && prefixStage !== 'done') {
+    const outcome = gameOutcome(game, totalKills);
+    const cop = game.players.find((p) => p.role === 'cop');
+    const copDeadRound = cop && cop.status === 'dead' ? eliminatedByRound[cop.id] : undefined;
+    const flashingCount = cop?.shame.filter((s) => s.flashing).length ?? 0;
+    const reinforcementsRound = game.cop?.reinforcementsRoundOnTheWay;
+    return (
+      <Box sx={{ width: "100vw", height: "100vh" }}>
+        <PageCanvas aspectRatio="16 / 9" sx={{ width: "100%", height: "100%" }}>
+          <Masthead
+            left={<>{t("shell.room")} <em>{roomId}</em></>}
+            right={<FullscreenButton />}
+          />
+          {prefixStage === 'roles' && <RolesFlipBeat players={game.players} t={t} />}
+          {prefixStage === 'investigation' && (
+            <InvestigationBeat
+              reinforcementsRound={reinforcementsRound}
+              copDeadRound={copDeadRound}
+              flashingCount={flashingCount}
+              t={t}
+            />
+          )}
+          {prefixStage === 'verdict' && <VerdictBeat outcome={outcome} t={t} />}
+        </PageCanvas>
+      </Box>
+    );
+  }
 
   // Unrevealed effects get the full PowerRevealOverlay treatment first —
   // the "I had this all along" card flip. Revealed effects (Dead Eye,
@@ -248,7 +306,7 @@ function WinnerEnthronement({
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.45rem" }}>
             <WoundPips count={winner.wounds} />
-            {winner.shame.length > 0 && <ShamePips count={winner.shame.length} />}
+            {winner.shame.length > 0 && <ShamePips markers={winner.shame} />}
           </Box>
           <Box
             sx={{
@@ -276,6 +334,203 @@ function WinnerEnthronement({
       >
         {t("reckoning.winnerCry")}
       </Box>
+    </Box>
+  );
+}
+
+// Beat 1: all role cards flip simultaneously. The cop's card carries the
+// dark-blood ground; pirate cards take the inky ground. Same flip keyframe
+// across the board so the table reveals as one motion.
+const roleFlip = keyframes`
+  from { transform: rotateY(180deg); opacity: 0; }
+  to   { transform: rotateY(0deg);   opacity: 1; }
+`;
+
+function RolesFlipBeat({
+  players,
+  t,
+}: {
+  players: Player[];
+  t: (k: string, p?: Record<string, unknown>) => string;
+}) {
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "1.6rem",
+        padding: "0 2rem",
+      }}
+    >
+      <Box
+        sx={{
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "1rem",
+          letterSpacing: "0.4em",
+          color: palette.paperDim,
+        }}
+      >
+        {t("cop.reckoning.rolesIntro")}
+      </Box>
+      <Box sx={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+        {players.map((p) => {
+          const isCop = p.role === "cop";
+          return (
+            <Box
+              key={p.id}
+              sx={{
+                width: "6.5rem",
+                height: "9rem",
+                border: `2px solid ${palette.paper}`,
+                background: isCop ? palette.bloodDeep : palette.ink,
+                color: palette.paper,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "0.5rem",
+                textAlign: "center",
+                fontFamily: fonts.displayCaps,
+                fontFeatureSettings: '"smcp"',
+                fontSize: "0.85rem",
+                letterSpacing: "0.18em",
+                boxShadow: `4px 4px 0 ${palette.inkDeep}`,
+                animation: `${roleFlip} 700ms ease-out both`,
+              }}
+            >
+              {isCop ? t("cop.widget.cop") : t("cop.widget.mafia")}
+              <Box
+                sx={{
+                  marginTop: "0.5rem",
+                  fontFamily: fonts.body,
+                  fontStyle: "italic",
+                  fontSize: "0.75rem",
+                  letterSpacing: "0.04em",
+                  color: palette.paperDim,
+                }}
+              >
+                {p.displayName}
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
+
+function InvestigationBeat({
+  reinforcementsRound,
+  copDeadRound,
+  flashingCount,
+  t,
+}: {
+  reinforcementsRound: number | undefined;
+  copDeadRound: number | undefined;
+  flashingCount: number;
+  t: (k: string, p?: Record<string, unknown>) => string;
+}) {
+  // 2–3 narrated lines, sequenced. The flashing-shame line only renders
+  // if the Navy actually came — otherwise there's nothing to be shamed by.
+  const lines: string[] = [];
+  lines.push(
+    reinforcementsRound !== undefined
+      ? t("cop.reckoning.calledRoundN", { n: reinforcementsRound })
+      : t("cop.reckoning.neverCame"),
+  );
+  lines.push(
+    copDeadRound !== undefined
+      ? t("cop.reckoning.copKilledRoundN", { n: copDeadRound })
+      : t("cop.reckoning.copSurvived"),
+  );
+  if (reinforcementsRound !== undefined) {
+    lines.push(t("cop.reckoning.copFlashingShame", { n: flashingCount }));
+  }
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.9rem",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0 4rem",
+        textAlign: "center",
+        color: palette.paper,
+        fontFamily: fonts.body,
+        fontStyle: "italic",
+        fontSize: "1.6rem",
+        lineHeight: 1.3,
+      }}
+    >
+      {lines.map((line, i) => (
+        <Box
+          key={i}
+          sx={{
+            animation: `${fadeIn} 600ms ease-out ${i * 800}ms both`,
+          }}
+        >
+          {line}
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+// Cop victory: a siren-wash backdrop (radial blood → ink) under a blackletter
+// "BY THE CROWN'S JUSTICE". Mafia victory: muted italic line in paperDim.
+function VerdictBeat({
+  outcome,
+  t,
+}: {
+  outcome: GameOutcome;
+  t: (k: string, p?: Record<string, unknown>) => string;
+}) {
+  if (outcome.kind === "cop_wins") {
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          background: `radial-gradient(ellipse at center, ${palette.blood} 0%, ${palette.ink} 75%)`,
+          fontFamily: fonts.blackletter,
+          fontSize: "4.5rem",
+          lineHeight: 1.05,
+          color: palette.paper,
+          letterSpacing: "0.02em",
+          textShadow: `4px 4px 0 ${palette.inkDeep}`,
+          animation: `${fadeIn} 500ms ease-out both`,
+        }}
+      >
+        {t("cop.reckoning.verdictCopWins")}
+      </Box>
+    );
+  }
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        padding: "0 4rem",
+        fontFamily: fonts.body,
+        fontStyle: "italic",
+        fontSize: "2.2rem",
+        color: palette.paperDim,
+        animation: `${fadeIn} 500ms ease-out both`,
+      }}
+    >
+      {t("cop.reckoning.verdictMafiaWins")}
     </Box>
   );
 }

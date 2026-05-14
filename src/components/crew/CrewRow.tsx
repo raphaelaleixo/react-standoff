@@ -124,7 +124,9 @@ export function CrewRow({ player, status, freshWoundIndex, extraBadgeKinds, woun
           </Box>
           {player.shame.length > 0 && (
             <Box sx={{ marginLeft: "0.5rem", marginTop: "3px" }}>
-              <ShamePips count={player.shame.length} animateNew />
+              {/* Markers (not count) so flashing-light shame stays visible
+                  during play once reinforcements have landed. */}
+              <ShamePips markers={player.shame} animateNew />
             </Box>
           )}
         </Box>

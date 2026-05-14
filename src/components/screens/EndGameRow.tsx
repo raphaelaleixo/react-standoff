@@ -149,9 +149,11 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
       <Box sx={{ display: "flex", justifyContent: "center" }}>
         <WoundPips count={player.wounds} />
       </Box>
-      {/* Shame */}
+      {/* Shame — pass the marker array so flashing-light markers (cop
+          variant, post-reinforcements) read distinctly from quiet yellow
+          shame. Base-game shame is all `flashing: false`. */}
       <Box sx={{ display: "flex", justifyContent: "center" }}>
-        <ShamePips count={player.shame.length} />
+        <ShamePips markers={player.shame} />
       </Box>
       {/* Cash */}
       <MoneyCell value={dead ? null : `$${cash.toLocaleString()}`} color={palette.paper} />

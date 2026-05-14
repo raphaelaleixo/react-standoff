@@ -203,7 +203,7 @@ function PhoneWinnerEnthronement({
         }}
       >
         <WoundPips count={winner.wounds} size={11} />
-        {winner.shame.length > 0 && <ShamePips count={winner.shame.length} size={9} />}
+        {winner.shame.length > 0 && <ShamePips markers={winner.shame} size={9} />}
       </Box>
       <Box
         sx={{
