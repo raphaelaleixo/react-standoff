@@ -199,6 +199,12 @@ export default function MockPlayerPage() {
     renderGame.round.number === 1 &&
     renderGame.round.phase === "commit";
 
+  const roleIntroOpen =
+    renderGame.variants.cop &&
+    !!me.role &&
+    renderGame.round.number === 1 &&
+    renderGame.round.phase === "commit";
+
   // Mirror PlayerPage: flip the corner card to USED as soon as the
   // commit lands with the power armed, not at split.
   const armedThisRound =
@@ -212,6 +218,7 @@ export default function MockPlayerPage() {
         me={me}
         roomId="MOCK"
         introOpen={introOpen}
+        roleIntroOpen={roleIntroOpen}
         armedThisRound={armedThisRound}
       >
         <PhaseView

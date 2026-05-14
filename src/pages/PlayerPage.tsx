@@ -155,6 +155,14 @@ export default function PlayerPage() {
     game.round.number === 1 &&
     game.round.phase === "commit";
 
+  // Cop variant: same intro choreography for the role card.
+  const roleIntroOpen =
+    game.variants.cop &&
+    !!me.role &&
+    game.phase === "in_progress" &&
+    game.round.number === 1 &&
+    game.round.phase === "commit";
+
   // Flip the corner power card to USED as soon as the holder commits with
   // the power armed — without waiting for the resolver to mark the
   // persistent effect.used flag at split. Specialist + Insane atomically
@@ -169,6 +177,7 @@ export default function PlayerPage() {
       me={me}
       roomId={roomState.roomId}
       introOpen={introOpen}
+      roleIntroOpen={roleIntroOpen}
       armedThisRound={armedThisRound}
     >
       <PhaseView

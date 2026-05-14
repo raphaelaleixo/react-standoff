@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Box } from "@mui/material";
 import type { BulletCard, Game, Player } from "../../game/types";
@@ -12,24 +11,8 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { Button } from "../shell/Button";
 import { XMarksCheckbox } from "../XMarksCheckbox";
-import { RoleRevealScreen } from "./RoleRevealScreen";
-import { RoleWidget } from "./RoleWidget";
 import { TelephoneHolderScreen } from "./TelephoneHolderScreen";
 
-// Translated cop-only hint for the persistent corner widget. Returns
-// undefined for mafia and for moments when no hint applies (e.g. before
-// reinforcements are on the way and we're past round 6).
-function copHint(game: Game, me: Player, t: TFunction): string | undefined {
-  if (me.role !== "cop") return undefined;
-  const reinforced = game.cop?.reinforcementsRoundOnTheWay;
-  if (reinforced !== undefined) {
-    const flashing = me.shame.filter(s => s.flashing).length;
-    if (flashing >= 1) return t("cop.widget.hintOneDuckLeft");
-    return undefined;
-  }
-  if (game.round.number <= 6) return t("cop.widget.hintCallByRound6");
-  return undefined;
-}
 // Spelled-out small counts for headline copy (e.g. "TWO BARRELS ON YE").
 // Falls back to the numeral string for anything we don't have a word for.
 const COUNT_WORDS: Record<number, string> = {
@@ -83,10 +66,6 @@ interface PhaseViewProps {
 // so the mock player page can render the exact same UI against fixture state.
 export function PhaseView({ game, me, submitCommit, submitDuck, handSlots, store }: PhaseViewProps) {
   const { t } = useTranslation();
-  // One-time role reveal at round-1 commit entry. Local-only state so it
-  // shows once per browser session — engine state has no "acknowledged"
-  // flag, by design.
-  const [roleAcknowledged, setRoleAcknowledged] = useState(false);
   // Standoff countdown — `active` only during the count itself; the silent
   // standoff_hold beat that follows shouldn't restart the timer. Computed
   // unconditionally to satisfy hook rules; only consumed in the standoff
@@ -128,24 +107,6 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots, store
     : phase === "reveal_withdraw" || phase === "reveal_bbb" || phase === "reveal_others" || phase === "split" || phase === "grenade" ? "reveal"
     : "standoff";
 
-  // ─── Cop variant: one-time role reveal at round-1 commit entry ───
-  // Shown before any normal phase view. The acknowledge tap flips local
-  // state so subsequent renders skip it. Mafia + cop both see this.
-  if (
-    game.variants.cop &&
-    me.role &&
-    !roleAcknowledged &&
-    game.round.number === 1 &&
-    game.round.phase === "commit"
-  ) {
-    return (
-      <RoleRevealScreen
-        role={me.role}
-        onAcknowledge={() => setRoleAcknowledged(true)}
-      />
-    );
-  }
-
   // ─── Cop variant: telephone-holder full-screen takeover ───
   // When this player is the currently-active bottle holder, replace the
   // normal phase view with the holder screen. Cop's CALL finalises the
@@ -170,44 +131,20 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots, store
     );
   }
 
-  // Persistent corner widget — sits alongside whichever phase body
-  // renders below. Mutually exclusive with super-powers at game level
-  // (wave 1), so the PhoneShell's power card and this widget never both
-  // render in the same game.
-  const widget = game.variants.cop && me.role ? (
-    <Box
-      sx={{
-        position: "fixed",
-        top: "0.6rem",
-        right: "0.6rem",
-        zIndex: 5,
-        pointerEvents: "auto",
-      }}
-    >
-      <RoleWidget
-        role={me.role}
-        callsMade={game.cop?.callsMade}
-        hint={copHint(game, me, t)}
-      />
-    </Box>
-  ) : null;
+  // Cop-variant role indicator is now the persistent role card rendered
+  // by PhoneShell (mirrors PowerCard's corner widget), so there's no
+  // separate top-right widget here anymore.
 
   if (game.phase === "ended") {
     return (
-      <>
-        <PhaseFader phaseKey={phaseKey}>
-          <PhoneReckoning game={game} me={me} />
-        </PhaseFader>
-        {widget}
-      </>
+      <PhaseFader phaseKey={phaseKey}>
+        <PhoneReckoning game={game} me={me} />
+      </PhaseFader>
     );
   }
   if (me.status === "dead") {
     return (
-      <>
-        <PhaseFader phaseKey={phaseKey}><Spectator game={game} eliminated /></PhaseFader>
-        {widget}
-      </>
+      <PhaseFader phaseKey={phaseKey}><Spectator game={game} eliminated /></PhaseFader>
     );
   }
   const opponents = game.players.filter(p => p.id !== me.id && p.status === "alive");
@@ -220,20 +157,17 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots, store
     (phase === "late_commit" && lateHalfPending)
   ) {
     return (
-      <>
-        <PhaseFader phaseKey={phaseKey}>
-          <CommitPicker
-            me={me}
-            opponents={opponents}
-            myCommit={myCommit}
-            onSubmit={submitCommit}
-            handSlots={handSlots}
-            variantOn={!!game.variants.superPowers}
-            phase={phase}
-          />
-        </PhaseFader>
-        {widget}
-      </>
+      <PhaseFader phaseKey={phaseKey}>
+        <CommitPicker
+          me={me}
+          opponents={opponents}
+          myCommit={myCommit}
+          onSubmit={submitCommit}
+          handSlots={handSlots}
+          variantOn={!!game.variants.superPowers}
+          phase={phase}
+        />
+      </PhaseFader>
     );
   }
 
@@ -249,35 +183,34 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots, store
     // the big-screen StandoffStamp behaviour) and the barrel just shows the
     // locked target's jolly roger.
     return (
-      <>
-        <PhaseFader phaseKey={phaseKey}>
+      <PhaseFader phaseKey={phaseKey}>
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "1.1rem",
+            // Top padding chosen so the disc lands at the same vertical
+            // position as the commit picker's disc (which sits below the
+            // "Aimin' at" heading + selected-target stat row). Keeps the
+            // crosshair pinned on screen across commit / committed /
+            // standoff / standoff_hold so the transition reads as a lock-
+            // in, not a jump.
+            padding: "5rem 1rem 1rem",
+          }}
+        >
+          <AimBarrel
+            colorOrAvatar={target?.colorOrAvatar ?? null}
+            size={200}
+            count={phase === "standoff" ? standoffCount : null}
+          />
           <Box
             sx={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "1.1rem",
-              // Top padding chosen so the disc lands at the same vertical
-              // position as the commit picker's disc (which sits below the
-              // "Aimin' at" heading + selected-target stat row). Keeps the
-              // crosshair pinned on screen across commit / committed /
-              // standoff / standoff_hold so the transition reads as a lock-
-              // in, not a jump.
-              padding: "5rem 1rem 1rem",
+              textAlign: "center",
+              animation: `${slideUpIn} 400ms ease-out 120ms both`,
             }}
           >
-            <AimBarrel
-              colorOrAvatar={target?.colorOrAvatar ?? null}
-              size={200}
-              count={phase === "standoff" ? standoffCount : null}
-            />
-            <Box
-              sx={{
-                textAlign: "center",
-                animation: `${slideUpIn} 400ms ease-out 120ms both`,
-              }}
-            >
             <Box
               sx={{
                 fontFamily: fonts.displayCaps,
@@ -302,10 +235,8 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots, store
               {target?.displayName ?? "?"}
             </Box>
           </Box>
-          </Box>
-        </PhaseFader>
-        {widget}
-      </>
+        </Box>
+      </PhaseFader>
     );
   }
 
@@ -315,52 +246,49 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots, store
       .map(([sid]) => game.players.find(p => p.id === sid))
       .filter((p): p is Player => !!p);
     return (
-      <>
-        <PhaseFader phaseKey={phaseKey}>
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              gap: "1.2rem",
-              padding: "0.8rem 1rem 1rem",
-            }}
-          >
-            <ThreatPanel attackers={attackers} />
-            <YieldRibbon
-              yielded={!!myCommit?.withdrew}
-              onToggle={() => submitDuck(me.id, !myCommit?.withdrew)}
-            />
-            <Box sx={{ textAlign: "center" }}>
-              <Box
-                sx={{
-                  fontFamily: fonts.displayCaps,
-                  fontFeatureSettings: '"smcp"',
-                  fontSize: "0.65rem",
-                  letterSpacing: "0.32em",
-                  color: palette.paperDim,
-                }}
-              >
-                {t("phase.withdraw.cost")}
-              </Box>
-              <Box
-                sx={{
-                  fontFamily: fonts.body,
-                  fontStyle: "italic",
-                  fontSize: "0.78rem",
-                  letterSpacing: "0.04em",
-                  color: palette.paper,
-                  marginTop: "0.2rem",
-                }}
-              >
-                {t("phase.withdraw.costSub", { amount: SHAME_PENALTY.toLocaleString() })}
-              </Box>
+      <PhaseFader phaseKey={phaseKey}>
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            gap: "1.2rem",
+            padding: "0.8rem 1rem 1rem",
+          }}
+        >
+          <ThreatPanel attackers={attackers} />
+          <YieldRibbon
+            yielded={!!myCommit?.withdrew}
+            onToggle={() => submitDuck(me.id, !myCommit?.withdrew)}
+          />
+          <Box sx={{ textAlign: "center" }}>
+            <Box
+              sx={{
+                fontFamily: fonts.displayCaps,
+                fontFeatureSettings: '"smcp"',
+                fontSize: "0.65rem",
+                letterSpacing: "0.32em",
+                color: palette.paperDim,
+              }}
+            >
+              {t("phase.withdraw.cost")}
+            </Box>
+            <Box
+              sx={{
+                fontFamily: fonts.body,
+                fontStyle: "italic",
+                fontSize: "0.78rem",
+                letterSpacing: "0.04em",
+                color: palette.paper,
+                marginTop: "0.2rem",
+              }}
+            >
+              {t("phase.withdraw.costSub", { amount: SHAME_PENALTY.toLocaleString() })}
             </Box>
           </Box>
-        </PhaseFader>
-        {widget}
-      </>
+        </Box>
+      </PhaseFader>
     );
   }
 
@@ -372,22 +300,15 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots, store
     phase === "grenade"
   ) {
     return (
-      <>
-        <PhaseFader phaseKey={phaseKey}><Spectator game={game} /></PhaseFader>
-        {widget}
-      </>
+      <PhaseFader phaseKey={phaseKey}><Spectator game={game} /></PhaseFader>
     );
   }
 
   // Telephone phase, non-holder: render the standard spectator-ish view
-  // (we already early-returned for the active holder). Wrapped so the
-  // role widget stays visible while the pass animation plays.
+  // (we already early-returned for the active holder).
   if (phase === "telephone") {
     return (
-      <>
-        <PhaseFader phaseKey={phaseKey}><Spectator game={game} /></PhaseFader>
-        {widget}
-      </>
+      <PhaseFader phaseKey={phaseKey}><Spectator game={game} /></PhaseFader>
     );
   }
 

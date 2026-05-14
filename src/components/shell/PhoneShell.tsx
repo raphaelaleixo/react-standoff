@@ -8,6 +8,7 @@ import { PageCanvas } from "./PageCanvas";
 import { PhoneHeader } from "./PhoneHeader";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { PowerCard } from "../powers/PowerCard";
+import { RoleCardBack, RoleCardFront } from "../phone/RoleCard";
 import type { Player } from "../../game/types";
 import { cashTotal } from "../../lib/score";
 
@@ -21,6 +22,10 @@ interface PhoneShellProps {
    *  into its footer corner — one element animating, not a separate intro
    *  screen handing off to a footer widget. */
   introOpen?: boolean;
+  /** Cop variant: open the role card face-up on mount with the same
+   *  intro choreography as the power card. Mutually exclusive with
+   *  `introOpen` at wave-1 game level (powers + cop can't coexist). */
+  roleIntroOpen?: boolean;
   /** When true, the corner power card renders with the X-marks USED stamp
    *  even before the resolver flips the persistent `effects.used` flag —
    *  used to give immediate feedback as soon as the holder commits with
@@ -32,7 +37,7 @@ interface PhoneShellProps {
 // flag tile), the phase body in the middle, and a footer strip showing
 // cash, wounds, and shame markers — the stash bookkeeping that used to sit
 // inline with the header.
-export function PhoneShell({ me, roomId, children, introOpen, armedThisRound }: PhoneShellProps) {
+export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, armedThisRound }: PhoneShellProps) {
   const { t } = useTranslation();
   const cash = cashTotal(me);
   const myPower = me.effects[0];
@@ -61,6 +66,32 @@ export function PhoneShell({ me, roomId, children, introOpen, armedThisRound }: 
       return;
     }
     setPowerOpen(o => !o);
+  };
+
+  // ─── Role card (cop variant) — parallel lifecycle to the power card. ───
+  // Same recipe: auto-open on first intro, tap to close + tuck, subsequent
+  // taps just toggle. Wave 1 keeps role + power mutually exclusive at the
+  // engine level, so both cards can safely share the bottom-right corner.
+  const [roleOpen, setRoleOpen] = useState(!!roleIntroOpen);
+  const [roleIntroActive, setRoleIntroActive] = useState(!!roleIntroOpen);
+  const hasTriggeredRoleIntroRef = useRef(!!roleIntroOpen);
+  useEffect(() => {
+    if (roleIntroOpen && !hasTriggeredRoleIntroRef.current) {
+      hasTriggeredRoleIntroRef.current = true;
+      setRoleOpen(true);
+      setRoleIntroActive(true);
+    }
+  }, [roleIntroOpen]);
+  const closeRoleCard = () => {
+    setRoleOpen(false);
+    setRoleIntroActive(false);
+  };
+  const handleRoleCardTap = () => {
+    if (roleIntroActive) {
+      closeRoleCard();
+      return;
+    }
+    setRoleOpen(o => !o);
   };
   return (
     <Box
@@ -240,6 +271,105 @@ export function PhoneShell({ me, roomId, children, introOpen, armedThisRound }: 
                     variant={myPower.used || armedThisRound ? "used" : "faceUp"}
                     size="lg"
                   />
+                </Box>
+              </Box>
+            </Box>
+          </>
+        )}
+
+        {/* Role card (cop variant). Same overlay recipe as the power
+            card — backdrop, intro hint, flipper that tucks to the
+            bottom-right corner on close. Wave 1 ensures role + power
+            never both render, so they can safely share the corner. */}
+        {me.role && (
+          <>
+            <Box
+              onClick={closeRoleCard}
+              sx={{
+                position: "absolute",
+                inset: 0,
+                bgcolor: "rgba(0, 0, 0, 0.78)",
+                zIndex: 5,
+                opacity: roleOpen ? 1 : 0,
+                pointerEvents: roleOpen ? "auto" : "none",
+                transition: "opacity 0.32s ease-out",
+              }}
+            />
+            {roleIntroActive && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: "calc(50% - 230px)",
+                  left: 0,
+                  right: 0,
+                  textAlign: "center",
+                  fontFamily: fonts.body,
+                  fontStyle: "italic",
+                  fontSize: "1rem",
+                  color: palette.paperDim,
+                  animation: `${breath} 2.4s ease-in-out infinite`,
+                  zIndex: 6,
+                  pointerEvents: "none",
+                }}
+              >
+                {t("cop.reveal.tapHint")}
+              </Box>
+            )}
+            <Box
+              role="button"
+              aria-label="Your role"
+              onClick={handleRoleCardTap}
+              sx={{
+                position: "absolute",
+                cursor: "pointer",
+                zIndex: 6,
+                transformOrigin: "bottom right",
+                perspective: "1200px",
+                transition:
+                  "bottom 0.5s cubic-bezier(0.34, 1.32, 0.64, 1), right 0.5s cubic-bezier(0.34, 1.32, 0.64, 1), transform 0.5s cubic-bezier(0.34, 1.32, 0.64, 1)",
+                ...(roleOpen
+                  ? {
+                      bottom: "calc(50% - 200px)",
+                      right: "calc(50% - 150px)",
+                      transform: "scale(1)",
+                    }
+                  : {
+                      bottom: "0.8rem",
+                      right: "0.95rem",
+                      transform: "scale(0.24)",
+                    }),
+              }}
+            >
+              <Box
+                sx={{
+                  width: 300,
+                  height: 400,
+                  position: "relative",
+                  transformStyle: "preserve-3d",
+                  transition: "transform 0.55s cubic-bezier(0.34, 1.32, 0.64, 1)",
+                  transform: roleOpen ? "rotateY(180deg)" : "rotateY(0deg)",
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                  }}
+                >
+                  <RoleCardBack />
+                </Box>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)",
+                  }}
+                >
+                  <RoleCardFront role={me.role} colorOrAvatar={me.colorOrAvatar} />
                 </Box>
               </Box>
             </Box>
