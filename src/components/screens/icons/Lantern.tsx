@@ -27,10 +27,12 @@ const GLASS_CY = 1430;
 const GLASS_R = 780;
 
 // Silhouette darkens when lit so the metal frame reads as a dark
-// outline against the bright interior glow. When unlit, a faint
-// translucent white keeps it visible on the dark widget background.
+// outline against the bright interior glow — but kept a few shades
+// lighter than the widget background (palette.inkUp = #2a2118) so the
+// frame doesn't disappear into the canvas. When unlit, a faint
+// translucent white keeps it visible against the same background.
 const SILHOUETTE_UNLIT = "rgba(255, 255, 255, 0.32)";
-const SILHOUETTE_LIT = "rgba(18, 12, 6, 1)";
+const SILHOUETTE_LIT = "rgba(98, 72, 42, 1)";
 
 export function Lantern({ lit, size = 64 }: Props) {
   const id = useId();

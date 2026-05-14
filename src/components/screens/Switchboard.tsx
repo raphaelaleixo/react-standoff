@@ -18,13 +18,13 @@ export function Switchboard({ callsMade }: Props) {
     <Box
       sx={{
         display: "flex",
-        gap: "0.6rem",
+        gap: "1.1rem",
         justifyContent: "center",
         alignItems: "flex-end",
       }}
     >
       {[1, 2, 3].map(i => (
-        <Lantern key={i} lit={callsMade >= i} size={64} />
+        <Lantern key={i} lit={callsMade >= i} size={48} />
       ))}
     </Box>
   );
