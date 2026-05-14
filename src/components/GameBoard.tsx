@@ -8,6 +8,9 @@ import { WithdrawStamp } from "./standoff/WithdrawStamp";
 import { RevealStamp } from "./standoff/RevealStamp";
 import { SplitRolloverStamp } from "./standoff/SplitRolloverStamp";
 import { CrewRoster } from "./crew/CrewRoster";
+import { Switchboard } from "./screens/Switchboard";
+import { TelephonePassOverlay } from "./screens/TelephonePassOverlay";
+import { ReinforcementsOverlay } from "./screens/ReinforcementsOverlay";
 import { useStandoffCount } from "../hooks/useStandoffCount";
 import { useSecondsRemaining } from "../hooks/useSecondsRemaining";
 import { STANDOFF_DURATION_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
@@ -179,6 +182,15 @@ export function GameBoard({ game: rawGame, freshlyStruck }: GameBoardProps) {
           <CrewRoster game={game} freshlyStruck={freshlyStruck} />
         </Box>
       </Box>
+      {game.variants.cop && (
+        <>
+          <Box sx={{ position: "absolute", top: "0.8rem", right: "0.8rem", zIndex: 20 }}>
+            <Switchboard callsMade={game.cop?.callsMade ?? 0} />
+          </Box>
+          <TelephonePassOverlay game={game} />
+          <ReinforcementsOverlay game={game} />
+        </>
+      )}
     </Box>
   );
 }
