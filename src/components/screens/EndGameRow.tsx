@@ -7,6 +7,7 @@ import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { PowerBadge } from "../powers/PowerBadge";
 import { Crown } from "./icons/Crown";
+import { Lantern } from "./icons/Lantern";
 import type { Player } from "../../game/types";
 import { cashTotal } from "../../lib/score";
 import { finalScore, hasEffect } from "../../game/scoring";
@@ -132,8 +133,11 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
           </Box>
         )}
       </Box>
-      {/* Name (+ optional planked-round suffix) */}
-      <Box sx={{ minWidth: 0 }}>
+      {/* Name (+ optional planked-round suffix). Privateer rows get a small
+          lit lantern before the name, mirroring the in-game shore-lanterns
+          motif. */}
+      <Box sx={{ minWidth: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        {isPrivateer && <Lantern lit size={22} />}
         <Box
           sx={{
             fontFamily: fonts.displayCaps,

@@ -13,6 +13,7 @@ import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
 import { Crown } from "./icons/Crown";
+import { Lantern } from "./icons/Lantern";
 import { PowerBadge } from "../powers/PowerBadge";
 import { PowerRevealOverlay } from "../powers/PowerRevealOverlay";
 import { finalScore, rankPlayers, gameOutcome, type GameOutcome } from "../../game/scoring";
@@ -439,12 +440,16 @@ function PrivateerVictoryEnthronement({
         <Box sx={{ textAlign: "left" }}>
           <Box
             sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.9rem",
               fontFamily: fonts.blackletter,
               fontSize: "3.5rem",
               lineHeight: 0.9,
               color: palette.paper,
             }}
           >
+            <Lantern lit size={56} />
             {cop.displayName}
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.45rem" }}>
