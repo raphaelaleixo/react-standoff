@@ -1,5 +1,7 @@
 # Super Powers (Wave 1) Implementation Plan
 
+**Status:** Shipped · 2026-05-13 — see spec for outcome of wave-2 deferrals.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement the Super Powers advanced variant of Standoff (wave 1 of 2) — host-toggleable, deals 1 of 6 power cards to each player at game start, modifies round resolution and endgame scoring per `docs/superpowers/specs/2026-05-11-super-powers-wave-1-design.md`.

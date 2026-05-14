@@ -1,6 +1,6 @@
 # Insane (Wave 2 · Power 1 of 2) — Design
 
-**Status:** Draft for review · 2026-05-12
+**Status:** Shipped · 2026-05-13
 **Scope:** The Insane power — one-shot grenade that terminates the round early when the holder is wounded. First of two wave-2 specs (Kid + Cunning will follow).
 
 ## Goal

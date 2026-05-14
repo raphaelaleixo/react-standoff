@@ -1,7 +1,9 @@
 # Super Powers (Wave 1) — Design
 
-**Status:** Draft for review · 2026-05-11
+**Status:** Shipped · 2026-05-13
 **Scope:** The "Super Powers" advanced variant of *Cash'n Guns* (Repos Production, 2005), wave 1 of 2.
+
+> **Outcome:** Wave 1 shipped as designed. Of the four wave-2 deferrals below, three shipped on top of wave 1 (Insane → *Pocket Inferno*, Kid → *Dead Eye*, Cunning → *Bloodhound*); **You Don't Need It Anymore…** was dropped — its multi-target commit shape would have rewritten the resolver and big-screen targeting layer for one card and we judged the cost-to-payoff wrong.
 
 ## Goal
 
