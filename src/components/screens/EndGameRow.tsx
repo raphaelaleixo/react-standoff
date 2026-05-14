@@ -124,7 +124,7 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
             sx={{
               position: "absolute",
               top: -10,
-              left: -10,
+              right: -10,
               pointerEvents: "none",
             }}
           >

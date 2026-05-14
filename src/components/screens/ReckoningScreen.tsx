@@ -422,11 +422,14 @@ function PrivateerVictoryEnthronement({
           }}
         >
           <FlagFor id={jollyRogerForColor(cop.colorOrAvatar)} size={84} />
+          {/* Crown lives in the top-right corner so it doesn't fight the
+              top-left PowerBadge slot when wave 2 lets a Privateer also
+              hold a super-power. */}
           <Box
             sx={{
               position: "absolute",
               top: -18,
-              left: -18,
+              right: -18,
               animation: `${popIn} 500ms cubic-bezier(.2,.7,.2,1.4) ${medallionDelayMs + 160}ms both`,
             }}
           >
