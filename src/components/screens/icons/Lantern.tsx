@@ -41,13 +41,19 @@ export function Lantern({ lit, size = 64 }: Props) {
         width: size,
         display: "inline-block",
         lineHeight: 0,
+        overflow: "visible",
         filter: lit
           ? "drop-shadow(0 0 14px rgba(246, 198, 106, 0.45))"
-          : undefined,
-        transition: "filter 360ms ease",
+          : "drop-shadow(0 0 0 rgba(246, 198, 106, 0))",
+        transition: "filter 480ms ease",
       }}
     >
-      <svg viewBox={VIEW_BOX} xmlns="http://www.w3.org/2000/svg" width="100%">
+      <svg
+        viewBox={VIEW_BOX}
+        xmlns="http://www.w3.org/2000/svg"
+        width="100%"
+        style={{ overflow: "visible" }}
+      >
         <defs>
           <radialGradient
             id={gradId}
@@ -63,25 +69,29 @@ export function Lantern({ lit, size = 64 }: Props) {
           </radialGradient>
         </defs>
         {/* Glow sits BEHIND the silhouette so it bleeds through the
-            empty glass area between the lantern frame bars. */}
-        {lit && (
-          <circle
-            cx={GLASS_CX}
-            cy={GLASS_CY}
-            r={GLASS_R}
-            fill={`url(#${gradId})`}
-            style={{
-              transformOrigin: `${GLASS_CX}px ${GLASS_CY}px`,
-              animation: "lanternFlicker 2400ms ease-in-out infinite alternate",
-            }}
-          />
-        )}
+            empty glass area between the lantern frame bars. Always
+            rendered — opacity drives the lit/unlit crossfade, so the
+            light fades in/out rather than popping. */}
+        <circle
+          cx={GLASS_CX}
+          cy={GLASS_CY}
+          r={GLASS_R}
+          fill={`url(#${gradId})`}
+          style={{
+            opacity: lit ? 1 : 0,
+            transformOrigin: `${GLASS_CX}px ${GLASS_CY}px`,
+            animation: lit
+              ? "lanternFlicker 2400ms ease-in-out infinite alternate"
+              : undefined,
+            transition: "opacity 480ms ease",
+          }}
+        />
         <g transform={LANTERN_TRANSFORM}>
           <path
             d={LANTERN_D}
             fill={lit ? SILHOUETTE_LIT : SILHOUETTE_UNLIT}
             fillRule="nonzero"
-            style={{ transition: "fill 360ms ease" }}
+            style={{ transition: "fill 480ms ease" }}
           />
         </g>
         <style>
