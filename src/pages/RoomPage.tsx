@@ -119,28 +119,24 @@ export default function RoomPage() {
 
   const onSuperPowersToggle = async (next: boolean) => {
     if (!id) return;
-    // Mutually exclusive in wave I: turning Super Powers on forces Cop off.
     await set(ref(database, `rooms/${id}/lobbyVariants`), {
       superPowers: next,
-      cop: next ? false : variantCop,
+      cop: variantCop,
     });
   };
 
   const onCopToggle = async (next: boolean) => {
     if (!id) return;
     if (next && !canEnableCop) return;
-    // Mutually exclusive in wave I: turning Cop on forces Super Powers off.
     await set(ref(database, `rooms/${id}/lobbyVariants`), {
-      superPowers: next ? false : variantSuperPowers,
+      superPowers: variantSuperPowers,
       cop: next,
     });
   };
 
   const copHint = !canEnableCop
     ? t("cop.lobby.requiresFiveSix")
-    : variantSuperPowers && !variantCop
-      ? t("cop.lobby.exclusiveWithPowers")
-      : t("cop.lobby.toggleSub");
+    : t("cop.lobby.toggleSub");
 
   const variantSlot = (
     <Box sx={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>

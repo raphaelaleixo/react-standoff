@@ -129,17 +129,17 @@
       "toggleLabel": "A Privateer Among Us",
       "toggleSub": "the Crown has eyes in the crew",
       "requiresFiveSix": "needs 5 or 6 hands aboard",
-      "exclusiveWithPowers": "wave I: choose one — Privateer or Super Powers",
       "banner": "A Privateer sails among us…"
     },
     "reveal": {
       "title": "Show yer colours…",
-      "cop": "You are the Privateer",
+      "cop": "You're the Privateer",
       "copBody": "Send word to the Navy. Stay alive. Don't blink.",
-      "mafia": "You are a Pirate",
+      "mafia": "You're a Pirate",
       "mafiaBody": "A Privateer sails among us. Find them. Feed them to the fishes. Or just get rich.",
       "ack": "Aye",
-      "allDealt": "COLOURS DEALT"
+      "allDealt": "COLOURS DEALT",
+      "tapHint": "Tap when ready"
     },
     "widget": {
       "cop": "Privateer",
@@ -150,12 +150,11 @@
       "hintOneDuckLeft": "One more duck and the crew smells the rat"
     },
     "telephone": {
-      "heading": "THE BOTTLE IS IN YER HANDS",
+      "heading": "THE LANTERN IS IN YER HANDS",
       "pass": "Pass",
-      "call": "Send",
-      "callPlaced": "Note slipped",
-      "notUsed": "Bottle — empty",
-      "used": "Bottle — sealed with a note"
+      "passSub": "— hand it on —",
+      "light": "Light it",
+      "lightSub": "— send word ashore —"
     },
     "switchboard": {
       "busy": "A note washed ashore",
