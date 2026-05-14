@@ -15,6 +15,7 @@ import { Foot } from "../components/shell/Foot";
 import { GameBoard } from "../components/GameBoard";
 import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
+import { RolesDealtOverlay } from "../components/screens/RolesDealtOverlay";
 import { PowerRevealOverlay } from "../components/powers/PowerRevealOverlay";
 import { toRoman } from "../lib/navyHours";
 import { useGameState } from "../hooks/useGameState";
@@ -41,7 +42,7 @@ export default function MockBigScreen() {
   // store.reset(); useGameState's effects then drive the state machine.
   const [store] = useState<LocalGameStore>(() => createLocalGameStore(null));
   const serverNow = useCallback(() => Date.now(), []);
-  const { game } = useGameState(store, serverNow);
+  const { game, rolesDealtSeen } = useGameState(store, serverNow);
 
   const [scenarioId, setScenarioId] = useState<string>(SCENARIOS[0].id);
   const [surface, setSurface] = useState<DockSurface>("game");
@@ -107,6 +108,14 @@ export default function MockBigScreen() {
     if (out.length > 0) setInitialReveals(out);
   }, [game, initialReveals.length]);
 
+  // Local toggle for the "roles dealt" overlay (cop variant). Page-local
+  // lifecycle: flips true once when useGameState reports the round 1
+  // commit-entry signal, and back false when the overlay's onDone fires.
+  const [rolesDealtVisible, setRolesDealtVisible] = useState(false);
+  useEffect(() => {
+    if (rolesDealtSeen) setRolesDealtVisible(true);
+  }, [rolesDealtSeen]);
+
   return (
     <>
       {surface === "muster" ? (
@@ -164,6 +173,12 @@ export default function MockBigScreen() {
                   players={game.players}
                 />
               )}
+            <RolesDealtOverlay
+              visible={rolesDealtVisible}
+              onDone={() => setRolesDealtVisible(false)}
+              acknowledgedCount={game.players.length}
+              totalCount={game.players.length}
+            />
           </PageCanvas>
         </Box>
       ) : (

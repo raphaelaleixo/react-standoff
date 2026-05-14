@@ -19,6 +19,7 @@ import { GameBoard } from "../components/GameBoard";
 import { PowerRevealOverlay } from "../components/powers/PowerRevealOverlay";
 import { MusterScreen } from "../components/screens/MusterScreen";
 import { ReckoningScreen } from "../components/screens/ReckoningScreen";
+import { RolesDealtOverlay } from "../components/screens/RolesDealtOverlay";
 import { useFirebaseRoom } from "../hooks/useFirebaseRoom";
 import { useGameState } from "../hooks/useGameState";
 import { createFirebaseGameStore } from "../hooks/gameStore";
@@ -44,7 +45,7 @@ export default function RoomPage() {
   const { roomState, loading, error } = useFirebaseRoom(id);
   const store = useMemo(() => (id ? createFirebaseGameStore(id) : null), [id]);
   const { serverNow } = useServerTime();
-  const { game } = useGameState(store, serverNow);
+  const { game, rolesDealtSeen } = useGameState(store, serverNow);
   const derived = useRoomState(roomState ?? EMPTY_ROOM);
   const [variantSuperPowers, setVariantSuperPowers] = useState(false);
   const [variantCop, setVariantCop] = useState(false);
@@ -91,7 +92,7 @@ export default function RoomPage() {
   }
 
   if (roomState.status === "started") {
-    return <GameView game={game} roomId={id ?? ""} />;
+    return <GameView game={game} roomId={id ?? ""} rolesDealtSeen={rolesDealtSeen} />;
   }
 
   const joinUrl = id ? buildJoinUrl(id) : "";
@@ -170,10 +171,22 @@ export default function RoomPage() {
   );
 }
 
-function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["game"]; roomId: string }) {
+function GameView({
+  game,
+  roomId,
+  rolesDealtSeen,
+}: {
+  game: ReturnType<typeof useGameState>["game"];
+  roomId: string;
+  rolesDealtSeen: boolean;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   useBigScreenZoom();
+  const [rolesDealtVisible, setRolesDealtVisible] = useState(false);
+  useEffect(() => {
+    if (rolesDealtSeen) setRolesDealtVisible(true);
+  }, [rolesDealtSeen]);
   if (!game) {
     return (
       <Container sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -259,6 +272,12 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
           players={game.players}
         />
       )}
+      <RolesDealtOverlay
+        visible={rolesDealtVisible}
+        onDone={() => setRolesDealtVisible(false)}
+        acknowledgedCount={game.players.length}
+        totalCount={game.players.length}
+      />
     </Box>
   );
 }
