@@ -103,7 +103,7 @@ export function Lantern({ lit, size = 64 }: Props) {
             fill={lit ? SILHOUETTE_LIT : SILHOUETTE_UNLIT}
             fillRule="nonzero"
             stroke={lit ? STROKE_LIT : STROKE_UNLIT}
-            strokeWidth={1.25}
+            strokeWidth={0.75}
             vectorEffect="non-scaling-stroke"
             style={{ transition: "fill 480ms ease, stroke 480ms ease" }}
           />
