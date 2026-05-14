@@ -123,7 +123,7 @@ export function PhoneShell({ me, roomId, children, introOpen, armedThisRound }: 
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <WoundPips count={me.wounds} size={14} />
-            {me.shame > 0 && <ShamePips count={me.shame} size={14} />}
+            {me.shame.length > 0 && <ShamePips count={me.shame.length} size={14} />}
           </Box>
         </Box>
 

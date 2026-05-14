@@ -14,7 +14,7 @@ describe('normalizeGame variant fields', () => {
     expect(g?.variants.superPowers).toBe(true);
   });
 
-  it('defaults variants to { superPowers: false } when missing', () => {
+  it('defaults variants to { superPowers: false, cop: false } when missing', () => {
     const raw = {
       phase: 'in_progress',
       players: [],
@@ -22,7 +22,7 @@ describe('normalizeGame variant fields', () => {
       bankDeck: [], discardedBullets: [], seed: 's',
     };
     const g = normalizeGame(raw);
-    expect(g?.variants).toEqual({ superPowers: false });
+    expect(g?.variants).toEqual({ superPowers: false, cop: false });
   });
 
   it('round-trips Player.effects', () => {

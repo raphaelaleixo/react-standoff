@@ -9,7 +9,7 @@ const lobbyPlayer = (id: string): Player => ({
   bullets: [],
   cash: [],
   wounds: 0,
-  shame: 0,
+  shame: [],
   status: 'alive',
   effects: [],
 });
@@ -53,7 +53,7 @@ describe('initGame', () => {
       ...lobbyPlayer('A'),
       wounds: 2,
       cash: [{ id: 'leftover', value: 5000 }],
-      shame: 1,
+      shame: [{ flashing: false }],
       status: 'dead',
       effects: [{ kind: 'tough', revealed: true, used: true }],
     };
@@ -61,7 +61,7 @@ describe('initGame', () => {
     const p = game.players[0];
     expect(p.wounds).toBe(0);
     expect(p.cash).toEqual([]);
-    expect(p.shame).toBe(0);
+    expect(p.shame).toEqual([]);
     expect(p.status).toBe('alive');
     expect(p.effects).toEqual([]);
   });
@@ -98,7 +98,7 @@ describe('initGame variants', () => {
     bullets: [],
     cash: [],
     wounds: 0,
-    shame: 0,
+    shame: [],
     status: 'alive',
     effects: [],
   });
@@ -108,7 +108,7 @@ describe('initGame variants', () => {
       [samplePlayer('p1'), samplePlayer('p2'), samplePlayer('p3'), samplePlayer('p4')],
       'seed-off',
       0,
-      { superPowers: false },
+      { superPowers: false, cop: false },
     );
     for (const p of game.players) expect(p.effects).toEqual([]);
     expect(game.variants.superPowers).toBe(false);
@@ -119,7 +119,7 @@ describe('initGame variants', () => {
       [samplePlayer('p1'), samplePlayer('p2'), samplePlayer('p3'), samplePlayer('p4')],
       'seed-on',
       0,
-      { superPowers: true },
+      { superPowers: true, cop: false },
     );
     for (const p of game.players) {
       expect(p.effects).toHaveLength(1);
@@ -139,7 +139,7 @@ describe('initGame variants', () => {
       [samplePlayer('p1'), samplePlayer('p2'), samplePlayer('p3'), samplePlayer('p4')],
       'seed-act',
       0,
-      { superPowers: true },
+      { superPowers: true, cop: false },
     );
     expect(game.round.activations).toEqual({});
   });

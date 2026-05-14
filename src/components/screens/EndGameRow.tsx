@@ -41,7 +41,7 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
   const cash = cashTotal(player);
   const isCoward = hasEffect(player, "super_coward");
   const hasUndertaker = hasEffect(player, "six_feet_under");
-  const shameAbs = player.shame * 5000;
+  const shameAbs = player.shame.length * 5000;
   const undertakerBonus = totalKills * 10000;
   const score = dead ? null : finalScore(player, totalKills);
   return (
@@ -151,7 +151,7 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
       </Box>
       {/* Shame */}
       <Box sx={{ display: "flex", justifyContent: "center" }}>
-        <ShamePips count={player.shame} />
+        <ShamePips count={player.shame.length} />
       </Box>
       {/* Cash */}
       <MoneyCell value={dead ? null : `$${cash.toLocaleString()}`} color={palette.paper} />
@@ -159,7 +159,7 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
           shame becomes a bonus rather than a penalty. Hidden when shame is 0
           or the player is dead, regardless of variant. */}
       <MoneyCell
-        value={dead || player.shame === 0 ? null : isCoward ? `+$${shameAbs.toLocaleString()}` : `− $${shameAbs.toLocaleString()}`}
+        value={dead || player.shame.length === 0 ? null : isCoward ? `+$${shameAbs.toLocaleString()}` : `− $${shameAbs.toLocaleString()}`}
         color={isCoward ? palette.gold : palette.blood}
       />
       {/* Undertaker (six_feet_under) bonus — only renders when the player

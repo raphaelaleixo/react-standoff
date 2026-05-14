@@ -9,7 +9,7 @@ function p(id: string, status: Player["status"]): Player {
     bullets: [],
     cash: [],
     wounds: 0,
-    shame: 0,
+    shame: [],
     status,
     effects: [],
   };
@@ -22,7 +22,7 @@ const game = (players: Player[], commits: Game["round"]["commits"]): Game => ({
   round: { number: 1, phase: "commit", phaseStartedAt: 0, loot: [], commits, activations: {} },
   bankDeck: [],
   discardedBullets: [],
-  variants: { superPowers: false },
+  variants: { superPowers: false, cop: false },
 });
 
 describe("playerCounts", () => {

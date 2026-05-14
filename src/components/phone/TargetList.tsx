@@ -149,10 +149,10 @@ export function TargetList({ opponents, selectedId, onPick }: TargetListProps) {
           >
             ${cashTotal(selected).toLocaleString()}
           </Box>
-          {selected.shame > 0 ? (
+          {selected.shame.length > 0 ? (
             <>
               <ColumnRule />
-              <ShamePips count={selected.shame} size={9} />
+              <ShamePips count={selected.shame.length} size={9} />
             </>
           ) : null}
         </Box>

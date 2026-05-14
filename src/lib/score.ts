@@ -10,7 +10,7 @@ export function cashTotal(p: Player): number {
 }
 
 export function shamePenalty(p: Player): number {
-  return SHAME_PENALTY * p.shame;
+  return SHAME_PENALTY * p.shame.length;
 }
 
 export function netScore(p: Player): number {
@@ -27,7 +27,7 @@ export function compareForRanking(a: Player, b: Player): number {
   if (aDead !== bDead) return aDead ? 1 : -1;
   const ds = netScore(b) - netScore(a);
   if (ds !== 0) return ds;
-  const dShame = a.shame - b.shame;
+  const dShame = a.shame.length - b.shame.length;
   if (dShame !== 0) return dShame;
   return b.wounds - a.wounds;
 }

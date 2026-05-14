@@ -20,7 +20,7 @@ function p(id: string, opts: Partial<Player> = {}): Player {
     bullets: opts.bullets ?? ['clic', 'clic', 'clic', 'clic', 'clic', 'bang', 'bang', 'bang_bang_bang'],
     cash: opts.cash ?? [],
     wounds: opts.wounds ?? 0,
-    shame: opts.shame ?? 0,
+    shame: opts.shame ?? [],
     status: opts.status ?? 'alive',
     effects: opts.effects ?? [],
   };
@@ -34,7 +34,7 @@ function pl(id: string, opts: { wounds?: 0|1|2|3|4; powers?: PowerKind[] } = {})
     bullets: ['clic','clic','clic','clic','clic','bang','bang','bang_bang_bang'],
     cash: [],
     wounds: opts.wounds ?? 0,
-    shame: 0,
+    shame: [],
     status: 'alive',
     effects: (opts.powers ?? []).map(k => ({ kind: k, revealed: false, used: false })),
   };
@@ -64,8 +64,8 @@ describe('resolveRound — withdraw phase', () => {
       [],
     );
     expect(result.resolution.ducks).toEqual(['A']);
-    expect(findPlayer(result.players, 'A').shame).toBe(1);
-    expect(findPlayer(result.players, 'B').shame).toBe(0);
+    expect(findPlayer(result.players, 'A').shame).toHaveLength(1);
+    expect(findPlayer(result.players, 'B').shame).toHaveLength(0);
   });
 
   test('aiming a player who ducked voids the shooter\'s bullet (gangster code)', () => {
@@ -345,7 +345,7 @@ describe('resolveRound — Dragon Skin', () => {
       {
         id: 'p1', displayName: 'p1', colorOrAvatar: 'calico_jack',
         bullets: ['clic','clic','clic','clic','clic','bang','bang','bang_bang_bang'],
-        cash: [], wounds: 0, shame: 0, status: 'alive',
+        cash: [], wounds: 0, shame: [], status: 'alive',
         effects: [{ kind: 'dragon_skin', revealed: true, used: false }],
       },
       pl('p2'),
@@ -403,7 +403,7 @@ describe('resolveRound — Unbreakable', () => {
       {
         id: 'p1', displayName: 'p1', colorOrAvatar: 'calico_jack',
         bullets: ['clic','clic','clic','clic','clic','bang','bang','bang_bang_bang'],
-        cash: [], wounds: 2, shame: 0, status: 'alive',
+        cash: [], wounds: 2, shame: [], status: 'alive',
         effects: [{ kind: 'unbreakable', revealed: true, used: false }],
       },
       pl('p2'),

@@ -10,12 +10,12 @@ import type { Game, Player, RoundResolution } from "../../game/types";
 // player "a" carries a full hand here; the big-screen view doesn't need to
 // know other players' bullets, so they sit empty for the ledger fixture.
 export const MOCK_PLAYERS: Player[] = [
-  { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",  bullets: ["bang","clic","clic","clic","clic","bang","bang_bang_bang"], cash: [{ id: "bn-a1", value: 10000 }, { id: "bn-a2", value: 5000 }], wounds: 1, shame: 0, status: "alive", effects: [] },
-  { id: "b", displayName: "Mad Mary",   colorOrAvatar: "blackbeard",   bullets: [], cash: [{ id: "bn-b1", value: 20000 }, { id: "bn-b2", value: 5000 }], wounds: 1, shame: 0, status: "alive", effects: [] },
-  { id: "c", displayName: "Wet Match",  colorOrAvatar: "edward_low",   bullets: [], cash: [{ id: "bn-c1", value: 5000 }], wounds: 0, shame: 0, status: "alive", effects: [] },
-  { id: "d", displayName: "One-Eye",    colorOrAvatar: "stede_bonnet", bullets: [], cash: [{ id: "bn-d1", value: 20000 }, { id: "bn-d2", value: 5000 }], wounds: 2, shame: 1, status: "alive", effects: [] },
-  { id: "e", displayName: "Old Salt",   colorOrAvatar: "black_bart",   bullets: [], cash: [{ id: "bn-e1", value: 10000 }], wounds: 0, shame: 0, status: "alive", effects: [] },
-  { id: "f", displayName: "Black Sam",  colorOrAvatar: "henry_avery",  bullets: [], cash: [], wounds: 0, shame: 0, status: "alive", effects: [] },
+  { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",  bullets: ["bang","clic","clic","clic","clic","bang","bang_bang_bang"], cash: [{ id: "bn-a1", value: 10000 }, { id: "bn-a2", value: 5000 }], wounds: 1, shame: [], status: "alive", effects: [] },
+  { id: "b", displayName: "Mad Mary",   colorOrAvatar: "blackbeard",   bullets: [], cash: [{ id: "bn-b1", value: 20000 }, { id: "bn-b2", value: 5000 }], wounds: 1, shame: [], status: "alive", effects: [] },
+  { id: "c", displayName: "Wet Match",  colorOrAvatar: "edward_low",   bullets: [], cash: [{ id: "bn-c1", value: 5000 }], wounds: 0, shame: [], status: "alive", effects: [] },
+  { id: "d", displayName: "One-Eye",    colorOrAvatar: "stede_bonnet", bullets: [], cash: [{ id: "bn-d1", value: 20000 }, { id: "bn-d2", value: 5000 }], wounds: 2, shame: [{ flashing: false }], status: "alive", effects: [] },
+  { id: "e", displayName: "Old Salt",   colorOrAvatar: "black_bart",   bullets: [], cash: [{ id: "bn-e1", value: 10000 }], wounds: 0, shame: [], status: "alive", effects: [] },
+  { id: "f", displayName: "Black Sam",  colorOrAvatar: "henry_avery",  bullets: [], cash: [], wounds: 0, shame: [], status: "alive", effects: [] },
 ];
 
 export const RESOLUTION_BROADSIDE: RoundResolution = {
@@ -75,27 +75,27 @@ export const MOCK_ROOM_STATE: RoomState<Player> = {
 export const RECKONING_PLAYERS: Player[] = [
   { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",
     bullets: [], cash: [{ id: "ra1", value: 20000 }, { id: "ra2", value: 20000 }, { id: "ra3", value: 20000 }, { id: "ra4", value: 20000 }, { id: "ra5", value: 5000 }],
-    wounds: 0, shame: 0, status: "alive",
+    wounds: 0, shame: [], status: "alive",
     // Maud held Davy Jones's Cut all game — unrevealed, so the reckoning
     // gets to flip the card for the "I had this all along" payoff.
     effects: [{ kind: "six_feet_under", revealed: false, used: false }] },
   { id: "b", displayName: "Mad Mary", colorOrAvatar: "blackbeard",
     bullets: [], cash: [{ id: "rb1", value: 20000 }, { id: "rb2", value: 20000 }, { id: "rb3", value: 10000 }],
-    wounds: 1, shame: 1, status: "alive", effects: [] },
+    wounds: 1, shame: [{ flashing: false }], status: "alive", effects: [] },
   { id: "d", displayName: "One-Eye", colorOrAvatar: "stede_bonnet",
     bullets: [], cash: [{ id: "rd1", value: 20000 }, { id: "rd2", value: 10000 }, { id: "rd3", value: 5000 }],
-    wounds: 2, shame: 0, status: "alive", effects: [] },
+    wounds: 2, shame: [], status: "alive", effects: [] },
   { id: "e", displayName: "Old Salt", colorOrAvatar: "black_bart",
     bullets: [], cash: [{ id: "re1", value: 20000 }, { id: "re2", value: 5000 }],
-    wounds: 0, shame: 2, status: "alive",
+    wounds: 0, shame: [{ flashing: false }, { flashing: false }], status: "alive",
     // Old Salt rode Yellow-Belly's Purse — also held in secret, flipped
     // at the reckoning. Shame turned profit, ledger gives him the bonus.
     effects: [{ kind: "super_coward", revealed: false, used: false }] },
   { id: "f", displayName: "Black Sam", colorOrAvatar: "henry_avery",
     bullets: [], cash: [{ id: "rf1", value: 10000 }],
-    wounds: 0, shame: 0, status: "alive", effects: [] },
+    wounds: 0, shame: [], status: "alive", effects: [] },
   { id: "c", displayName: "Wet Match", colorOrAvatar: "edward_low",
-    bullets: [], cash: [], wounds: 3, shame: 0, status: "dead", effects: [] },
+    bullets: [], cash: [], wounds: 3, shame: [], status: "dead", effects: [] },
 ];
 
 export const RECKONING_GAME: Game = {
@@ -105,7 +105,7 @@ export const RECKONING_GAME: Game = {
   bankDeck: [],
   discardedBullets: [],
   phase: "ended",
-  variants: { superPowers: true },
+  variants: { superPowers: true, cop: false },
 };
 
 export const RECKONING_ELIMINATED_BY_ROUND: Record<string, number> = { c: 6 };
@@ -138,6 +138,6 @@ export const FIXTURE_GAME: Game = {
   bankDeck: [],
   discardedBullets: [],
   phase: "in_progress",
-  variants: { superPowers: false },
+  variants: { superPowers: false, cop: false },
 };
 

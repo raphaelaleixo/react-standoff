@@ -248,7 +248,7 @@ function WinnerEnthronement({
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.45rem" }}>
             <WoundPips count={winner.wounds} />
-            {winner.shame > 0 && <ShamePips count={winner.shame} />}
+            {winner.shame.length > 0 && <ShamePips count={winner.shame.length} />}
           </Box>
           <Box
             sx={{

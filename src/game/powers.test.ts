@@ -12,7 +12,7 @@ function makePlayer(id: string, overrides: Partial<Player> = {}): Player {
     bullets: ['clic', 'clic', 'clic', 'clic', 'clic', 'bang', 'bang', 'bang_bang_bang'],
     cash: [],
     wounds: 0,
-    shame: 0,
+    shame: [],
     status: 'alive',
     effects: [],
     ...overrides,
@@ -34,7 +34,7 @@ function makeGame(overrides: Partial<Game> = {}): Game {
     bankDeck: [],
     discardedBullets: [],
     seed: 'test',
-    variants: { superPowers: true },
+    variants: { superPowers: true, cop: false },
     ...overrides,
   };
 }

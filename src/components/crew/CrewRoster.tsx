@@ -57,7 +57,7 @@ function computeStruckCounts(game: Game): Record<string, number> {
 
 // Yielding gives a shame marker. The marker becomes visible once the duck is
 // public — reveal_withdraw onward.
-function effectiveShame(p: Player, game: Game): number {
+function effectiveShame(p: Player, game: Game): Player["shame"] {
   const phase = game.round.phase;
   const yieldRevealed =
     phase === "reveal_withdraw" ||
@@ -65,7 +65,9 @@ function effectiveShame(p: Player, game: Game): number {
     phase === "reveal_others" ||
     phase === "split" ||
     phase === "grenade";
-  return yieldRevealed && game.round.commits[p.id]?.withdrew ? p.shame + 1 : p.shame;
+  return yieldRevealed && game.round.commits[p.id]?.withdrew
+    ? [...p.shame, { flashing: false }]
+    : p.shame;
 }
 
 function deriveStatus(

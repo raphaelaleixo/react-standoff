@@ -22,7 +22,7 @@ export function initGame(
   players: Player[],
   seed: string,
   now: number,
-  variants: GameVariants = { superPowers: false },
+  variants: GameVariants = { superPowers: false, cop: false },
 ): Game {
   const rng = makeRng(seed);
   const shuffledDeck = shuffle(buildBankDeck(), rng);
@@ -34,7 +34,7 @@ export function initGame(
     bullets: [...STARTING_HAND],
     cash: [],
     wounds: 0,
-    shame: 0,
+    shame: [],
     status: 'alive',
     effects: [],
   }));

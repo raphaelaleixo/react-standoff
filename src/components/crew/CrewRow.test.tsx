@@ -5,7 +5,7 @@ import type { Player } from "../../game/types";
 function p(over: Partial<Player> = {}): Player {
   return {
     id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",
-    bullets: [], cash: [], wounds: 0, shame: 0, status: "alive", effects: [],
+    bullets: [], cash: [], wounds: 0, shame: [], status: "alive", effects: [],
     ...over,
   };
 }
@@ -31,7 +31,7 @@ describe("CrewRow", () => {
   });
 
   it("renders one yellow pip per shame marker", () => {
-    render(<CrewRow player={p({ shame: 2 })} status="ready" data-testid="r" />);
+    render(<CrewRow player={p({ shame: [{ flashing: false }, { flashing: false }] })} status="ready" data-testid="r" />);
     const shamePips = screen.getByTestId("r").querySelectorAll('[data-pip="shame"]');
     expect(shamePips).toHaveLength(2);
   });

@@ -11,10 +11,29 @@ import type {
   RoundActivations,
   RoundResolution,
   RoundShot,
+  ShameMarker,
 } from './types';
 import { asArray, asRecord } from '../lib/rtdbCoerce';
 
 type Raw = Record<string, unknown> | unknown[] | null | undefined;
+
+function normalizeShame(raw: unknown): ShameMarker[] {
+  // Legacy: scalar number → expand to N non-flashing markers. New shape:
+  // array of { flashing: boolean }.
+  if (typeof raw === 'number') {
+    return Array.from({ length: raw }, () => ({ flashing: false }));
+  }
+  if (Array.isArray(raw)) {
+    return raw.map(item => {
+      if (item && typeof item === 'object') {
+        const r = item as Record<string, unknown>;
+        return { flashing: !!r.flashing };
+      }
+      return { flashing: false };
+    });
+  }
+  return [];
+}
 
 function normalizePlayer(raw: Raw): Player {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -25,7 +44,7 @@ function normalizePlayer(raw: Raw): Player {
     bullets: asArray<BulletCard>(r.bullets),
     cash: asArray<Banknote>(r.cash),
     wounds: (r.wounds ?? 0) as Player['wounds'],
-    shame: (r.shame ?? 0) as number,
+    shame: normalizeShame(r.shame),
     status: (r.status ?? 'alive') as Player['status'],
     effects: asArray<Effect>(r.effects),
   };
@@ -87,7 +106,7 @@ function normalizeRound(raw: Raw): Round {
 
 function normalizeVariants(raw: Raw): GameVariants {
   const r = (raw ?? {}) as Record<string, unknown>;
-  return { superPowers: !!r.superPowers };
+  return { superPowers: !!r.superPowers, cop: !!r.cop };
 }
 
 export function normalizeGame(raw: Raw): Game | null {

@@ -8,8 +8,9 @@ export function finalScore(player: Player, totalKills: number): number {
   if (player.status === 'dead') return 0;
   const cashTotal = player.cash.reduce((s, b) => s + b.value, 0);
   const shameSign = hasEffect(player, 'super_coward') ? +1 : -1;
+  const shameCount = player.shame.length;
   const undertakerBonus = hasEffect(player, 'six_feet_under') ? 10_000 * totalKills : 0;
-  return cashTotal + shameSign * 5_000 * player.shame + undertakerBonus;
+  return cashTotal + shameSign * 5_000 * shameCount + undertakerBonus;
 }
 
 export function rankPlayers(players: Player[], totalKills: number): Player[] {
@@ -17,7 +18,7 @@ export function rankPlayers(players: Player[], totalKills: number): Player[] {
     const sa = finalScore(a, totalKills);
     const sb = finalScore(b, totalKills);
     if (sa !== sb) return sb - sa;
-    if (a.shame !== b.shame) return a.shame - b.shame;
+    if (a.shame.length !== b.shame.length) return a.shame.length - b.shame.length;
     return b.wounds - a.wounds;
   });
 }

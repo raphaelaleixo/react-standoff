@@ -15,7 +15,7 @@ const ALIVE: Player = {
     { id: "n3", value: 10000 },
   ],
   wounds: 0,
-  shame: 1,
+  shame: [{ flashing: false }],
   status: "alive",
   effects: [],
 };

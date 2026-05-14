@@ -16,7 +16,7 @@ const DEMO_PLAYER: Player = {
   bullets: [],
   cash: [],
   wounds: 0,
-  shame: 0,
+  shame: [],
   status: "alive",
   effects: [],
 };

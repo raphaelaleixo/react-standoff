@@ -82,7 +82,7 @@ export default function RoomPage() {
     const startedRoom = startGame(roomState);
     const variantsSnap = await get(ref(database, `rooms/${id}/lobbyVariants`));
     const variants: GameVariants =
-      (variantsSnap.val() as GameVariants | null) ?? { superPowers: false };
+      (variantsSnap.val() as GameVariants | null) ?? { superPowers: false, cop: false };
     const players = startedRoom.players
       .filter(p => p.status !== "empty" && p.data)
       .map(p => p.data as Player);

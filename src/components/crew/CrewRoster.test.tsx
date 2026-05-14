@@ -5,14 +5,14 @@ import type { Game } from "../../game/types";
 function makeGame(): Game {
   const players = ["a", "b", "c", "d"].map(id => ({
     id, displayName: id.toUpperCase(), colorOrAvatar: "generic",
-    bullets: [], cash: [], wounds: 0 as const, shame: 0,
+    bullets: [], cash: [], wounds: 0 as const, shame: [],
     status: "alive" as const, effects: [],
   }));
   return {
     seed: "x", players,
     round: { number: 1, phase: "commit", phaseStartedAt: 0, loot: [], commits: {}, activations: {} },
     bankDeck: [], discardedBullets: [], phase: "in_progress",
-    variants: { superPowers: false },
+    variants: { superPowers: false, cop: false },
   };
 }
 

@@ -7,7 +7,7 @@ const note = (id: string, value: 5000 | 10000 | 20000): Banknote => ({ id, value
 function pl(id: string, opts: Partial<Player> = {}): Player {
   return {
     id, displayName: id, colorOrAvatar: 'calico_jack',
-    bullets: [], cash: [], wounds: 0, shame: 0, status: 'alive',
+    bullets: [], cash: [], wounds: 0, shame: [], status: 'alive',
     effects: [], ...opts,
   };
 }
@@ -24,14 +24,14 @@ describe('hasEffect', () => {
 
 describe('finalScore', () => {
   it('base formula: cash − $5k × shame', () => {
-    const p = pl('p1', { cash: [note('a', 10000), note('b', 5000)], shame: 1 });
+    const p = pl('p1', { cash: [note('a', 10000), note('b', 5000)], shame: [{ flashing: false }] });
     expect(finalScore(p, 0)).toBe(15000 - 5000);
   });
 
   it('Super Coward flips shame sign', () => {
     const p = pl('p1', {
       cash: [note('a', 10000)],
-      shame: 2,
+      shame: [{ flashing: false }, { flashing: false }],
       effects: [{ kind: 'super_coward', revealed: false }],
     });
     expect(finalScore(p, 0)).toBe(10000 + 2 * 5000);
@@ -40,7 +40,7 @@ describe('finalScore', () => {
   it('6 Feet Under: +$10k per total kill', () => {
     const p = pl('p1', {
       cash: [note('a', 10000)],
-      shame: 0,
+      shame: [],
       effects: [{ kind: 'six_feet_under', revealed: false }],
     });
     expect(finalScore(p, 3)).toBe(10000 + 3 * 10000);
@@ -49,7 +49,7 @@ describe('finalScore', () => {
   it('both held: stack', () => {
     const p = pl('p1', {
       cash: [note('a', 10000)],
-      shame: 1,
+      shame: [{ flashing: false }],
       effects: [
         { kind: 'super_coward', revealed: false },
         { kind: 'six_feet_under', revealed: false },
@@ -66,14 +66,14 @@ describe('rankPlayers (tiebreakers)', () => {
     expect(rankPlayers([a, b], 0).map(p => p.id)).toEqual(['a', 'b']);
   });
   it('tie on score → fewer shame wins', () => {
-    const a = pl('a', { cash: [note('n', 10000)], shame: 0 });
-    const b = pl('b', { cash: [note('n1', 10000), note('n2', 5000)], shame: 1 });
+    const a = pl('a', { cash: [note('n', 10000)], shame: [] });
+    const b = pl('b', { cash: [note('n1', 10000), note('n2', 5000)], shame: [{ flashing: false }] });
     // both score $10k. a has fewer shame.
     expect(rankPlayers([a, b], 0).map(p => p.id)).toEqual(['a', 'b']);
   });
   it('tie on score and shame → more wounds wins', () => {
-    const a = pl('a', { cash: [note('n', 10000)], shame: 0, wounds: 1 });
-    const b = pl('b', { cash: [note('n', 10000)], shame: 0, wounds: 2 });
+    const a = pl('a', { cash: [note('n', 10000)], shame: [], wounds: 1 });
+    const b = pl('b', { cash: [note('n', 10000)], shame: [], wounds: 2 });
     expect(rankPlayers([a, b], 0).map(p => p.id)).toEqual(['b', 'a']);
   });
 });

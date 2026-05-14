@@ -9,14 +9,14 @@ function makeGame(): Game {
     seed: "x",
     roomId: "x",
     players: [
-      { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack", bullets: [], cash: [], wounds: 0, shame: 0, status: "alive", effects: [] },
-      { id: "b", displayName: "Mad Mary", colorOrAvatar: "blackbeard", bullets: [], cash: [], wounds: 1, shame: 0, status: "alive", effects: [] },
+      { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack", bullets: [], cash: [], wounds: 0, shame: [], status: "alive", effects: [] },
+      { id: "b", displayName: "Mad Mary", colorOrAvatar: "blackbeard", bullets: [], cash: [], wounds: 1, shame: [], status: "alive", effects: [] },
     ],
     round: { number: 4, phase: "reveal_others", phaseStartedAt: 0, loot: [], commits: {}, activations: {} },
     bankDeck: [],
     discardedBullets: [],
     phase: "in_progress",
-    variants: { superPowers: false },
+    variants: { superPowers: false, cop: false },
   } as Game;
 }
 

@@ -112,7 +112,7 @@ function scenario({
     bullets: [...STARTING_HAND],
     cash: [],
     wounds: wounds[c.id] ?? 0,
-    shame: shame[c.id] ?? 0,
+    shame: Array.from({ length: shame[c.id] ?? 0 }, () => ({ flashing: false })),
     status: "alive",
     effects: powers[c.id]
       ? [{ kind: powers[c.id]!, revealed: PUBLIC_POWER_KINDS.has(powers[c.id]!), used: false }]
@@ -132,7 +132,7 @@ function scenario({
     bankDeck: [],
     discardedBullets: [],
     seed: "scenario",
-    variants: { superPowers: variant },
+    variants: { superPowers: variant, cop: false },
   };
 }
 

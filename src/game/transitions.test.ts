@@ -12,7 +12,7 @@ const player = (id: string, opts: Partial<Player> = {}): Player => ({
   bullets: [],
   cash: opts.cash ?? [],
   wounds: opts.wounds ?? 0,
-  shame: opts.shame ?? 0,
+  shame: opts.shame ?? [],
   status: opts.status ?? 'alive',
   effects: [],
 });
@@ -31,7 +31,7 @@ const baseGame = (overrides: Partial<Game> = {}): Game => ({
   bankDeck: [],
   discardedBullets: [],
   seed: 'test',
-  variants: { superPowers: false },
+  variants: { superPowers: false, cop: false },
   ...overrides,
 });
 
@@ -196,12 +196,12 @@ describe('startNextRound variants & activations', () => {
     bankDeck: [],
     discardedBullets: [],
     seed: 's',
-    variants: { superPowers: true },
+    variants: { superPowers: true, cop: false },
   });
 
   test('preserves Game.variants across rounds', () => {
     const next = startNextRound(variantBaseGame(), 1000);
-    expect(next.variants).toEqual({ superPowers: true });
+    expect(next.variants).toEqual({ superPowers: true, cop: false });
   });
 
   test('resets Round.activations to {} on the new round', () => {
@@ -211,8 +211,8 @@ describe('startNextRound variants & activations', () => {
 
   test('preserves variants when superPowers is false', () => {
     const g = variantBaseGame();
-    g.variants = { superPowers: false };
+    g.variants = { superPowers: false, cop: false };
     const next = startNextRound(g, 1000);
-    expect(next.variants).toEqual({ superPowers: false });
+    expect(next.variants).toEqual({ superPowers: false, cop: false });
   });
 });

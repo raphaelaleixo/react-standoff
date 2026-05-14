@@ -11,7 +11,7 @@ const me: Player = {
   bullets: [],
   cash: [{ id: "n1", value: 10000 }, { id: "n2", value: 5000 }],
   wounds: 1,
-  shame: 0,
+  shame: [],
   status: "alive",
   effects: [],
 };

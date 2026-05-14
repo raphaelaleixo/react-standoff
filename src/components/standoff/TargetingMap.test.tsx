@@ -7,7 +7,7 @@ function makeGame(overrides?: Partial<Game>): Game {
     seed: "x",
     players: ["a", "b", "c", "d", "e", "f"].map(id => ({
       id, displayName: id.toUpperCase(), colorOrAvatar: "generic",
-      bullets: [], cash: [], wounds: 0, shame: 0, status: "alive", effects: [],
+      bullets: [], cash: [], wounds: 0, shame: [], status: "alive", effects: [],
     })),
     round: {
       number: 1,
@@ -16,7 +16,7 @@ function makeGame(overrides?: Partial<Game>): Game {
       loot: [], commits: {}, activations: {},
     },
     bankDeck: [], discardedBullets: [], phase: "in_progress",
-    variants: { superPowers: false },
+    variants: { superPowers: false, cop: false },
   };
   return { ...base, ...overrides };
 }

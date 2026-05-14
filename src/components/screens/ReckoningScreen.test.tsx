@@ -12,7 +12,7 @@ function player(overrides: Partial<Player>): Player {
     bullets: [],
     cash: [],
     wounds: 0,
-    shame: 0,
+    shame: [],
     status: "alive",
     effects: [],
     ...overrides,
@@ -27,7 +27,7 @@ function makeGame(): Game {
       player({ id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",
         cash: [{ id: "c1", value: 20000 }, { id: "c2", value: 20000 }, { id: "c3", value: 20000 }, { id: "c4", value: 20000 }, { id: "c5", value: 5000 }] }),
       player({ id: "b", displayName: "Mad Mary", colorOrAvatar: "blackbeard",
-        cash: [{ id: "m1", value: 20000 }, { id: "m2", value: 20000 }, { id: "m3", value: 10000 }], shame: 1 }),
+        cash: [{ id: "m1", value: 20000 }, { id: "m2", value: 20000 }, { id: "m3", value: 10000 }], shame: [{ flashing: false }] }),
       player({ id: "c", displayName: "Wet Match", colorOrAvatar: "edward_low",
         wounds: 3, status: "dead" }),
     ],
@@ -35,7 +35,7 @@ function makeGame(): Game {
     bankDeck: [],
     discardedBullets: [],
     phase: "ended",
-    variants: { superPowers: false },
+    variants: { superPowers: false, cop: false },
   } as Game;
 }
 

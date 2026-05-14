@@ -121,7 +121,7 @@ export default function PlayerJoinPage() {
         bullets: [],
         cash: [],
         wounds: 0,
-        shame: 0,
+        shame: [],
         status: "alive",
         effects: [],
       };

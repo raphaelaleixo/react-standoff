@@ -173,7 +173,7 @@ export function resolveRound(
       ...pl,
       bullets,
       effects,
-      shame: pl.shame + shameDelta,
+      shame: shameDelta > 0 ? [...pl.shame, { flashing: false }] : pl.shame,
       wounds: willDie ? (threshold as Player['wounds']) : newWounds,
       status: willDie ? 'dead' : pl.status,
       cash: willDie ? [] : pl.cash,

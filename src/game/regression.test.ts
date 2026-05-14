@@ -6,7 +6,7 @@ function pl(id: string, wounds: 0|1|2|3|4 = 0): Player {
   return {
     id, displayName: id, colorOrAvatar: 'calico_jack',
     bullets: ['clic','clic','clic','clic','clic','bang','bang','bang_bang_bang'],
-    cash: [], wounds, shame: 0, status: 'alive', effects: [],
+    cash: [], wounds, shame: [], status: 'alive', effects: [],
   };
 }
 const note = (id: string, value: 5000|10000|20000): Banknote => ({ id, value });

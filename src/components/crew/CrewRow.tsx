@@ -122,9 +122,9 @@ export function CrewRow({ player, status, freshWoundIndex, extraBadgeKinds, woun
           >
             ${tickingCash.toLocaleString()}
           </Box>
-          {player.shame > 0 && (
+          {player.shame.length > 0 && (
             <Box sx={{ marginLeft: "0.5rem", marginTop: "3px" }}>
-              <ShamePips count={player.shame} animateNew />
+              <ShamePips count={player.shame.length} animateNew />
             </Box>
           )}
         </Box>

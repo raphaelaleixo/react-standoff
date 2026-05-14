@@ -10,7 +10,7 @@ function p(overrides: Partial<Player> = {}): Player {
     bullets: [],
     cash: [],
     wounds: 0,
-    shame: 0,
+    shame: [],
     status: "alive",
     effects: [],
     ...overrides,
@@ -23,15 +23,15 @@ describe("score helpers", () => {
   });
 
   it("shamePenalty applies SHAME_PENALTY per shame point", () => {
-    expect(shamePenalty(p({ shame: 3 }))).toBe(3 * SHAME_PENALTY);
+    expect(shamePenalty(p({ shame: [{ flashing: false }, { flashing: false }, { flashing: false }] }))).toBe(3 * SHAME_PENALTY);
   });
 
   it("netScore subtracts shame penalty from cash", () => {
-    const player = p({ cash: [{ id: "a", value: 20000 }, { id: "b", value: 20000 }, { id: "c", value: 10000 }], shame: 1 });
+    const player = p({ cash: [{ id: "a", value: 20000 }, { id: "b", value: 20000 }, { id: "c", value: 10000 }], shame: [{ flashing: false }] });
     expect(netScore(player)).toBe(50000 - SHAME_PENALTY);
   });
 
   it("netScore can go negative (shame outweighs hoard)", () => {
-    expect(netScore(p({ shame: 2 }))).toBe(-2 * SHAME_PENALTY);
+    expect(netScore(p({ shame: [{ flashing: false }, { flashing: false }] }))).toBe(-2 * SHAME_PENALTY);
   });
 });
