@@ -12,6 +12,7 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
+import { Crown } from "./icons/Crown";
 import { PowerBadge } from "../powers/PowerBadge";
 import { PowerRevealOverlay } from "../powers/PowerRevealOverlay";
 import { finalScore, rankPlayers, gameOutcome, type GameOutcome } from "../../game/scoring";
@@ -424,21 +425,12 @@ function PrivateerVictoryEnthronement({
           <Box
             sx={{
               position: "absolute",
-              top: -14,
-              left: -14,
-              padding: "0.25rem 0.5rem",
-              background: palette.bloodDeep,
-              border: `2px solid ${palette.paper}`,
-              fontFamily: fonts.displayCaps,
-              fontFeatureSettings: '"smcp"',
-              fontSize: "0.65rem",
-              letterSpacing: "0.2em",
-              color: palette.paper,
-              boxShadow: `2px 2px 0 ${palette.inkDeep}`,
-              animation: `${fadeIn} 500ms ease-out ${medallionDelayMs + 160}ms both`,
+              top: -18,
+              left: -18,
+              animation: `${popIn} 500ms cubic-bezier(.2,.7,.2,1.4) ${medallionDelayMs + 160}ms both`,
             }}
           >
-            {t("cop.widget.cop")}
+            <Crown size={48} />
           </Box>
         </Box>
         <Box sx={{ textAlign: "left" }}>

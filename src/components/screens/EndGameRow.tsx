@@ -6,6 +6,7 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { PowerBadge } from "../powers/PowerBadge";
+import { Crown } from "./icons/Crown";
 import type { Player } from "../../game/types";
 import { cashTotal } from "../../lib/score";
 import { finalScore, hasEffect } from "../../game/scoring";
@@ -122,20 +123,12 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
           <Box
             sx={{
               position: "absolute",
-              top: -8,
-              left: -8,
-              padding: "0.12rem 0.4rem",
-              background: palette.bloodDeep,
-              border: `1.5px solid ${palette.paper}`,
-              fontFamily: fonts.displayCaps,
-              fontFeatureSettings: '"smcp"',
-              fontSize: "0.55rem",
-              letterSpacing: "0.18em",
-              color: palette.paper,
+              top: -10,
+              left: -10,
               pointerEvents: "none",
             }}
           >
-            {t("cop.widget.cop")}
+            <Crown size={24} />
           </Box>
         )}
       </Box>
