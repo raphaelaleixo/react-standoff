@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { BulletCard, Commit, Game, Player } from "../game/types";
 import { resolveRound, type ResolveRoundResult } from "../game/resolver";
 import { startNextRound, endGameStatus } from "../game/transitions";
+import { PUBLIC_POWER_KINDS } from "../game/powerKinds";
 import type { GameStore } from "./gameStore";
 import { STANDOFF_DURATION_MS, STANDOFF_HOLD_MS, WITHDRAW_DURATION_MS } from "../lib/phaseDurations";
 
@@ -28,7 +29,7 @@ function alivePlayers(game: Game): Player[] {
   return game.players.filter(p => p.status === "alive");
 }
 
-// Powder Monkey / Wily Bosun split the commit lock — the holder is
+// Dead Eye / Bloodhound split the commit lock — the holder is
 // considered "committed" at the commit phase with only their early half
 // (Kid → bullet, Cunning → target). They fill the deferred half during
 // the late_commit phase.
@@ -112,15 +113,44 @@ export function useGameState(
   // ─────────── Auto-transitions (every-client idempotent) ───────────
 
   // commit → standoff
+  //
+  // Holds the transition long enough for any synthetic reveal cards to
+  // play out on a clean stage before the standoff countdown begins:
+  // - Round 1 public-on-deal cards (Dead Eye, Bloodhound).
+  // - Pocket Inferno when the holder armed it at commit.
+  // In real games this is usually a no-op (humans take longer to commit
+  // than the cards take to play). In the mock — and any future
+  // bot/seed-fast scenario — every commit lands at once, so without
+  // this hold the standoff would start while the card is still mid-air.
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "commit") return;
     if (!allAliveCommitted(game)) return;
-    store.update("round", {
-      phase: "standoff",
-      phaseStartedAt: store.serverTimestamp(),
-    });
-  }, [store, game]);
+    let cardCount = 0;
+    if (game.round.number === 1) {
+      for (const p of game.players) {
+        for (const e of p.effects) {
+          if (PUBLIC_POWER_KINDS.has(e.kind) && e.revealed) cardCount += 1;
+        }
+      }
+    }
+    if (game.round.activations.insane) cardCount += 1;
+    const holdMs = cardCount > 0 ? cardCount * POWER_CARD_MS + REVEAL_WITHDRAW_TAIL_MS : 0;
+    const elapsed = serverNow() - game.round.phaseStartedAt;
+    const remaining = Math.max(0, holdMs - elapsed);
+    const fire = () => {
+      store.update("round", {
+        phase: "standoff",
+        phaseStartedAt: store.serverTimestamp(),
+      });
+    };
+    if (remaining === 0) {
+      fire();
+      return;
+    }
+    const t = setTimeout(fire, remaining);
+    return () => clearTimeout(t);
+  }, [store, game, serverNow]);
 
   // standoff → standoff_hold (timed; the count animation plays out, then we
   // hand off to a silent hold phase where the targeting lines draw in).
@@ -139,7 +169,7 @@ export function useGameState(
   }, [store, game, serverNow]);
 
   // standoff_hold → late_commit | withdraw (timed; lines have drawn in
-  // by now). If any Powder Monkey / Wily Bosun is still missing their
+  // by now). If any Dead Eye / Bloodhound is still missing their
   // deferred half, route through the late_commit phase so they can fill
   // it in. Otherwise advance straight to withdraw.
   useEffect(() => {
@@ -394,8 +424,8 @@ export function useGameState(
   // ─────────── Player-side write helpers ───────────
 
   // Accepts partial commits: regular players pass both bullet+target;
-  // Powder Monkey passes bullet-only at commit time and target-only during
-  // late_commit; Wily Bosun does the inverse. Each call writes whichever
+  // Dead Eye passes bullet-only at commit time and target-only during
+  // late_commit; Bloodhound does the inverse. Each call writes whichever
   // fields are present, leaving the others untouched.
   const submitCommit = useCallback(
     async (

@@ -11,9 +11,10 @@ import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { EndGameRow } from "./EndGameRow";
 import { PowerBadge } from "../powers/PowerBadge";
+import { PowerRevealOverlay } from "../powers/PowerRevealOverlay";
 import { finalScore, rankPlayers } from "../../game/scoring";
 import { popIn, fadeIn } from "../../theme/animations";
-import type { Game, Player } from "../../game/types";
+import type { Game, Player, PowerActivation } from "../../game/types";
 
 // Stagger budget for the entrance choreography. Rows announce in reverse —
 // last place first — at ROW_STAGGER_MS apart, then a beat of silence, then
@@ -23,6 +24,12 @@ const ROW_STAGGER_MS = 110;
 const WINNER_BUFFER_MS = 280;
 const WINNER_DURATION_MS = 600;
 const BUTTONS_AFTER_WINNER_MS = 350;
+// Card-reveal pacing mirrors PowerRevealOverlay's internal stepMs +
+// exit-fade timing. Each unrevealed effect lingers stepMs before the
+// next one steps in; the final card sits a beat longer to let the exit
+// fade play out so the ledger choreography lands on a clean canvas.
+const RECKONING_REVEAL_STEP_MS = 3800;
+const RECKONING_REVEAL_TAIL_MS = 620;
 
 interface ReckoningScreenProps {
   game: Game;
@@ -44,11 +51,27 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
   const winner = ranked[0];
   const rest = ranked.slice(1);
 
+  // Unrevealed effects get the full PowerRevealOverlay treatment first —
+  // the "I had this all along" card flip. Revealed effects (Dead Eye,
+  // Bloodhound, anything that fired during play) are already known to
+  // the audience, so they stay as quiet badges on the ledger rows.
+  const reckoningReveals: PowerActivation[] = [];
+  for (const p of game.players) {
+    for (const e of p.effects) {
+      if (!e.revealed) reckoningReveals.push({ playerId: p.id, kind: e.kind });
+    }
+  }
+  const revealsTotalMs =
+    reckoningReveals.length > 0
+      ? reckoningReveals.length * RECKONING_REVEAL_STEP_MS + RECKONING_REVEAL_TAIL_MS
+      : 0;
+
   // Reverse-order stagger: the last-place row enters first (delay 0) so the
   // ledger fills bottom-up; second-place lands just before the winner
-  // enthronement pops in.
+  // enthronement pops in. Everything's offset by revealsTotalMs so the
+  // ledger doesn't animate underneath the card-reveal overlay.
   const rowsTotalMs = rest.length * ROW_STAGGER_MS;
-  const winnerDelayMs = rowsTotalMs + WINNER_BUFFER_MS;
+  const winnerDelayMs = revealsTotalMs + rowsTotalMs + WINNER_BUFFER_MS;
   const buttonsDelayMs = winnerDelayMs + WINNER_DURATION_MS + BUTTONS_AFTER_WINNER_MS - 200;
 
   return (
@@ -83,7 +106,7 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
                 rank={i + 2}
                 player={p}
                 eliminatedRound={eliminatedByRound[p.id] ?? null}
-                enterDelayMs={(rest.length - 1 - i) * ROW_STAGGER_MS}
+                enterDelayMs={revealsTotalMs + (rest.length - 1 - i) * ROW_STAGGER_MS}
                 totalKills={totalKills}
               />
             ))}
@@ -107,6 +130,9 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
           </Button>
         </Box>
       </PageCanvas>
+      {/* "I had this all along" card flip — every unrevealed effect rolls
+          through the overlay before the ledger lands. */}
+      <PowerRevealOverlay activations={reckoningReveals} players={game.players} />
     </Box>
   );
 }

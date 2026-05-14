@@ -115,11 +115,11 @@
         "description": "Reveal early to brandish your grenade. If any wound lands on you this round, it explodes — every still-standing crewmate takes a wound and the round ends. One use."
       },
       "the_kid": {
-        "name": "Powder Monkey",
+        "name": "Dead Eye",
         "description": "Lock in your powder now, but call your mark after every other gun is leveled."
       },
       "the_cunning": {
-        "name": "Wily Bosun",
+        "name": "Bloodhound",
         "description": "Lock in your mark now, but load your gun after every other gun is leveled."
       }
     }

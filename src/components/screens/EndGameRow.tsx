@@ -28,11 +28,12 @@ interface EndGameRowProps {
 }
 
 // One grid column per ledger field so columns line up across rows. The Undertaker
-// (six_feet_under) bonus and the held-powers strip have their own columns so the
-// base-game layout is unchanged when those segments don't render. The shame
-// column flips sign when super_coward is held — same column, same width, just
-// "+" in success.main instead of "− " in blood.
-const GRID_COLUMNS = "44px 60px 1fr 52px 80px 110px 110px 110px 130px auto";
+// (six_feet_under) bonus has its own column so the base-game layout is unchanged
+// when it doesn't render. The shame column flips sign when super_coward is held —
+// same column, same width, just "+" in success.main instead of "− " in blood.
+// Held-power badges aren't in the grid: they're absolutely positioned over the
+// flag chip so they never push the other columns around.
+const GRID_COLUMNS = "44px 60px 1fr 52px 80px 110px 110px 110px 130px";
 
 export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, totalKills = 0 }: EndGameRowProps) {
   const { t } = useTranslation();
@@ -74,20 +75,46 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
       >
         {toRoman(rank)}
       </Box>
-      {/* Flag chip */}
+      {/* Flag chip — held-power badges sit absolute-positioned over the
+          top-left corner so they read as "I had this all along" without
+          stealing space from the ledger columns. */}
       <Box
         sx={{
+          position: "relative",
           width: 60,
           height: 40,
-          border: `2px solid ${palette.paper}`,
-          background: flagColor(player.colorOrAvatar),
-          color: palette.paper,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
-        <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={28} />
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            border: `2px solid ${palette.paper}`,
+            background: flagColor(player.colorOrAvatar),
+            color: palette.paper,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={28} />
+        </Box>
+        {player.effects.length > 0 && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: -10,
+              left: -10,
+              display: "flex",
+              gap: "0.2rem",
+              pointerEvents: "none",
+            }}
+          >
+            {player.effects.map((e) => (
+              <PowerBadge key={e.kind} kind={e.kind} size={24} />
+            ))}
+          </Box>
+        )}
       </Box>
       {/* Name (+ optional planked-round suffix) */}
       <Box sx={{ minWidth: 0 }}>
@@ -156,15 +183,6 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
         }}
       >
         {dead ? t("reckoning.dead") : `$${score!.toLocaleString()}`}
-      </Box>
-      {/* Held powers — surface the badge at the reckoning so unrevealed
-          powers get their "I had X all along" moment without taking up the
-          space a full card would. Empty in the base game (no effects), so
-          the column collapses naturally. */}
-      <Box sx={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
-        {player.effects.map((e) => (
-          <PowerBadge key={e.kind} kind={e.kind} size={32} />
-        ))}
       </Box>
     </Box>
   );

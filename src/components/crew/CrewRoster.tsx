@@ -75,7 +75,7 @@ function deriveStatus(
 ): CrewStatus | undefined {
   if (p.status === "dead") return "dead";
   const c = game.round.commits[p.id];
-  // Powder Monkey / Wily Bosun split the lock — they're "ready" once
+  // Dead Eye / Bloodhound split the lock — they're "ready" once
   // they've filled the half this phase asks for, even though the full
   // commit isn't complete yet.
   const hasKid = p.effects.some(e => e.kind === "the_kid");

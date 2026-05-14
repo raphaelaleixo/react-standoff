@@ -75,7 +75,10 @@ export const MOCK_ROOM_STATE: RoomState<Player> = {
 export const RECKONING_PLAYERS: Player[] = [
   { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",
     bullets: [], cash: [{ id: "ra1", value: 20000 }, { id: "ra2", value: 20000 }, { id: "ra3", value: 20000 }, { id: "ra4", value: 20000 }, { id: "ra5", value: 5000 }],
-    wounds: 0, shame: 0, status: "alive", effects: [] },
+    wounds: 0, shame: 0, status: "alive",
+    // Maud held Davy Jones's Cut all game — unrevealed, so the reckoning
+    // gets to flip the card for the "I had this all along" payoff.
+    effects: [{ kind: "six_feet_under", revealed: false, used: false }] },
   { id: "b", displayName: "Mad Mary", colorOrAvatar: "blackbeard",
     bullets: [], cash: [{ id: "rb1", value: 20000 }, { id: "rb2", value: 20000 }, { id: "rb3", value: 10000 }],
     wounds: 1, shame: 1, status: "alive", effects: [] },
@@ -84,7 +87,10 @@ export const RECKONING_PLAYERS: Player[] = [
     wounds: 2, shame: 0, status: "alive", effects: [] },
   { id: "e", displayName: "Old Salt", colorOrAvatar: "black_bart",
     bullets: [], cash: [{ id: "re1", value: 20000 }, { id: "re2", value: 5000 }],
-    wounds: 0, shame: 2, status: "alive", effects: [] },
+    wounds: 0, shame: 2, status: "alive",
+    // Old Salt rode Yellow-Belly's Purse — also held in secret, flipped
+    // at the reckoning. Shame turned profit, ledger gives him the bonus.
+    effects: [{ kind: "super_coward", revealed: false, used: false }] },
   { id: "f", displayName: "Black Sam", colorOrAvatar: "henry_avery",
     bullets: [], cash: [{ id: "rf1", value: 10000 }],
     wounds: 0, shame: 0, status: "alive", effects: [] },
@@ -99,7 +105,7 @@ export const RECKONING_GAME: Game = {
   bankDeck: [],
   discardedBullets: [],
   phase: "ended",
-  variants: { superPowers: false },
+  variants: { superPowers: true },
 };
 
 export const RECKONING_ELIMINATED_BY_ROUND: Record<string, number> = { c: 6 };

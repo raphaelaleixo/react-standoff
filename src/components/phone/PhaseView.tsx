@@ -67,18 +67,37 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
     startedAt: game.round.phaseStartedAt,
     durationMs: STANDOFF_DURATION_MS,
   });
-  // Group phases that should NOT cross-fade between each other (standoff and
-  // standoff_hold share the same render branch — the AimBarrel handles its
-  // own count → no-count fade — so flipping between them shouldn't trigger
-  // the PhaseFader's exit/enter cycle).
+  const phase = game.round.phase;
+  const myCommit = game.round.commits[me.id];
+  // Kid (Dead Eye) defers target; Cunning (Bloodhound) defers bullet.
+  // myCommitPhaseDone = the player has filled in every half they were
+  // supposed to fill at the regular commit phase. Once that flips true,
+  // they're effectively waiting — we render the AimBarrel view instead of
+  // CommitPicker, so we don't briefly flash the "POWDER LOADED" /
+  // "AIMING AT" ready view before the standoff countdown begins.
+  const myHasKid = me.effects.some(e => e.kind === "the_kid");
+  const myHasCunning = me.effects.some(e => e.kind === "the_cunning");
+  const lateHalfPending =
+    (myHasKid && myCommit?.bullet !== undefined && myCommit.target === undefined) ||
+    (myHasCunning && myCommit?.target !== undefined && myCommit.bullet === undefined);
+  const myCommitPhaseDone =
+    !!myCommit &&
+    (myCommit.bullet !== undefined || myHasCunning) &&
+    (myCommit.target !== undefined || myHasKid);
+
+  // Group views that should NOT cross-fade between each other. The
+  // AimBarrel render branch covers committed-during-commit / standoff /
+  // standoff_hold / late_commit (non-holder + holder-after-pick), so all
+  // four share phaseKey="standoff" — the count just appears/disappears
+  // without a full fade.
   const phaseKey =
     game.phase === "ended" ? "ended"
     : me.status === "dead" ? "spectator"
-    : game.round.phase === "commit" ? "commit"
-    : game.round.phase === "standoff" || game.round.phase === "standoff_hold" ? "standoff"
-    : game.round.phase === "late_commit" ? "late_commit"
-    : game.round.phase === "withdraw" ? "withdraw"
-    : "reveal";
+    : phase === "commit" && !myCommitPhaseDone ? "commit"
+    : phase === "late_commit" && lateHalfPending ? "late_commit"
+    : phase === "withdraw" ? "withdraw"
+    : phase === "reveal_withdraw" || phase === "reveal_bbb" || phase === "reveal_others" || phase === "split" || phase === "grenade" ? "reveal"
+    : "standoff";
 
   if (game.phase === "ended") {
     return (
@@ -90,21 +109,15 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
   if (me.status === "dead") {
     return <PhaseFader phaseKey={phaseKey}><Spectator game={game} eliminated /></PhaseFader>;
   }
-  const phase = game.round.phase;
-  const myCommit = game.round.commits[me.id];
   const opponents = game.players.filter(p => p.id !== me.id && p.status === "alive");
 
-  // Render the commit picker during the regular commit phase, and also
-  // during late_commit when the holder still has a deferred half to
-  // fill in (Kid → target, Cunning → bullet). The picker reads the
-  // current commit + the holder's power and renders only the missing
-  // half.
-  const myHasKid = me.effects.some(e => e.kind === "the_kid");
-  const myHasCunning = me.effects.some(e => e.kind === "the_cunning");
-  const lateHalfPending =
-    (myHasKid && myCommit?.bullet !== undefined && myCommit.target === undefined) ||
-    (myHasCunning && myCommit?.target !== undefined && myCommit.bullet === undefined);
-  if (phase === "commit" || (phase === "late_commit" && lateHalfPending)) {
+  // Picker only renders while there's still something for this player to
+  // pick — once their pick lands, PhaseView falls through to the
+  // AimBarrel view directly (same phaseKey, so no extra fade).
+  if (
+    (phase === "commit" && !myCommitPhaseDone) ||
+    (phase === "late_commit" && lateHalfPending)
+  ) {
     return (
       <PhaseFader phaseKey={phaseKey}>
         <CommitPicker
@@ -120,7 +133,12 @@ export function PhaseView({ game, me, submitCommit, submitDuck, handSlots }: Pha
     );
   }
 
-  if (phase === "standoff" || phase === "standoff_hold" || phase === "late_commit") {
+  if (
+    phase === "standoff" ||
+    phase === "standoff_hold" ||
+    phase === "late_commit" ||
+    (phase === "commit" && myCommitPhaseDone)
+  ) {
     const target = game.players.find(p => p.id === myCommit?.target);
     // Show the count only during the standoff countdown itself. During the
     // standoff_hold silent beat that follows, the count is hidden (mirrors
@@ -264,14 +282,16 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn,
   const [armSpecialist, setArmSpecialist] = useState(false);
   const [armTough, setArmTough] = useState(false);
   const [armInsane, setArmInsane] = useState(false);
-  // Powder Monkey (Kid) defers target until late_commit; Wily Bosun
+  // Dead Eye (Kid) defers target until late_commit; Bloodhound
   // (Cunning) defers bullet. The picker renders only the half the
-  // current phase wants from this holder.
+  // current phase wants from this holder. Both powers are revealed
+  // on deal (public knowledge), so we don't gate on `!revealed` —
+  // just check the card hasn't been used yet this game.
   const hasKid = variantOn && me.effects.some(
-    e => e.kind === "the_kid" && !e.revealed && !e.used,
+    e => e.kind === "the_kid" && !e.used,
   );
   const hasCunning = variantOn && me.effects.some(
-    e => e.kind === "the_cunning" && !e.revealed && !e.used,
+    e => e.kind === "the_cunning" && !e.used,
   );
   const showBullet =
     (phase === "commit" && !hasCunning) ||
@@ -310,7 +330,7 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn,
   if (ready) {
     const targetPlayer = opponents.find(o => o.id === myCommit?.target);
     const targetName = targetPlayer?.displayName;
-    // Powder Monkey in commit phase has only the bullet locked — the target
+    // Dead Eye in commit phase has only the bullet locked — the target
     // gets picked during late_commit. Show a "powder loaded" waiting state
     // instead of pretending we're aiming at something.
     const heading = targetName ? "AIMING AT" : "POWDER LOADED";
@@ -446,12 +466,25 @@ function CommitPicker({ me, opponents, myCommit, onSubmit, handSlots, variantOn,
             });
           }}
           caption={(() => {
-            const bulletReady = !showBullet || !!pick;
-            const targetReady = !showTarget || !!target;
-            if (!bulletReady || !targetReady) return t("phase.commit.selectCard");
-            const bulletPart = pick ? t(`load.${pick.load}`) : null;
-            const targetPart = target
-              ? opponents.find(o => o.id === target)?.displayName ?? "?"
+            // Bloodhound at commit only picks a mark — the disc already
+            // shows it. Hint that the bullet is deferred so the player
+            // knows the lock-in isn't the full call yet.
+            if (phase === "commit" && !showBullet) return "powder loads at the standoff";
+            // Dead Eye at commit only picks a bullet; the mark is called
+            // during the standoff. Mirror Bloodhound's hint.
+            if (phase === "commit" && !showTarget) return "mark called at the standoff";
+            // In late_commit, the half locked at commit phase comes from
+            // myCommit (Dead Eye → bullet, Bloodhound → target); the
+            // in-flight half comes from local state. Resolve both so the
+            // button reads "{bullet} → {mark}" for the full picture.
+            const needsBullet = showBullet && !pick;
+            const needsTarget = showTarget && !target;
+            if (needsBullet || needsTarget) return t("phase.commit.selectCard");
+            const bullet = pick?.load ?? myCommit?.bullet;
+            const targetId = target ?? myCommit?.target;
+            const bulletPart = bullet ? t(`load.${bullet}`) : null;
+            const targetPart = targetId
+              ? opponents.find(o => o.id === targetId)?.displayName ?? "?"
               : null;
             if (bulletPart && targetPart) return `${bulletPart} → ${targetPart}`;
             return bulletPart ?? targetPart ?? t("phase.commit.selectCard");

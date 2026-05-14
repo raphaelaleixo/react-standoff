@@ -85,12 +85,24 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
   // reveal_bbb → reveal_others) keep the lines stable.
   const wasShowingLinesRef = useRef(false);
   const [drawState, setDrawState] = useState<"pre" | "active" | "done">("done");
+  // Lines committed at the moment we enter PHASES_WITH_LINES — these are
+  // covered by the global draw-in above. Lines that land AFTER that
+  // (Kid/Cunning late_commit picks) each get their own draw-in tracked in
+  // `lateLineState`.
+  const stableLineKeysRef = useRef<Set<string> | null>(null);
+  const startedLateKeysRef = useRef<Set<string>>(new Set());
+  const [lateLineState, setLateLineState] = useState<Map<string, "pre" | "active" | "done">>(
+    () => new Map(),
+  );
   // useLayoutEffect — not useEffect — so the "pre" state lands before the
   // browser ever paints the new round. Otherwise the arrows flash visible
   // for one frame between phase change and the draw-in starting.
   useLayoutEffect(() => {
     if (!showLines) {
       wasShowingLinesRef.current = false;
+      stableLineKeysRef.current = null;
+      startedLateKeysRef.current = new Set();
+      setLateLineState(new Map());
       return;
     }
     if (wasShowingLinesRef.current) return;
@@ -103,6 +115,52 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
       clearTimeout(t);
     };
   }, [showLines]);
+  // Snapshot the stable line set + spin up draw-ins for late additions.
+  // Runs on every commits change; startedLateKeysRef dedupes so an
+  // animation only fires once per new line. No cleanup so animation state
+  // updates land even if commits churn during the draw window.
+  useLayoutEffect(() => {
+    if (!showLines) return;
+    if (stableLineKeysRef.current === null) {
+      const initial = new Set<string>();
+      for (const p of players) {
+        const c = game.round.commits[p.id];
+        if (c?.target) initial.add(`${p.id}->${c.target}`);
+      }
+      stableLineKeysRef.current = initial;
+      return;
+    }
+    const newKeys: string[] = [];
+    for (const p of players) {
+      const c = game.round.commits[p.id];
+      if (!c?.target) continue;
+      const key = `${p.id}->${c.target}`;
+      if (stableLineKeysRef.current.has(key)) continue;
+      if (startedLateKeysRef.current.has(key)) continue;
+      newKeys.push(key);
+      startedLateKeysRef.current.add(key);
+    }
+    if (newKeys.length === 0) return;
+    setLateLineState(prev => {
+      const next = new Map(prev);
+      for (const k of newKeys) next.set(k, "pre");
+      return next;
+    });
+    requestAnimationFrame(() => {
+      setLateLineState(prev => {
+        const next = new Map(prev);
+        for (const k of newKeys) next.set(k, "active");
+        return next;
+      });
+    });
+    setTimeout(() => {
+      setLateLineState(prev => {
+        const next = new Map(prev);
+        for (const k of newKeys) next.set(k, "done");
+        return next;
+      });
+    }, durations.draw);
+  }, [showLines, players, game.round.commits]);
   // Phases at and after each reveal beat — once a beat lands, its state
   // (ducked / BBB struck / shots fired) stays on screen through the rest
   // of the round, including tough_reveal which holds the Phantom Pain
@@ -250,24 +308,31 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
             return false;
           };
           const FIRE_FILL_DURATION = 0.35; // seconds to fill the line source→target
+          // Per-line draw state: lines committed at standoff_hold entry
+          // use the global drawState; late additions (Kid/Cunning at
+          // late_commit) use their own entry in lateLineState so each one
+          // draws in when its commit lands, not when the round started.
+          const stableKeys = stableLineKeysRef.current;
+          const effectiveDrawStateFor = (key: string) =>
+            stableKeys?.has(key) ? drawState : (lateLineState.get(key) ?? "pre");
           // Draw-in via SVG mask: each direction renders an invisible
           // "reveal stroke" inside a <mask> whose stroke-dashoffset animates
           // from lineLen → 0. The visible dashed line stays "6 4" the whole
           // time and is only painted where the mask is white, so the dashes
           // appear progressively from source to target without ever flashing
           // as a solid line.
-          const maskRevealStyle: React.CSSProperties = {
-            transition: drawState === "active"
+          const maskRevealStyleFor = (state: "pre" | "active" | "done"): React.CSSProperties => ({
+            transition: state === "active"
               ? `stroke-dashoffset ${durations.draw}ms ease-out`
               : undefined,
-          };
+          });
           // Arrow polygons stay hidden until the beige lines finish drawing,
           // then fade in. Once visible they carry on with their existing
           // fire-fill colour shift (handled inline below).
-          const arrowDrawStyle: React.CSSProperties = {
-            opacity: drawState === "done" ? 1 : 0,
+          const arrowDrawStyleFor = (state: "pre" | "active" | "done"): React.CSSProperties => ({
+            opacity: state === "done" ? 1 : 0,
             transition: `opacity ${durations.fast}ms ease-out`,
-          };
+          });
           return (
           <g
             // Round-end fade: when phase becomes "split" the whole line set
@@ -291,6 +356,12 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
               // lines out instead of snapping them.
               const forwardCommitted = !!ci && ci.target === pj.id;
               const backwardCommitted = !!cj && cj.target === pi.id;
+              const fwdDrawState = effectiveDrawStateFor(`${pi.id}->${pj.id}`);
+              const bwdDrawState = effectiveDrawStateFor(`${pj.id}->${pi.id}`);
+              const fwdMaskStyle = maskRevealStyleFor(fwdDrawState);
+              const bwdMaskStyle = maskRevealStyleFor(bwdDrawState);
+              const fwdArrowDrawStyle = arrowDrawStyleFor(fwdDrawState);
+              const bwdArrowDrawStyle = arrowDrawStyleFor(bwdDrawState);
               const forwardVisible = forwardCommitted && lineVisible(ci, cj, pi.id, pj.id);
               const backwardVisible = backwardCommitted && lineVisible(cj, ci, pj.id, pi.id);
               const forwardFired = lineFired(ci?.bullet);
@@ -354,8 +425,8 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                             x2={forwardLane.x2} y2={forwardLane.y2}
                             stroke="white" strokeWidth={6}
                             strokeDasharray={`${lineLen} ${lineLen}`}
-                            strokeDashoffset={drawState === "pre" ? lineLen : 0}
-                            style={maskRevealStyle}
+                            strokeDashoffset={fwdDrawState === "pre" ? lineLen : 0}
+                            style={fwdMaskStyle}
                           />
                         </mask>
                       </defs>
@@ -402,11 +473,11 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                         transform={`translate(${forwardArrowEnd.x},${forwardArrowEnd.y}) rotate(${lineAngleDeg})`}
                         fill={forwardFired ? palette.blood : palette.paperDim}
                         style={{
-                          ...arrowDrawStyle,
+                          ...fwdArrowDrawStyle,
                           // Delay the colour shift until ink actually reaches the arrow tip
                           // (durLong) — not the full source→target fill — so the arrow
                           // turns red just as the red overlay arrives at it.
-                          transition: `${arrowDrawStyle.transition}, fill 0.12s ease ${forwardFired ? durLong : 0}s, filter 0.12s ease ${forwardFired ? durLong : 0}s`,
+                          transition: `${fwdArrowDrawStyle.transition}, fill 0.12s ease ${forwardFired ? durLong : 0}s, filter 0.12s ease ${forwardFired ? durLong : 0}s`,
                           filter: forwardFired ? "drop-shadow(0 0 1.8px rgba(201,58,48,0.55))" : "none",
                         }}
                       />
@@ -429,8 +500,8 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                             x2={backwardLane.x1} y2={backwardLane.y1}
                             stroke="white" strokeWidth={6}
                             strokeDasharray={`${lineLen} ${lineLen}`}
-                            strokeDashoffset={drawState === "pre" ? lineLen : 0}
-                            style={maskRevealStyle}
+                            strokeDashoffset={bwdDrawState === "pre" ? lineLen : 0}
+                            style={bwdMaskStyle}
                           />
                         </mask>
                       </defs>
@@ -477,8 +548,8 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
                         transform={`translate(${backwardArrowEnd.x},${backwardArrowEnd.y}) rotate(${lineAngleDeg + 180})`}
                         fill={backwardFired ? palette.blood : palette.paperDim}
                         style={{
-                          ...arrowDrawStyle,
-                          transition: `${arrowDrawStyle.transition}, fill 0.12s ease ${backwardFired ? durLong : 0}s, filter 0.12s ease ${backwardFired ? durLong : 0}s`,
+                          ...bwdArrowDrawStyle,
+                          transition: `${bwdArrowDrawStyle.transition}, fill 0.12s ease ${backwardFired ? durLong : 0}s, filter 0.12s ease ${backwardFired ? durLong : 0}s`,
                           filter: backwardFired ? "drop-shadow(0 0 1.8px rgba(201,58,48,0.55))" : "none",
                         }}
                       />

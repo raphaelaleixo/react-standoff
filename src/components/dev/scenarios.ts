@@ -8,6 +8,7 @@ import type {
   RoundPhase,
 } from "../../game/types";
 import { STARTING_HAND } from "../../game/setup";
+import { PUBLIC_POWER_KINDS } from "../../game/powerKinds";
 import type { GameStore } from "../../hooks/gameStore";
 
 // =============================================================================
@@ -114,7 +115,7 @@ function scenario({
     shame: shame[c.id] ?? 0,
     status: "alive",
     effects: powers[c.id]
-      ? [{ kind: powers[c.id]!, revealed: false, used: false }]
+      ? [{ kind: powers[c.id]!, revealed: PUBLIC_POWER_KINDS.has(powers[c.id]!), used: false }]
       : [],
   }));
   return {
@@ -176,9 +177,9 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "pick-and-play-the-kid",
-    label: "Pick & play — Powder Monkey (Kid)",
+    label: "Pick & play — Dead Eye (Kid)",
     blurb:
-      "Seat 'a' (Powder Monkey) is the only open commit; b, c, d are " +
+      "Seat 'a' (Dead Eye) is the only open commit; b, c, d are " +
       "pre-filled. Pick your bullet at commit, watch the standoff stamp " +
       "and aim lines come up — then during late_commit you fill in your " +
       "mark with everyone else's aim on screen.",
@@ -195,9 +196,9 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "pick-and-play-the-cunning",
-    label: "Pick & play — Wily Bosun (Cunning)",
+    label: "Pick & play — Bloodhound (Cunning)",
     blurb:
-      "Seat 'a' (Wily Bosun) is the only open commit; b, c, d are " +
+      "Seat 'a' (Bloodhound) is the only open commit; b, c, d are " +
       "pre-filled. Pick your mark at commit, watch the standoff stamp " +
       "and aim lines come up — then during late_commit you load your " +
       "bullet with everyone else's aim on screen.",
@@ -350,6 +351,84 @@ export const SCENARIOS: Scenario[] = [
           d: { bullet: "clic", target: "c" },
         },
       }),
+  },
+  {
+    id: "dead-eye-late-aim",
+    label: "Dead Eye calls the mark late",
+    blurb:
+      "Cap'n Maud holds Dead Eye. She locks her powder at commit (BANG) but " +
+      "leaves the mark blank. After the standoff lines draw in and she sees " +
+      "Mad Mary aiming her way, late_commit fills in Mary as the mark. The " +
+      "shot trades during reveal.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "the_kid" },
+        commits: {
+          a: { bullet: "bang" },
+          b: { bullet: "bang", target: "a" },
+          c: { bullet: "clic", target: "d" },
+          d: { bullet: "bang", target: "c" },
+        },
+      }),
+    onPhaseEnter: {
+      late_commit: (store) => {
+        store.update("round", { "commits/a/target": "b" });
+      },
+    },
+  },
+  {
+    id: "kid-and-cunning-on-parade",
+    label: "Dead Eye + Bloodhound on parade",
+    blurb:
+      "Cap'n Maud holds Dead Eye, Mad Mary holds Bloodhound. Both badges " +
+      "are revealed on deal — you see them on the crew rail from the moment " +
+      "the round opens. Maud locks her powder at commit (BANG); Mary locks " +
+      "Wet Match as her mark. At late_commit Maud calls One-Eye and Mary " +
+      "loads BANG. Both lines animate in.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "the_kid", b: "the_cunning" },
+        commits: {
+          a: { bullet: "bang" },
+          b: { target: "c" },
+          c: { bullet: "bang", target: "d" },
+          d: { bullet: "clic", target: "a" },
+        },
+      }),
+    onPhaseEnter: {
+      late_commit: (store) => {
+        store.update("round", {
+          "commits/a/target": "d",
+          "commits/b/bullet": "bang",
+        });
+      },
+    },
+  },
+  {
+    id: "bloodhound-late-load",
+    label: "Bloodhound loads the gun late",
+    blurb:
+      "Cap'n Maud holds Bloodhound. She locks Mad Mary as her mark at commit " +
+      "but leaves the powder unchosen. After the standoff lines draw in she " +
+      "loads BANG during late_commit and the round resolves.",
+    build: () =>
+      scenario({
+        seats: 4,
+        powers: { a: "the_cunning" },
+        commits: {
+          a: { target: "b" },
+          b: { bullet: "clic", target: "a" },
+          c: { bullet: "clic", target: "d" },
+          d: { bullet: "bang", target: "c" },
+        },
+      }),
+    onPhaseEnter: {
+      late_commit: (store) => {
+        store.update("round", { "commits/a/bullet": "bang" });
+      },
+    },
   },
   {
     id: "six-feet-bonus",

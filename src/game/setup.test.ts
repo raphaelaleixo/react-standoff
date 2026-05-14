@@ -114,7 +114,7 @@ describe('initGame variants', () => {
     expect(game.variants.superPowers).toBe(false);
   });
 
-  test('variant on: every player has exactly one PowerEffect, none revealed', () => {
+  test('variant on: every player has exactly one PowerEffect, public ones revealed', () => {
     const game = initGame(
       [samplePlayer('p1'), samplePlayer('p2'), samplePlayer('p3'), samplePlayer('p4')],
       'seed-on',
@@ -123,8 +123,13 @@ describe('initGame variants', () => {
     );
     for (const p of game.players) {
       expect(p.effects).toHaveLength(1);
-      expect(p.effects[0].revealed).toBe(false);
-      expect(p.effects[0].used).toBe(false);
+      const e = p.effects[0];
+      // Dead Eye / Bloodhound are revealed on deal — their mechanic
+      // changes the visible commit flow, so hiding them makes no sense.
+      // Every other power starts hidden.
+      const shouldBeRevealed = e.kind === 'the_kid' || e.kind === 'the_cunning';
+      expect(e.revealed).toBe(shouldBeRevealed);
+      expect(e.used).toBe(false);
     }
     expect(game.variants.superPowers).toBe(true);
   });

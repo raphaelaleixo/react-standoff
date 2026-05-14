@@ -1,12 +1,13 @@
 import { shuffle } from './random';
 import type { Game, Player, PowerEffect, PowerKind } from './types';
-import { POWER_KINDS } from './powerKinds';
+import { POWER_KINDS, PUBLIC_POWER_KINDS } from './powerKinds';
 
 export function dealPowers(players: Player[], rng: () => number): Player[] {
   const shuffled = shuffle([...POWER_KINDS], rng);
   return players.map((p, i) => {
     if (i >= shuffled.length) return { ...p, effects: [] };
-    const effect: PowerEffect = { kind: shuffled[i], revealed: false, used: false };
+    const kind = shuffled[i];
+    const effect: PowerEffect = { kind, revealed: PUBLIC_POWER_KINDS.has(kind), used: false };
     return { ...p, effects: [effect] };
   });
 }

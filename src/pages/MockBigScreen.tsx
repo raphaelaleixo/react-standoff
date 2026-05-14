@@ -22,6 +22,8 @@ import { useBigScreenZoom } from "../hooks/useBigScreenZoom";
 import { createLocalGameStore, type LocalGameStore } from "../components/dev/localGameStore";
 import { SCENARIOS } from "../components/dev/scenarios";
 import { ScenarioDock, type DockSurface } from "../components/dev/ScenarioDock";
+import { PUBLIC_POWER_KINDS } from "../game/powerKinds";
+import type { PowerActivation } from "../game/types";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import {
@@ -82,6 +84,29 @@ export default function MockBigScreen() {
     activeScenario?.onPhaseEnter?.[phase]?.(store);
   }, [game, activeScenario, store]);
 
+  // Synthetic round-start reveals for revealed-on-deal powers (Dead Eye /
+  // Bloodhound). Captured once at round 1 commit entry and held stable so
+  // the overlay plays through even after the state machine has moved on
+  // to standoff. Cleared on store reset.
+  const [initialReveals, setInitialReveals] = useState<PowerActivation[]>([]);
+  useEffect(() => {
+    if (!game) {
+      setInitialReveals([]);
+      return;
+    }
+    if (initialReveals.length > 0) return;
+    if (game.round.number !== 1 || game.round.phase !== "commit") return;
+    const out: PowerActivation[] = [];
+    for (const p of game.players) {
+      for (const e of p.effects) {
+        if (PUBLIC_POWER_KINDS.has(e.kind) && e.revealed) {
+          out.push({ playerId: p.id, kind: e.kind });
+        }
+      }
+    }
+    if (out.length > 0) setInitialReveals(out);
+  }, [game, initialReveals.length]);
+
   return (
     <>
       {surface === "muster" ? (
@@ -116,6 +141,14 @@ export default function MockBigScreen() {
             />
             <PowerRevealOverlay
               activations={overlayActivations}
+              players={game.players}
+            />
+            {/* Round-start reveal for publicly-dealt powers (Dead Eye /
+                Bloodhound). Plays once at scenario load so the audience
+                sees the card animate in before settling into a crew-rail
+                badge. */}
+            <PowerRevealOverlay
+              activations={initialReveals}
               players={game.players}
             />
             {/* Synthetic insane reveal overlay — same trick RoomPage uses. */}

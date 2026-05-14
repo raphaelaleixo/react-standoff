@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { PUBLIC_POWER_KINDS } from "../game/powerKinds";
+import type { PowerActivation } from "../game/types";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -156,6 +158,7 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
           cry={<>{t("shell.round")} {t("shell.ofTotal", { n: toRoman(round.number) })}</>}
         />
       </PageCanvas>
+      <RoundStartPublicReveals game={game} />
       {game.round.resolution && (
         <PowerRevealOverlay
           activations={
@@ -206,4 +209,29 @@ function GameView({ game, roomId }: { game: ReturnType<typeof useGameState>["gam
       )}
     </Box>
   );
+}
+
+// Round-start reveal for revealed-on-deal powers (Dead Eye / Bloodhound).
+// Captured once at round 1 commit entry and held stable so the overlay
+// plays through even after the state machine has moved on to standoff.
+function RoundStartPublicReveals({
+  game,
+}: {
+  game: NonNullable<ReturnType<typeof useGameState>["game"]>;
+}) {
+  const [reveals, setReveals] = useState<PowerActivation[]>([]);
+  useEffect(() => {
+    if (reveals.length > 0) return;
+    if (game.round.number !== 1 || game.round.phase !== "commit") return;
+    const out: PowerActivation[] = [];
+    for (const p of game.players) {
+      for (const e of p.effects) {
+        if (PUBLIC_POWER_KINDS.has(e.kind) && e.revealed) {
+          out.push({ playerId: p.id, kind: e.kind });
+        }
+      }
+    }
+    if (out.length > 0) setReveals(out);
+  }, [game, reveals.length]);
+  return <PowerRevealOverlay activations={reveals} players={game.players} />;
 }
