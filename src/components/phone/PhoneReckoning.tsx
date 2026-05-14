@@ -6,7 +6,7 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { PowerBadge } from "../powers/PowerBadge";
-import { finalScore, rankPlayers } from "../../game/scoring";
+import { finalScore, gameOutcome, rankPlayers } from "../../game/scoring";
 import { toRoman } from "../../lib/navyHours";
 import { breath, fadeIn, popIn, slideUpIn } from "../../theme/animations";
 import type { Game, Player } from "../../game/types";
@@ -37,8 +37,13 @@ export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
   // Jones's Cut bonus inside finalScore so both surfaces rank seats the same.
   const totalKills = game.players.filter((p) => p.status === "dead").length;
   const ranked = rankPlayers(game.players, totalKills);
-  const winner = ranked[0];
-  const rest = ranked.slice(1);
+  // Crown the engine's named winner (cop variant: the Privateer when their
+  // mission lands, not just the richest seat). Defaults to ranked[0] for
+  // base-game and any case the outcome can't resolve.
+  const outcome = gameOutcome(game, totalKills);
+  const winner =
+    game.players.find((p) => p.id === outcome.winnerId) ?? ranked[0];
+  const rest = ranked.filter((p) => p.id !== winner.id);
 
   const rowsTotalMs = rest.length * ROW_STAGGER_MS;
   const winnerDelayMs = rowsTotalMs + WINNER_BUFFER_MS;
@@ -259,11 +264,10 @@ function PhoneEndRow({
   return (
     <Box
       sx={{
-        // Outer wrapper carries the row's chrome (border, animation, dead
-        // dim) so the inner grid stays a clean 4-column ledger. Held powers
-        // tack on as a second row in this column flow.
-        display: "flex",
-        flexDirection: "column",
+        display: "grid",
+        gridTemplateColumns: PHONE_GRID_COLUMNS,
+        gap: "0.6rem",
+        alignItems: "center",
         padding: "0.4rem 0.45rem",
         borderBottom: `1px solid ${palette.rule}`,
         // Highlight the local seat's row with a paper outline + slight tonal
@@ -273,14 +277,6 @@ function PhoneEndRow({
         background: isMe ? palette.inkUp : "transparent",
         animation: `${slideUpIn} 360ms ease-out ${enterDelayMs}ms both`,
         filter: dead ? "opacity(0.6)" : undefined,
-      }}
-    >
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: PHONE_GRID_COLUMNS,
-        gap: "0.6rem",
-        alignItems: "center",
       }}
     >
       <Box
@@ -297,17 +293,41 @@ function PhoneEndRow({
       </Box>
       <Box
         sx={{
+          position: "relative",
           width: 44,
           height: 30,
-          border: `1.5px solid ${palette.paper}`,
-          background: flagColor(player.colorOrAvatar),
-          color: palette.paper,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
-        <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={20} />
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            border: `1.5px solid ${palette.paper}`,
+            background: flagColor(player.colorOrAvatar),
+            color: palette.paper,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <FlagFor id={jollyRogerForColor(player.colorOrAvatar)} size={20} />
+        </Box>
+        {player.effects.length > 0 && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: -10,
+              left: -10,
+              display: "flex",
+              gap: "0.18rem",
+              pointerEvents: "none",
+            }}
+          >
+            {player.effects.map((e) => (
+              <PowerBadge key={e.kind} kind={e.kind} size={22} />
+            ))}
+          </Box>
+        )}
       </Box>
       <Box sx={{ minWidth: 0, overflow: "hidden" }}>
         <Box
@@ -340,21 +360,6 @@ function PhoneEndRow({
       >
         {dead ? t("reckoning.dead") : `$${score!.toLocaleString()}`}
       </Box>
-    </Box>
-      {player.effects.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            gap: "0.35rem",
-            marginTop: "0.35rem",
-            paddingLeft: "calc(26px + 0.6rem)", // align under the flag chip
-          }}
-        >
-          {player.effects.map((e) => (
-            <PowerBadge key={e.kind} kind={e.kind} size={28} />
-          ))}
-        </Box>
-      )}
     </Box>
   );
 }
