@@ -470,7 +470,64 @@ export const SCENARIOS: Scenario[] = [
   // ===========================================================================
   // Cop variant scenarios. Built via initGame (which handles role-deal +
   // game.cop init), then specific fields are pinned for reproducibility.
+  //
+  // "Auto-play" variants pre-fill every commit and hook phase 8 to
+  // snap-finalise the bottle-pass without a phone holder — they let the
+  // big-screen mock run the variant end-to-end on its own.
+  //
+  // "Pick & play" variants leave seat 'a' open so the dev plays the
+  // round through the MockPlayerPage.
   // ===========================================================================
+  {
+    id: "auto-cop-first-call",
+    kind: "cop",
+    label: "Auto-play — Privateer's 1st call (Tide 0→1)",
+    blurb:
+      "Big-screen auto-play: all 5 commits pre-filled with peaceful clics. " +
+      "Round 1 plays through to phase 8; the Privateer auto-sends a note. " +
+      "Tide advances 0/3 → 1/3, then round 2 begins.",
+    build: () => buildCopScenario("auto-cop-first-call", game => {
+      game.round.commits = peacefulRingCommits();
+    }),
+    onPhaseEnter: {
+      telephone: (store) => {
+        // Let the bottle visually settle at the first holder, then
+        // snap-finalise the pass with the cop's note inside. Skipping
+        // the holder-by-holder walk keeps the demo brief.
+        setTimeout(() => {
+          store.update("", {
+            "round/telephone": { used: true, holderOrder: ["a", "b", "c", "d", "e"] },
+            "cop/callsMade": 1,
+          });
+        }, 1500);
+      },
+    },
+  },
+  {
+    id: "auto-cop-reinforcements",
+    kind: "cop",
+    label: "Auto-play — Privateer's 3rd call (Sails on the Horizon)",
+    blurb:
+      "Big-screen auto-play: all 5 commits pre-filled, the Tide is already " +
+      "at 2/3, round 5 plays through to phase 8. The Privateer's note " +
+      "triggers the Sails-on-Horizon overlay and the King's Navy sails.",
+    build: () => buildCopScenario("auto-cop-reinforcements", game => {
+      game.cop = { callsMade: 2 };
+      game.round.number = 5;
+      game.round.commits = peacefulRingCommits();
+    }),
+    onPhaseEnter: {
+      telephone: (store) => {
+        setTimeout(() => {
+          store.update("", {
+            "round/telephone": { used: true, holderOrder: ["a", "b", "c", "d", "e"] },
+            "cop/callsMade": 3,
+            "cop/reinforcementsRoundOnTheWay": 5,
+          });
+        }, 1500);
+      },
+    },
+  },
   {
     id: "cop-calls-early",
     kind: "cop",
@@ -578,6 +635,19 @@ export const SCENARIOS: Scenario[] = [
     }),
   },
 ];
+
+// All five seats committing peaceful clics in a ring — used by the
+// auto-play cop scenarios so the round resolves with everyone standing,
+// no shots, and all five carrying the bottle in phase 8.
+function peacefulRingCommits(): Record<string, Commit> {
+  return {
+    a: { bullet: "clic", target: "b" },
+    b: { bullet: "clic", target: "c" },
+    c: { bullet: "clic", target: "d" },
+    d: { bullet: "clic", target: "e" },
+    e: { bullet: "clic", target: "a" },
+  };
+}
 
 // 5-seat crew template used for cop-variant scenarios. initGame fills in
 // bullets/cash/wounds/shame/status, then the scenario's mutator pins the
