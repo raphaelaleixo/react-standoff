@@ -39,3 +39,16 @@ export function endGameStatus(game: Game): { ended: boolean; reason?: EndGameRea
   if (game.round.number >= 8) return { ended: true, reason: 'all_rounds' };
   return { ended: false };
 }
+
+export function shouldRunTelephonePhase(game: Game): boolean {
+  if (!game.variants.cop) return false;
+  if (game.round.number > 6) return false;
+  const standing = game.round.resolution?.standing ?? [];
+  return standing.length > 0;
+}
+
+export function telephoneHolderOrder(game: Game): string[] {
+  const standingSet = new Set(game.round.resolution?.standing ?? []);
+  // Seat order = order of game.players. Among those, keep only standing.
+  return game.players.filter(p => standingSet.has(p.id)).map(p => p.id);
+}

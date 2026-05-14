@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 import type { Banknote, Game, Player, RoundResolution } from './types';
-import { drawLoot, endGameStatus, startNextRound } from './transitions';
+import { drawLoot, endGameStatus, shouldRunTelephonePhase, startNextRound, telephoneHolderOrder } from './transitions';
 
 let nid = 0;
 const note = (value: Banknote['value']): Banknote => ({ id: `n${nid++}`, value });
@@ -214,5 +214,75 @@ describe('startNextRound variants & activations', () => {
     g.variants = { superPowers: false, cop: false };
     const next = startNextRound(g, 1000);
     expect(next.variants).toEqual({ superPowers: false, cop: false });
+  });
+});
+
+function makeGameForTelephone(opts: {
+  copVariant: boolean;
+  roundNumber: number;
+  standing: string[];
+}): Game {
+  const resolution: RoundResolution = {
+    shots: [],
+    ducks: [],
+    standing: opts.standing,
+    woundedThisRound: {},
+    eliminated: [],
+    awards: {},
+    carryover: [],
+    powerActivations: [],
+  };
+  return {
+    phase: 'in_progress',
+    players: ['a', 'b', 'c', 'd', 'e'].map((id) => ({
+      id, displayName: id, colorOrAvatar: '#000',
+      bullets: [], cash: [], wounds: 0, shame: [], status: 'alive', effects: [],
+    })),
+    round: {
+      number: opts.roundNumber, phase: 'split', phaseStartedAt: 0,
+      loot: [], commits: {}, activations: {}, resolution,
+    },
+    bankDeck: [], discardedBullets: [], seed: 's',
+    variants: { superPowers: false, cop: opts.copVariant },
+  };
+}
+
+describe('shouldRunTelephonePhase', () => {
+  it('returns true when cop variant on, round ≤6, ≥1 split participant', () => {
+    const g = makeGameForTelephone({ copVariant: true, roundNumber: 3, standing: ['a', 'b'] });
+    expect(shouldRunTelephonePhase(g)).toBe(true);
+  });
+
+  it('returns false when cop variant off', () => {
+    const g = makeGameForTelephone({ copVariant: false, roundNumber: 3, standing: ['a', 'b'] });
+    expect(shouldRunTelephonePhase(g)).toBe(false);
+  });
+
+  it('returns false in round 7', () => {
+    const g = makeGameForTelephone({ copVariant: true, roundNumber: 7, standing: ['a', 'b'] });
+    expect(shouldRunTelephonePhase(g)).toBe(false);
+  });
+
+  it('returns false in round 8', () => {
+    const g = makeGameForTelephone({ copVariant: true, roundNumber: 8, standing: ['a', 'b'] });
+    expect(shouldRunTelephonePhase(g)).toBe(false);
+  });
+
+  it('returns false when nobody participated in the split', () => {
+    const g = makeGameForTelephone({ copVariant: true, roundNumber: 2, standing: [] });
+    expect(shouldRunTelephonePhase(g)).toBe(false);
+  });
+});
+
+describe('telephoneHolderOrder', () => {
+  it('returns split-participants in seat (player index) order', () => {
+    const g = makeGameForTelephone({ copVariant: true, roundNumber: 1, standing: ['c', 'a', 'e'] });
+    // players are seated a,b,c,d,e (indices 0..4); standing = a,c,e in seat order
+    expect(telephoneHolderOrder(g)).toEqual(['a', 'c', 'e']);
+  });
+
+  it('returns [] when nobody participated', () => {
+    const g = makeGameForTelephone({ copVariant: true, roundNumber: 1, standing: [] });
+    expect(telephoneHolderOrder(g)).toEqual([]);
   });
 });
