@@ -112,7 +112,7 @@ export default function MockBigScreen() {
       {surface === "muster" ? (
         <MusterScreen
           roomState={MOCK_ROOM_STATE}
-          joinUrl="https://standoff.party/join/MOCK"
+          joinUrl="https://standoff.ludoratory.com/join/MOCK"
           canStart
           onStart={() => {}}
         />
