@@ -1,5 +1,4 @@
 import { Box } from "@mui/material";
-import { palette } from "../../theme/colors";
 import { Lantern } from "./icons/Lantern";
 
 interface Props {
@@ -11,21 +10,21 @@ interface Props {
 // when a bottle washes ashore (cop's nth call lands). The 3rd lantern
 // lighting up = the King's Navy sails; the dramatic full-screen wash
 // is handled by ReinforcementsOverlay.
+//
+// Renders as a bare row of lanterns — no frame, no background. Place
+// it inside another container that supplies layout context.
 export function Switchboard({ callsMade }: Props) {
   return (
     <Box
       sx={{
         display: "flex",
-        gap: "0.4rem",
-        padding: "0.5rem 0.7rem",
-        background: palette.inkUp,
-        border: `2px solid ${palette.paper}`,
-        boxShadow: `3px 3px 0 ${palette.inkDeep}`,
+        gap: "0.6rem",
+        justifyContent: "center",
         alignItems: "flex-end",
       }}
     >
       {[1, 2, 3].map(i => (
-        <Lantern key={i} lit={callsMade >= i} size={56} />
+        <Lantern key={i} lit={callsMade >= i} size={64} />
       ))}
     </Box>
   );

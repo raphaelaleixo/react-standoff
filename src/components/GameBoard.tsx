@@ -180,13 +180,15 @@ export function GameBoard({ game: rawGame, freshlyStruck }: GameBoardProps) {
         </Box>
         <Box sx={{ padding: "0.6rem 0.85rem", display: "flex", flexDirection: "column", minHeight: 0 }}>
           <CrewRoster game={game} freshlyStruck={freshlyStruck} />
+          {game.variants.cop && (
+            <Box sx={{ marginTop: "0.6rem" }}>
+              <Switchboard callsMade={game.cop?.callsMade ?? 0} />
+            </Box>
+          )}
         </Box>
       </Box>
       {game.variants.cop && (
         <>
-          <Box sx={{ position: "absolute", top: "0.8rem", right: "0.8rem", zIndex: 20 }}>
-            <Switchboard callsMade={game.cop?.callsMade ?? 0} />
-          </Box>
           <TelephonePassOverlay game={game} />
           <ReinforcementsOverlay game={game} />
         </>
