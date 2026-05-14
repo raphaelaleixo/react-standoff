@@ -25,6 +25,28 @@ Decisions locked during brainstorm, kept here so future readers can see the desi
 | Mafia pass-screen UI | PASS + decoy CALL button | PASS-only · disabled CALL |
 | Super-powers compatibility | Mutually exclusive in wave 1; combined in wave-2 spec | Ship combined from the start · drop combination permanently |
 | Player count gating | 5-6 players only | Extend to 4-6 |
+| Cop archetype | **The Privateer** (cop's pirate-period analogue) | Redcoat · Crown's Eye · Snitch · Customs Man |
+| Signal mechanism | **Note in a bottle**, passed under the table; 3 notes washed ashore = Navy sails | Signal lantern · Carrier pigeon · Coded handkerchief |
+
+## Theme — pirate translation
+
+Internal engine identifiers stay paper-faithful (`Role: 'cop' \| 'mafia'`, `Round.telephone`, `Game.cop`, `applyTelephoneCall`, etc.) so the code can read alongside the source rulebook. **User-facing strings** translate to the pirate theme:
+
+| Engine concept | User-facing copy |
+|---|---|
+| Cop | **The Privateer** |
+| Mafia | **The Brethren** |
+| Telephone / Phone | **The Bottle** (a note in a bottle, passed under the table) |
+| "Call" (cop's action) | **Send** (slip a note inside the bottle) |
+| Switchboard (3-stage tracker) | **The Tide** (bottles drifting ashore) |
+| 1st & 2nd calls | "A note washed ashore" |
+| 3rd call (reinforcements) | **"Sails on the horizon"** |
+| Reinforcements arrive | The King's Navy sails for these waters |
+| Flashing-light shame | Shame markers earned after the Navy is on the way (still tracked engine-side as `{ flashing: true }`; visualized as a distinct glyph on the player card) |
+| "JUSTICE SERVED" (cop wins) | **"BY THE CROWN'S JUSTICE"** |
+| "Cop will not testify" (mafia wins) | **"The Privateer sleeps with the fishes."** |
+
+All values live in `src/locales/en.json` under the `cop.*` namespace. The keys themselves stay paper-faithful (e.g. `cop.telephone.heading`) to keep the engine/string mapping legible; the *values* carry the pirate theme.
 
 ## Game shape
 

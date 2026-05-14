@@ -126,54 +126,54 @@
   },
   "cop": {
     "lobby": {
-      "toggleLabel": "A Cop in the Mafia",
-      "toggleSub": "one of you is a cop",
-      "requiresFiveSix": "requires 5 or 6 players",
-      "exclusiveWithPowers": "wave 1: choose one — cop or super powers",
-      "banner": "A cop is among you…"
+      "toggleLabel": "A Privateer Among Us",
+      "toggleSub": "the Crown has eyes in the crew",
+      "requiresFiveSix": "needs 5 or 6 hands aboard",
+      "exclusiveWithPowers": "wave I: choose one — Privateer or Super Powers",
+      "banner": "A Privateer sails among us…"
     },
     "reveal": {
-      "title": "Your role…",
-      "cop": "You are the cop",
-      "copBody": "Call for backup. Stay alive. Don't blink.",
-      "mafia": "You are the mafia",
-      "mafiaBody": "The cop is among you. Find them. Kill them. Or get rich trying.",
-      "ack": "I'm in",
-      "allDealt": "ROLES DEALT"
+      "title": "Show yer colours…",
+      "cop": "You are the Privateer",
+      "copBody": "Send word to the Navy. Stay alive. Don't blink.",
+      "mafia": "You are the Brethren",
+      "mafiaBody": "A Privateer sails among us. Find them. Feed them to the fishes. Or just get rich.",
+      "ack": "Aye",
+      "allDealt": "COLOURS DEALT"
     },
     "widget": {
-      "cop": "Cop",
-      "mafia": "Mafia",
+      "cop": "Privateer",
+      "mafia": "Brethren",
       "calls": "{{n}}/3",
       "callsDone": "3/3 ✓",
-      "hintCallByRound6": "Call needs to land by round VI",
-      "hintOneDuckLeft": "One more duck and you're cooked"
+      "hintCallByRound6": "Send a note by round VI",
+      "hintOneDuckLeft": "One more duck and the crew smells the rat"
     },
     "telephone": {
-      "heading": "THE PHONE IS WITH YOU",
+      "heading": "THE BOTTLE IS IN YER HANDS",
       "pass": "Pass",
-      "call": "Call",
-      "callPlaced": "Call placed",
-      "notUsed": "Telephone — not used",
-      "used": "Telephone — used"
+      "call": "Send",
+      "callPlaced": "Note slipped",
+      "notUsed": "Bottle — empty",
+      "used": "Bottle — sealed with a note"
     },
     "switchboard": {
-      "busy": "Busy",
-      "reinforcementsSent": "Reinforcements Sent"
+      "busy": "A note washed ashore",
+      "reinforcementsSent": "Sails on the horizon"
     },
     "reinforcements": {
-      "overlayTitle": "REINFORCEMENTS ON THE WAY",
-      "overlaySub": "the sirens are coming"
+      "overlayTitle": "SAILS ON THE HORIZON",
+      "overlaySub": "the King's Navy makes for these waters"
     },
     "reckoning": {
-      "rolesIntro": "The roles…",
-      "calledRoundN": "Reinforcements were called in round {{n}}.",
-      "neverCame": "Reinforcements never came.",
-      "copSurvived": "The cop survived.",
-      "copKilledRoundN": "The cop was killed in round {{n}}.",
-      "copFlashingShame": "The cop took {{n}} flashing-light shame marker(s).",
-      "verdictCopWins": "JUSTICE SERVED",
-      "verdictMafiaWins": "The cop will not testify."
+      "rolesIntro": "Show yer colours…",
+      "calledRoundN": "The Privateer sent word by round {{n}}.",
+      "neverCame": "No word ever reached the shore.",
+      "copSurvived": "The Privateer survived.",
+      "copKilledRoundN": "The Privateer was cut down in round {{n}}.",
+      "copFlashingShame": "The Privateer was caught ducking {{n}} time(s) after the Navy was on the way.",
+      "verdictCopWins": "BY THE CROWN'S JUSTICE",
+      "verdictMafiaWins": "The Privateer sleeps with the fishes."
     }
   },
   "player": {
