@@ -20,12 +20,17 @@ const LANTERN_D =
 
 // Glow placement, in viewBox units. Centered horizontally on the
 // lantern (~1335), slightly above its vertical center to sit in the
-// flame/glass area.
+// flame/glass area. Radius is large so the warm light fills most of
+// the lantern interior when lit.
 const GLASS_CX = 1335;
-const GLASS_CY = 1500;
-const GLASS_R = 540;
+const GLASS_CY = 1430;
+const GLASS_R = 780;
 
-const SILHOUETTE = "rgba(255, 255, 255, 0.45)";
+// Silhouette darkens when lit so the metal frame reads as a dark
+// outline against the bright interior glow. When unlit, a faint
+// translucent white keeps it visible on the dark widget background.
+const SILHOUETTE_UNLIT = "rgba(255, 255, 255, 0.32)";
+const SILHOUETTE_LIT = "rgba(18, 12, 6, 1)";
 
 export function Lantern({ lit, size = 64 }: Props) {
   const id = useId();
@@ -51,10 +56,10 @@ export function Lantern({ lit, size = 64 }: Props) {
             r={GLASS_R}
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0%" stopColor="rgba(255, 232, 160, 0.95)" />
-            <stop offset="35%" stopColor="rgba(246, 198, 106, 0.55)" />
-            <stop offset="75%" stopColor="rgba(246, 198, 106, 0.1)" />
-            <stop offset="100%" stopColor="rgba(246, 198, 106, 0)" />
+            <stop offset="0%" stopColor="rgba(255, 240, 180, 1)" />
+            <stop offset="45%" stopColor="rgba(248, 200, 110, 0.85)" />
+            <stop offset="80%" stopColor="rgba(238, 160, 70, 0.25)" />
+            <stop offset="100%" stopColor="rgba(238, 160, 70, 0)" />
           </radialGradient>
         </defs>
         {/* Glow sits BEHIND the silhouette so it bleeds through the
@@ -72,7 +77,12 @@ export function Lantern({ lit, size = 64 }: Props) {
           />
         )}
         <g transform={LANTERN_TRANSFORM}>
-          <path d={LANTERN_D} fill={SILHOUETTE} fillRule="nonzero" />
+          <path
+            d={LANTERN_D}
+            fill={lit ? SILHOUETTE_LIT : SILHOUETTE_UNLIT}
+            fillRule="nonzero"
+            style={{ transition: "fill 360ms ease" }}
+          />
         </g>
         <style>
           {`@keyframes lanternFlicker {
