@@ -3,6 +3,7 @@ import type { BulletCard, Commit, Game, Player } from "../game/types";
 import { applyTelephoneCall, resolveRound, type ResolveRoundResult } from "../game/resolver";
 import {
   endGameStatus,
+  revealAllEffects,
   shouldRunTelephonePhase,
   startNextRound,
   telephoneHolderOrder,
@@ -108,7 +109,7 @@ function endRoundFromGrenade(
   const resolved = { ...game, players: result.players };
   const status = endGameStatus(resolved);
   if (status.ended) {
-    store.update("", { phase: "ended", players: result.players });
+    store.update("", { phase: "ended", players: revealAllEffects(result.players) });
     return;
   }
   const nextGame = startNextRound(resolved, serverNowMs);
@@ -460,7 +461,7 @@ export function useGameState(
       if (status.ended) {
         store.update("", {
           phase: "ended",
-          players: result.players,
+          players: revealAllEffects(result.players),
         });
         return;
       }
@@ -516,7 +517,10 @@ export function useGameState(
     const fire = () => {
       const status = endGameStatus(game);
       if (status.ended) {
-        store.update("", { phase: "ended" });
+        store.update("", {
+          phase: "ended",
+          players: revealAllEffects(game.players),
+        });
         return;
       }
       const nextGame = startNextRound(game, serverNow());
