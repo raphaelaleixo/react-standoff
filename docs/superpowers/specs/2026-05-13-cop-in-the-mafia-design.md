@@ -35,7 +35,7 @@ Internal engine identifiers stay paper-faithful (`Role: 'cop' \| 'mafia'`, `Roun
 | Engine concept | User-facing copy |
 |---|---|
 | Cop | **The Privateer** |
-| Mafia | **The Brethren** |
+| Mafia | **Pirates** (singular: "You are a Pirate") |
 | Telephone / Phone | **The Bottle** (a note in a bottle, passed under the table) |
 | "Call" (cop's action) | **Send** (slip a note inside the bottle) |
 | Switchboard (3-stage tracker) | **The Tide** (bottles drifting ashore) |

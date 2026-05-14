@@ -136,14 +136,14 @@
       "title": "Show yer colours…",
       "cop": "You are the Privateer",
       "copBody": "Send word to the Navy. Stay alive. Don't blink.",
-      "mafia": "You are the Brethren",
+      "mafia": "You are a Pirate",
       "mafiaBody": "A Privateer sails among us. Find them. Feed them to the fishes. Or just get rich.",
       "ack": "Aye",
       "allDealt": "COLOURS DEALT"
     },
     "widget": {
       "cop": "Privateer",
-      "mafia": "Brethren",
+      "mafia": "Pirate",
       "calls": "{{n}}/3",
       "callsDone": "3/3 ✓",
       "hintCallByRound6": "Send a note by round VI",
