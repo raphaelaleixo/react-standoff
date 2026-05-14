@@ -136,3 +136,120 @@ describe('normalizeGame Insane fields', () => {
     expect(g?.round.resolution?.roundTerminated).toBeUndefined();
   });
 });
+
+describe('normalizeGame — cop variant fields', () => {
+  it('round-trips Player.role', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [{ id: 'p1', role: 'cop' }, { id: 'p2', role: 'mafia' }],
+      round: { number: 1, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: true },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.players[0].role).toBe('cop');
+    expect(g.players[1].role).toBe('mafia');
+  });
+
+  it('drops invalid role values', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [{ id: 'p1', role: 'cheese' }],
+      round: { number: 1, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: true },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.players[0].role).toBeUndefined();
+  });
+
+  it('round-trips Round.telephone', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: {
+        number: 2, phase: 'telephone', loot: [], commits: {}, activations: {},
+        telephone: { used: true, holderOrder: ['a', 'b'] },
+      },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: true },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.round.telephone).toEqual({ used: true, holderOrder: ['a', 'b'] });
+  });
+
+  it('round-trips Round.telephone.currentHolderId when present', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: {
+        number: 2, phase: 'telephone', loot: [], commits: {}, activations: {},
+        telephone: { used: false, holderOrder: ['a', 'b', 'c'], currentHolderId: 'b' },
+      },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: true },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.round.telephone).toEqual({
+      used: false,
+      holderOrder: ['a', 'b', 'c'],
+      currentHolderId: 'b',
+    });
+  });
+
+  it('round-trips Game.cop', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: { number: 5, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: true },
+      cop: { callsMade: 2, reinforcementsRoundOnTheWay: 4 },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.cop).toEqual({ callsMade: 2, reinforcementsRoundOnTheWay: 4 });
+  });
+
+  it('round-trips GameVariants.cop default false when missing', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: { number: 1, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: true },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.variants).toEqual({ superPowers: true, cop: false });
+  });
+
+  it('round-trips ShameMarker[]', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [{
+        id: 'p1',
+        shame: [{ flashing: true }, { flashing: false }],
+      }],
+      round: { number: 1, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: true },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.players[0].shame).toEqual([{ flashing: true }, { flashing: false }]);
+  });
+
+  it('migrates legacy numeric shame to non-flashing markers', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [{ id: 'p1', shame: 3 }],
+      round: { number: 1, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: false },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.players[0].shame).toEqual([
+      { flashing: false },
+      { flashing: false },
+      { flashing: false },
+    ]);
+  });
+});

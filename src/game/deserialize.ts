@@ -7,6 +7,7 @@ import type {
   GameVariants,
   Player,
   PowerActivation,
+  Role,
   Round,
   RoundActivations,
   RoundResolution,
@@ -35,9 +36,15 @@ function normalizeShame(raw: unknown): ShameMarker[] {
   return [];
 }
 
+function normalizeRole(raw: unknown): Role | undefined {
+  if (raw === 'cop' || raw === 'mafia') return raw;
+  return undefined;
+}
+
 function normalizePlayer(raw: Raw): Player {
   const r = (raw ?? {}) as Record<string, unknown>;
-  return {
+  const role = normalizeRole(r.role);
+  const player: Player = {
     id: String(r.id ?? ''),
     displayName: String(r.displayName ?? ''),
     colorOrAvatar: String(r.colorOrAvatar ?? '#bdbdbd'),
@@ -48,6 +55,8 @@ function normalizePlayer(raw: Raw): Player {
     status: (r.status ?? 'alive') as Player['status'],
     effects: asArray<Effect>(r.effects),
   };
+  if (role) player.role = role;
+  return player;
 }
 
 function normalizeActivations(raw: Raw): RoundActivations {
@@ -93,7 +102,7 @@ function normalizeResolution(raw: Raw): RoundResolution {
 
 function normalizeRound(raw: Raw): Round {
   const r = (raw ?? {}) as Record<string, unknown>;
-  return {
+  const round: Round = {
     number: Number(r.number ?? 1),
     phase: (r.phase ?? 'commit') as Round['phase'],
     phaseStartedAt: Number(r.phaseStartedAt ?? 0),
@@ -102,6 +111,17 @@ function normalizeRound(raw: Raw): Round {
     activations: normalizeActivations(r.activations as Raw),
     resolution: r.resolution ? normalizeResolution(r.resolution as Raw) : undefined,
   };
+  if (r.telephone && typeof r.telephone === 'object') {
+    const t = r.telephone as Record<string, unknown>;
+    round.telephone = {
+      used: !!t.used,
+      holderOrder: asArray<string>(t.holderOrder),
+    };
+    if (typeof t.currentHolderId === 'string') {
+      round.telephone.currentHolderId = t.currentHolderId;
+    }
+  }
+  return round;
 }
 
 function normalizeVariants(raw: Raw): GameVariants {
@@ -127,6 +147,15 @@ export function normalizeGame(raw: Raw): Game | null {
     game.previousRoundSummary = {
       round: Number(p.round ?? 0),
       resolution: normalizeResolution(p.resolution as Raw),
+    };
+  }
+  if (r.cop && typeof r.cop === 'object') {
+    const c = r.cop as Record<string, unknown>;
+    const callsMade = Math.min(3, Math.max(0, Number(c.callsMade ?? 0))) as 0 | 1 | 2 | 3;
+    const reinf = c.reinforcementsRoundOnTheWay;
+    game.cop = {
+      callsMade,
+      reinforcementsRoundOnTheWay: typeof reinf === 'number' ? reinf : undefined,
     };
   }
   return game;
