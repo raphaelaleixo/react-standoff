@@ -36,9 +36,12 @@ const GLASS_R = 780;
 // objects sitting against the slightly-darker ink page background.
 const SILHOUETTE_UNLIT = "#2a2118";
 const SILHOUETTE_LIT = "rgba(0, 0, 0, 1)";
-// Matches the ruleStrong stroke that traces the loot notes — gives the
-// lantern silhouette a thin highlight along every sub-path edge.
-const STROKE = "rgba(237, 224, 196, 0.45)";
+// Stroke along every sub-path edge. Unlit uses the same ruleStrong cream
+// the loot notes use, which reads as a thin highlight on the dark inkUp
+// body. Lit swaps to a dark warm amber so the line doesn't compete with
+// the bright interior glow.
+const STROKE_UNLIT = "rgba(237, 224, 196, 0.45)";
+const STROKE_LIT = "rgba(50, 30, 12, 0.85)";
 
 export function Lantern({ lit, size = 64 }: Props) {
   const id = useId();
@@ -99,10 +102,10 @@ export function Lantern({ lit, size = 64 }: Props) {
             d={LANTERN_D}
             fill={lit ? SILHOUETTE_LIT : SILHOUETTE_UNLIT}
             fillRule="nonzero"
-            stroke={STROKE}
+            stroke={lit ? STROKE_LIT : STROKE_UNLIT}
             strokeWidth={1.25}
             vectorEffect="non-scaling-stroke"
-            style={{ transition: "fill 480ms ease" }}
+            style={{ transition: "fill 480ms ease, stroke 480ms ease" }}
           />
         </g>
         <style>
