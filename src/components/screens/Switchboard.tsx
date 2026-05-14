@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
 import { SectionHeader } from "../shell/SectionHeader";
-import { palette } from "../../theme/colors";
 import { Lantern } from "./icons/Lantern";
 
 interface Props {
@@ -26,19 +25,7 @@ export function Switchboard({ callsMade }: Props) {
         }}
       >
         {[1, 2, 3].map(i => (
-          <Box
-            key={i}
-            sx={{
-              backgroundColor: palette.inkUp,
-              border: `1px solid ${palette.rule}`,
-              padding: "0.55rem 0.5rem",
-              overflow: "visible",
-              display: "flex",
-              alignItems: "flex-end",
-            }}
-          >
-            <Lantern lit={callsMade >= i} size={48} />
-          </Box>
+          <Lantern key={i} lit={callsMade >= i} size={48} />
         ))}
       </Box>
     </Box>

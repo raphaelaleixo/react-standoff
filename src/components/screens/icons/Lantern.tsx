@@ -31,7 +31,10 @@ const GLASS_R = 780;
 // lighter than the widget background (palette.inkUp = #2a2118) so the
 // frame doesn't disappear into the canvas. When unlit, a faint
 // translucent white keeps it visible against the same background.
-const SILHOUETTE_UNLIT = "rgba(150, 108, 65, 1)";
+// Unlit silhouette uses inkUp (#2a2118) — the same fill the loot notes
+// use for their body, so the dim lanterns read as the same family of
+// objects sitting against the slightly-darker ink page background.
+const SILHOUETTE_UNLIT = "#2a2118";
 const SILHOUETTE_LIT = "rgba(0, 0, 0, 1)";
 
 export function Lantern({ lit, size = 64 }: Props) {
