@@ -29,6 +29,9 @@ const GRENADE_EXPLOSION_MS = 2800;
 // orchestration off `phaseStartedAt`; this is the timer that finally writes
 // the resolved players + opens the next round.
 const SPLIT_MS = 1800;
+// Rollover split (no awards distributed — bag stays on the table for next
+// round) gets a longer linger so the "Rollover" stamp has time to read.
+const SPLIT_ROLLOVER_MS = 3600;
 // Telephone-phase linger after the pass finalises. Longer when the cop
 // CALL went through (the on-screen switchboard card flips and animates the
 // reinforcement countdown) so it gets to play before the next round opens.
@@ -437,7 +440,13 @@ export function useGameState(
   useEffect(() => {
     if (!store || !game) return;
     if (game.round.phase !== "split") return;
-    const remaining = SPLIT_MS - (serverNow() - game.round.phaseStartedAt);
+    const resolution = game.round.resolution;
+    const isRollover =
+      !!resolution &&
+      resolution.carryover.length > 0 &&
+      Object.values(resolution.awards).every(a => !a || a.length === 0);
+    const splitDuration = isRollover ? SPLIT_ROLLOVER_MS : SPLIT_MS;
+    const remaining = splitDuration - (serverNow() - game.round.phaseStartedAt);
     const fire = () => {
       const result = resolveRound(
         game.round.commits,
