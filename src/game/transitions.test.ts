@@ -272,6 +272,12 @@ describe('shouldRunTelephonePhase', () => {
     const g = makeGameForTelephone({ copVariant: true, roundNumber: 2, standing: [] });
     expect(shouldRunTelephonePhase(g)).toBe(false);
   });
+
+  it('returns false once the cop has placed all 3 calls', () => {
+    const g = makeGameForTelephone({ copVariant: true, roundNumber: 4, standing: ['a', 'b'] });
+    g.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 3 };
+    expect(shouldRunTelephonePhase(g)).toBe(false);
+  });
 });
 
 describe('telephoneHolderOrder', () => {

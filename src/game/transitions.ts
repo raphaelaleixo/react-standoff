@@ -43,6 +43,10 @@ export function endGameStatus(game: Game): { ended: boolean; reason?: EndGameRea
 export function shouldRunTelephonePhase(game: Game): boolean {
   if (!game.variants.cop) return false;
   if (game.round.number > 6) return false;
+  // Once all 3 calls have landed, reinforcements are on the way — there's
+  // no further call the cop could make, so phase 8 has no remaining game
+  // function. Skip it from this round onward.
+  if (game.cop && game.cop.callsMade >= 3) return false;
   const standing = game.round.resolution?.standing ?? [];
   return standing.length > 0;
 }
