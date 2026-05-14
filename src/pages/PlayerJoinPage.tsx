@@ -25,11 +25,16 @@ export default function PlayerJoinPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [variantSuperPowers, setVariantSuperPowers] = useState(false);
+  const [variantCop, setVariantCop] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    const r = ref(database, `rooms/${id}/lobbyVariants/superPowers`);
-    return onValue(r, snap => setVariantSuperPowers(!!snap.val()));
+    const r = ref(database, `rooms/${id}/lobbyVariants`);
+    return onValue(r, snap => {
+      const v = (snap.val() as { superPowers?: unknown; cop?: unknown } | null) ?? null;
+      setVariantSuperPowers(!!v?.superPowers);
+      setVariantCop(!!v?.cop);
+    });
   }, [id]);
 
   if (loading) {
@@ -155,6 +160,14 @@ export default function PlayerJoinPage() {
           <Box sx={{ textAlign: "center", padding: "0.4rem 0.85rem 0", opacity: 0.8 }}>
             <Typography variant="caption" sx={{ color: palette.paperDim }}>
               {t("powers.lobbyBannerOn")}
+            </Typography>
+          </Box>
+        )}
+
+        {variantCop && (
+          <Box sx={{ textAlign: "center", padding: "0.4rem 0.85rem 0", opacity: 0.8 }}>
+            <Typography variant="caption" sx={{ color: palette.paperDim }}>
+              {t("cop.lobby.banner")}
             </Typography>
           </Box>
         )}

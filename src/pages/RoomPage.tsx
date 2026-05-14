@@ -47,12 +47,32 @@ export default function RoomPage() {
   const { game } = useGameState(store, serverNow);
   const derived = useRoomState(roomState ?? EMPTY_ROOM);
   const [variantSuperPowers, setVariantSuperPowers] = useState(false);
+  const [variantCop, setVariantCop] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    const r = ref(database, `rooms/${id}/lobbyVariants/superPowers`);
-    return onValue(r, snap => setVariantSuperPowers(!!snap.val()));
+    const r = ref(database, `rooms/${id}/lobbyVariants`);
+    return onValue(r, snap => {
+      const v = (snap.val() as Partial<GameVariants> | null) ?? null;
+      setVariantSuperPowers(!!v?.superPowers);
+      setVariantCop(!!v?.cop);
+    });
   }, [id]);
+
+  // Auto-disable cop if the crew falls out of the 5-6 range mid-lobby.
+  const claimedCount = (roomState?.players ?? []).filter(
+    p => p.status !== "empty",
+  ).length;
+  const canEnableCop = claimedCount >= 5 && claimedCount <= 6;
+  useEffect(() => {
+    if (!id) return;
+    if (variantCop && !canEnableCop) {
+      void set(ref(database, `rooms/${id}/lobbyVariants`), {
+        superPowers: variantSuperPowers,
+        cop: false,
+      });
+    }
+  }, [id, variantCop, canEnableCop, variantSuperPowers]);
 
   if (loading) {
     return (
@@ -81,8 +101,11 @@ export default function RoomPage() {
     if (!derived.canStart) return;
     const startedRoom = startGame(roomState);
     const variantsSnap = await get(ref(database, `rooms/${id}/lobbyVariants`));
-    const variants: GameVariants =
-      (variantsSnap.val() as GameVariants | null) ?? { superPowers: false, cop: false };
+    const raw = (variantsSnap.val() as Partial<GameVariants> | null) ?? null;
+    const variants: GameVariants = {
+      superPowers: !!raw?.superPowers,
+      cop: !!raw?.cop,
+    };
     const players = startedRoom.players
       .filter(p => p.status !== "empty" && p.data)
       .map(p => p.data as Player);
@@ -93,18 +116,47 @@ export default function RoomPage() {
     });
   };
 
-  const onVariantToggle = async (next: boolean) => {
+  const onSuperPowersToggle = async (next: boolean) => {
     if (!id) return;
-    await set(ref(database, `rooms/${id}/lobbyVariants`), { superPowers: next });
+    // Mutually exclusive in wave I: turning Super Powers on forces Cop off.
+    await set(ref(database, `rooms/${id}/lobbyVariants`), {
+      superPowers: next,
+      cop: next ? false : variantCop,
+    });
   };
 
+  const onCopToggle = async (next: boolean) => {
+    if (!id) return;
+    if (next && !canEnableCop) return;
+    // Mutually exclusive in wave I: turning Cop on forces Super Powers off.
+    await set(ref(database, `rooms/${id}/lobbyVariants`), {
+      superPowers: next ? false : variantSuperPowers,
+      cop: next,
+    });
+  };
+
+  const copHint = !canEnableCop
+    ? t("cop.lobby.requiresFiveSix")
+    : variantSuperPowers && !variantCop
+      ? t("cop.lobby.exclusiveWithPowers")
+      : t("cop.lobby.toggleSub");
+
   const variantSlot = (
-    <XMarksCheckbox
-      checked={variantSuperPowers}
-      onChange={onVariantToggle}
-      label={t("powers.variantLabel")}
-      hint={t("powers.variantHint")}
-    />
+    <Box sx={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+      <XMarksCheckbox
+        checked={variantSuperPowers}
+        onChange={onSuperPowersToggle}
+        label={t("powers.variantLabel")}
+        hint={t("powers.variantHint")}
+      />
+      <XMarksCheckbox
+        checked={variantCop}
+        onChange={onCopToggle}
+        disabled={!canEnableCop}
+        label={t("cop.lobby.toggleLabel")}
+        hint={copHint}
+      />
+    </Box>
   );
 
   return (
