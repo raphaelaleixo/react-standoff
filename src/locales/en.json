@@ -165,12 +165,6 @@
       "overlaySub": "the King's Navy makes for these waters"
     },
     "reckoning": {
-      "rolesIntro": "Show yer colours…",
-      "calledRoundN": "The Privateer sent word by round {{n}}.",
-      "neverCame": "No word ever reached the shore.",
-      "copSurvived": "The Privateer survived.",
-      "copKilledRoundN": "The Privateer was cut down in round {{n}}.",
-      "copFlashingShame": "The Privateer was caught ducking {{n}} time(s) after the Navy was on the way.",
       "verdictCopWins": "BY THE CROWN'S JUSTICE",
       "verdictMafiaWins": "The Privateer sleeps with the fishes."
     }
