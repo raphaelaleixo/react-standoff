@@ -40,7 +40,7 @@ const SILHOUETTE_LIT = "rgba(0, 0, 0, 1)";
 // the loot notes use, which reads as a thin highlight on the dark inkUp
 // body. Lit swaps to a dark warm amber so the line doesn't compete with
 // the bright interior glow.
-const STROKE_UNLIT = "rgba(237, 224, 196, 0.25)";
+const STROKE_UNLIT = "rgba(155, 115, 70, 0.7)";
 const STROKE_LIT = "rgba(50, 30, 12, 0.85)";
 
 export function Lantern({ lit, size = 64 }: Props) {
