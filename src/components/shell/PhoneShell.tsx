@@ -41,6 +41,7 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
   const { t } = useTranslation();
   const cash = cashTotal(me);
   const myPower = me.effects[0];
+  const bothCards = !!me.role && !!myPower;
   const [powerOpen, setPowerOpen] = useState(!!introOpen);
   // `introActive` flips false the first time the card closes. After that
   // taps just toggle, and the hint stays gone for the rest of the session.
@@ -221,7 +222,7 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
                   : {
                       bottom: "0.8rem",
                       right: "0.95rem",
-                      transform: "scale(0.24)",
+                      transform: bothCards ? "scale(0.35)" : "scale(0.24)",
                     }),
               }}
             >
@@ -323,7 +324,7 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
                 position: "absolute",
                 cursor: "pointer",
                 zIndex: 6,
-                transformOrigin: "bottom right",
+                transformOrigin: bothCards ? "bottom left" : "bottom right",
                 perspective: "1200px",
                 transition:
                   "bottom 0.5s cubic-bezier(0.34, 1.32, 0.64, 1), right 0.5s cubic-bezier(0.34, 1.32, 0.64, 1), transform 0.5s cubic-bezier(0.34, 1.32, 0.64, 1)",
@@ -333,11 +334,18 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
                       right: "calc(50% - 150px)",
                       transform: "scale(1)",
                     }
-                  : {
-                      bottom: "0.8rem",
-                      right: "0.95rem",
-                      transform: "scale(0.24)",
-                    }),
+                  : bothCards
+                    ? {
+                        bottom: "0.8rem",
+                        left: "0.95rem",
+                        right: "auto",
+                        transform: "scale(0.35)",
+                      }
+                    : {
+                        bottom: "0.8rem",
+                        right: "0.95rem",
+                        transform: "scale(0.24)",
+                      }),
               }}
             >
               <Box
