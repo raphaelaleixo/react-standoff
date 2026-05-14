@@ -7,7 +7,7 @@
 // submitInsane so the grenade scenario plays through.
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { PhoneShell } from "../components/shell/PhoneShell";
 import { PhaseView } from "../components/phone/PhaseView";
 import { PhoneReckoning } from "../components/phone/PhoneReckoning";
@@ -20,6 +20,15 @@ import { ScenarioDock, type DockSurface } from "../components/dev/ScenarioDock";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
 import { RECKONING_GAME } from "../components/dev/mockFixtures";
+import { telephoneHolderOrder } from "../game/transitions";
+import type { Game, RoundResolution } from "../game/types";
+
+// Smoke-testing the cop variant from this mock page:
+//   1. Pick a cop scenario from the dock (e.g. `cop-calls-early`).
+//   2. Pick a seat — seat 0 is the cop in all cop scenarios.
+//   3. Round 1 commit → RoleRevealScreen fires; tap "Aye" to acknowledge.
+//   4. Use "Force telephone" to jump straight into the bottle-pass beat.
+//   5. The current holder's phone shows `TelephoneHolderScreen` with PASS/Send.
 
 // Player surface has no muster screen — the lobby join lives on its own
 // route, not the in-game phone.
@@ -62,6 +71,55 @@ export default function MockPlayerPage() {
 
   const handlePlay = () => loadScenario(scenarioId);
   const handleReset = () => store.reset(null);
+
+  // Dev-only jump straight to the telephone phase. Mirrors the engine's
+  // phase-entry write in useGameState: builds a minimal `resolution`
+  // (all-alive standing so the holder order is non-empty), flips the
+  // phase, and seeds `Round.telephone` with the first holder so the
+  // TelephoneHolderScreen renders immediately.
+  const forceTelephone = useCallback(() => {
+    const current = game;
+    if (!current) return;
+    if (!current.variants.cop) return;
+    if (current.round.phase === "telephone") return;
+
+    const standing =
+      current.round.resolution?.standing ??
+      current.players.filter(p => p.status === "alive").map(p => p.id);
+
+    const resolution: RoundResolution = current.round.resolution ?? {
+      shots: [],
+      ducks: [],
+      standing,
+      woundedThisRound: {},
+      eliminated: [],
+      awards: {},
+      carryover: [],
+      powerActivations: [],
+    };
+
+    const order = telephoneHolderOrder({
+      ...current,
+      round: { ...current.round, resolution },
+    });
+    if (order.length === 0) return;
+
+    const next: Game = {
+      ...current,
+      round: {
+        ...current.round,
+        phase: "telephone",
+        phaseStartedAt: Date.now(),
+        resolution,
+        telephone: {
+          used: false,
+          holderOrder: order,
+          currentHolderId: order[0],
+        },
+      },
+    };
+    store.set(next);
+  }, [game, store]);
 
   // Fire scenario phase-entry hooks once per phase transition (same as
   // MockBigScreen). Powers production reads from a phone (tough was here
@@ -186,6 +244,25 @@ export default function MockPlayerPage() {
           onChange={setVariantOverride}
           label="Super Powers"
         />
+        {renderGame.variants.cop && (
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={forceTelephone}
+            disabled={renderGame.round.phase === "telephone"}
+            sx={{
+              textTransform: "none",
+              color: palette.paper,
+              borderColor: palette.paper,
+              "&.Mui-disabled": {
+                color: palette.paperDim,
+                borderColor: palette.rule,
+              },
+            }}
+          >
+            Force telephone
+          </Button>
+        )}
       </ScenarioDock>
     </>
   );
