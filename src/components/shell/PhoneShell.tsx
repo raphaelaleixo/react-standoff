@@ -80,6 +80,11 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
       closeCard();
       return;
     }
+    // One card open at a time: close role if it's open.
+    if (roleOpen) {
+      setRoleOpen(false);
+      setRoleIntroActive(false);
+    }
     setPowerOpen(o => !o);
   };
 
@@ -98,6 +103,11 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
     if (roleIntroActive) {
       closeRoleCard();
       return;
+    }
+    // One card open at a time: close power if it's open.
+    if (powerOpen) {
+      setPowerOpen(false);
+      setIntroActive(false);
     }
     setRoleOpen(o => !o);
   };
