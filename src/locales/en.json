@@ -166,7 +166,8 @@
     },
     "reckoning": {
       "verdictCopWins": "BY THE CROWN'S JUSTICE",
-      "verdictMafiaWins": "The Privateer sleeps with the fishes."
+      "verdictMafiaWins": "The Privateer sleeps with the fishes.",
+      "copWinsCry": "the Navy claps the crew in irons — the loot stays with the Crown"
     }
   },
   "player": {

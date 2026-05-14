@@ -6,6 +6,7 @@ import { FlagFor } from "../flags";
 import { jollyRogerForColor } from "../flags/jollyRogerForColor";
 import { WoundPips, ShamePips } from "../marks/PlayerMarks";
 import { PowerBadge } from "../powers/PowerBadge";
+import { Lantern } from "../screens/icons/Lantern";
 import { finalScore, gameOutcome, rankPlayers } from "../../game/scoring";
 import { toRoman } from "../../lib/navyHours";
 import { breath, fadeIn, popIn, slideUpIn } from "../../theme/animations";
@@ -61,6 +62,7 @@ export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
     >
       <PhoneWinnerEnthronement
         winner={winner}
+        copWon={outcome.kind === "cop_wins"}
         enterDelayMs={winnerDelayMs}
         durationMs={WINNER_DURATION_MS}
         totalKills={totalKills}
@@ -108,11 +110,16 @@ export function PhoneReckoning({ game, me }: PhoneReckoningProps) {
 
 function PhoneWinnerEnthronement({
   winner,
+  copWon,
   enterDelayMs,
   durationMs,
   totalKills,
 }: {
   winner: Player;
+  // Cop-variant verdict: swap the eyebrow for "BY THE CROWN'S JUSTICE",
+  // drop the cash line (mission verdict isn't about loot), and slip a
+  // lit lantern beside the name.
+  copWon: boolean;
   enterDelayMs: number;
   durationMs: number;
   totalKills: number;
@@ -132,13 +139,13 @@ function PhoneWinnerEnthronement({
         sx={{
           fontFamily: fonts.displayCaps,
           fontFeatureSettings: '"smcp"',
-          fontSize: "0.6rem",
-          letterSpacing: "0.4em",
-          color: palette.paperDim,
+          fontSize: copWon ? "0.72rem" : "0.6rem",
+          letterSpacing: copWon ? "0.6em" : "0.4em",
+          color: copWon ? palette.blood : palette.paperDim,
           animation: `${fadeIn} 400ms ease-out ${eyebrowDelayMs}ms both`,
         }}
       >
-        {t("reckoning.winnerEyebrow")}
+        {copWon ? t("cop.reckoning.verdictCopWins") : t("reckoning.winnerEyebrow")}
       </Box>
       <Box
         sx={{
@@ -187,6 +194,10 @@ function PhoneWinnerEnthronement({
       </Box>
       <Box
         sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: copWon ? "0.55rem" : 0,
           fontFamily: fonts.blackletter,
           fontSize: "2.2rem",
           lineHeight: 0.95,
@@ -195,6 +206,7 @@ function PhoneWinnerEnthronement({
           animation: `${popIn} ${durationMs}ms cubic-bezier(.2,.7,.2,1.4) ${medallionDelayMs}ms both`,
         }}
       >
+        {copWon && <Lantern lit size={28} />}
         {winner.displayName}
       </Box>
       <Box
@@ -210,19 +222,21 @@ function PhoneWinnerEnthronement({
         <WoundPips count={winner.wounds} size={11} />
         {winner.shame.length > 0 && <ShamePips markers={winner.shame} size={9} />}
       </Box>
-      <Box
-        sx={{
-          fontFamily: fonts.blackletter,
-          fontWeight: 700,
-          fontSize: "1.7rem",
-          lineHeight: 1,
-          marginTop: "0.4rem",
-          color: titleColor,
-          animation: `${fadeIn} 400ms ease-out ${medallionDelayMs + 160}ms both`,
-        }}
-      >
-        ${score.toLocaleString()}
-      </Box>
+      {!copWon && (
+        <Box
+          sx={{
+            fontFamily: fonts.blackletter,
+            fontWeight: 700,
+            fontSize: "1.7rem",
+            lineHeight: 1,
+            marginTop: "0.4rem",
+            color: titleColor,
+            animation: `${fadeIn} 400ms ease-out ${medallionDelayMs + 160}ms both`,
+          }}
+        >
+          ${score.toLocaleString()}
+        </Box>
+      )}
       <Box
         sx={{
           fontFamily: fonts.body,
@@ -233,7 +247,7 @@ function PhoneWinnerEnthronement({
           animation: `${fadeIn} 500ms ease-out ${cryDelayMs}ms both`,
         }}
       >
-        {t("reckoning.winnerCry")}
+        {copWon ? t("cop.reckoning.copWinsCry") : t("reckoning.winnerCry")}
       </Box>
     </Box>
   );

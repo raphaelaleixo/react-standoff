@@ -427,7 +427,7 @@ function PrivateerVictoryEnthronement({
           animation: `${fadeIn} 500ms ease-out ${cryDelayMs}ms both`,
         }}
       >
-        the Navy claps the crew in irons — the loot stays with the Crown
+        {t("cop.reckoning.copWinsCry")}
       </Box>
     </Box>
   );
