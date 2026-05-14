@@ -162,6 +162,7 @@ export default function MockPlayerPage() {
           submitCommit={submitCommit}
           submitDuck={submitDuck}
           handSlots={handSlots}
+          store={store}
         />
       </PhoneShell>
       <ScenarioDock

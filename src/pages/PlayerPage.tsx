@@ -177,6 +177,7 @@ export default function PlayerPage() {
         submitCommit={submitCommit}
         submitDuck={submitDuck}
         handSlots={handSlots}
+        store={store}
       />
     </PhoneShell>
   );
