@@ -574,36 +574,93 @@ export const SCENARIOS: Scenario[] = [
   {
     id: "cop-powers-baseline",
     kind: "cop_powers",
-    label: "Cop × Powers — baseline",
-    blurb: "Both variants on, no special interactions; verify layout and intros compose.",
-    build: () => buildCopPowersScenario("seed-cop-powers-baseline", () => {}),
+    label: "Auto-play — Cop × Powers baseline",
+    blurb:
+      "Both variants on, all 5 seats pre-filled with peaceful clics. " +
+      "Round 1 auto-plays to phase 8 and the Privateer's note lands. " +
+      "Demonstrates the dual-card layout + sequential intro.",
+    build: () => buildCopPowersScenario("seed-cop-powers-baseline", game => {
+      game.round.commits = peacefulRingCommits();
+    }),
+    onPhaseEnter: {
+      telephone: (store) => {
+        setTimeout(() => {
+          store.update("", {
+            "round/telephone": { used: true, holderOrder: ["a", "b", "c", "d", "e"] },
+            "cop/callsMade": 1,
+          });
+        }, 1500);
+      },
+    },
   },
   {
     id: "cop-with-insane",
     kind: "cop_powers",
-    label: "Cop × Powers — cop holds Insane",
-    blurb: "Cop has Pocket Inferno armed; takes a wound; round terminates, phase 8 skipped.",
+    label: "Auto-play — Cop × Powers, cop holds Insane",
+    blurb:
+      "Cop holds Pocket Inferno (face-down). Peaceful round auto-plays to " +
+      "phase 8; the grenade doesn't fire (no wound). Verifies the role card " +
+      "and Insane power card coexist in the corner.",
     build: () => buildCopPowersScenario("seed-cop-with-insane", game => {
       game.players[0].effects = [{ kind: "insane", revealed: false, used: false }];
+      game.round.commits = peacefulRingCommits();
     }),
+    onPhaseEnter: {
+      telephone: (store) => {
+        setTimeout(() => {
+          store.update("", {
+            "round/telephone": { used: true, holderOrder: ["a", "b", "c", "d", "e"] },
+            "cop/callsMade": 1,
+          });
+        }, 1500);
+      },
+    },
   },
   {
     id: "cop-with-super-coward",
     kind: "cop_powers",
-    label: "Cop × Powers — cop has Yellow-Belly's Purse",
-    blurb: "Cop ducks too much after the alarm; mission fails; shame inverts in scoring.",
+    label: "Auto-play — Cop × Powers, cop has Yellow-Belly's Purse",
+    blurb:
+      "Cop holds Yellow-Belly's Purse. Peaceful round auto-plays to phase 8. " +
+      "Verifies the role card and super_coward power card coexist; shame " +
+      "inversion would apply at reckoning if the mission failed.",
     build: () => buildCopPowersScenario("seed-cop-with-super-coward", game => {
       game.players[0].effects = [{ kind: "super_coward", revealed: false, used: false }];
+      game.round.commits = peacefulRingCommits();
     }),
+    onPhaseEnter: {
+      telephone: (store) => {
+        setTimeout(() => {
+          store.update("", {
+            "round/telephone": { used: true, holderOrder: ["a", "b", "c", "d", "e"] },
+            "cop/callsMade": 1,
+          });
+        }, 1500);
+      },
+    },
   },
   {
     id: "mafia-with-tough",
     kind: "cop_powers",
-    label: "Cop × Powers — mafia holds Phantom Pain",
-    blurb: "Mafia player has Tough; cop calls successfully; both systems compose.",
+    label: "Auto-play — Cop × Powers, mafia holds Phantom Pain",
+    blurb:
+      "Seat 'b' (mafia) holds Phantom Pain. Peaceful round auto-plays to " +
+      "phase 8 and the Privateer's note lands. Verifies both variant " +
+      "systems compose without interference.",
     build: () => buildCopPowersScenario("seed-mafia-with-tough", game => {
       game.players[1].effects = [{ kind: "tough", revealed: false, used: false }];
+      game.round.commits = peacefulRingCommits();
     }),
+    onPhaseEnter: {
+      telephone: (store) => {
+        setTimeout(() => {
+          store.update("", {
+            "round/telephone": { used: true, holderOrder: ["a", "b", "c", "d", "e"] },
+            "cop/callsMade": 1,
+          });
+        }, 1500);
+      },
+    },
   },
 ];
 
