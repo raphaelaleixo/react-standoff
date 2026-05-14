@@ -25,6 +25,9 @@ interface EndGameRowProps {
    * to 0 so the base-game callsite doesn't have to thread it.
    */
   totalKills?: number;
+  /** Cop variant: when true, the row gets a small "PRIVATEER" tag pinned to
+   *  the flag chip so the role identity is always visible regardless of rank. */
+  isPrivateer?: boolean;
 }
 
 // One grid column per ledger field so columns line up across rows. The Undertaker
@@ -35,7 +38,7 @@ interface EndGameRowProps {
 // flag chip so they never push the other columns around.
 const GRID_COLUMNS = "44px 60px 1fr 52px 80px 110px 110px 110px 130px";
 
-export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, totalKills = 0 }: EndGameRowProps) {
+export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, totalKills = 0, isPrivateer = false }: EndGameRowProps) {
   const { t } = useTranslation();
   const dead = player.status === "dead";
   const cash = cashTotal(player);
@@ -113,6 +116,26 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
             {player.effects.map((e) => (
               <PowerBadge key={e.kind} kind={e.kind} size={24} />
             ))}
+          </Box>
+        )}
+        {isPrivateer && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: -8,
+              left: -8,
+              padding: "0.12rem 0.4rem",
+              background: palette.bloodDeep,
+              border: `1.5px solid ${palette.paper}`,
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: "0.55rem",
+              letterSpacing: "0.18em",
+              color: palette.paper,
+              pointerEvents: "none",
+            }}
+          >
+            {t("cop.widget.cop")}
           </Box>
         )}
       </Box>

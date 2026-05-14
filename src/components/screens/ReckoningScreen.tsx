@@ -58,8 +58,18 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
   // so we can count it directly off the live roster.
   const totalKills = game.players.filter((p) => p.status === "dead").length;
   const ranked = rankPlayers(game.players, totalKills);
-  const winner = ranked[0];
-  const rest = ranked.slice(1);
+  // The displayed winner is whoever the engine's outcome resolver names —
+  // for the cop variant that's the Privateer (when their mission lands),
+  // not just the richest player. Defaults to ranked[0] for base game / if
+  // the outcome can't find a matching player.
+  const outcome = gameOutcome(game, totalKills);
+  const winner =
+    game.players.find((p) => p.id === outcome.winnerId) ?? ranked[0];
+  const rest = ranked.filter((p) => p.id !== winner.id);
+  const cop = game.variants.cop
+    ? game.players.find((p) => p.role === "cop")
+    : undefined;
+  const copWon = outcome.kind === "cop_wins";
 
   // Cop variant: a three-beat prefix runs before the ledger choreography.
   // Base game starts at 'done' so behavior is byte-identical to before.
@@ -149,13 +159,22 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
             minHeight: 0,
           }}
         >
-          <WinnerEnthronement
-            winner={winner}
-            t={t}
-            enterDelayMs={winnerDelayMs}
-            durationMs={WINNER_DURATION_MS}
-            totalKills={totalKills}
-          />
+          {copWon && cop ? (
+            <PrivateerVictoryEnthronement
+              cop={cop}
+              t={t}
+              enterDelayMs={winnerDelayMs}
+              durationMs={WINNER_DURATION_MS}
+            />
+          ) : (
+            <WinnerEnthronement
+              winner={winner}
+              t={t}
+              enterDelayMs={winnerDelayMs}
+              durationMs={WINNER_DURATION_MS}
+              totalKills={totalKills}
+            />
+          )}
 
           <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "auto", marginTop: "0.4rem" }}>
             {rest.map((p, i) => (
@@ -166,6 +185,7 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
                 eliminatedRound={eliminatedByRound[p.id] ?? null}
                 enterDelayMs={revealsTotalMs + (rest.length - 1 - i) * ROW_STAGGER_MS}
                 totalKills={totalKills}
+                isPrivateer={p.id === cop?.id}
               />
             ))}
           </Box>
@@ -333,6 +353,122 @@ function WinnerEnthronement({
         }}
       >
         {t("reckoning.winnerCry")}
+      </Box>
+    </Box>
+  );
+}
+
+// Cop-wins enthronement — replaces the cash-focused WinnerEnthronement when
+// the Privateer's mission lands. No cash total: the Crown's verdict isn't
+// about who hoarded the most loot. The cop's flag is overlaid with a small
+// "PRIVATEER" tag so the role identity reads at a glance.
+function PrivateerVictoryEnthronement({
+  cop,
+  t,
+  enterDelayMs,
+  durationMs,
+}: {
+  cop: Player;
+  t: (k: string, p?: Record<string, unknown>) => string;
+  enterDelayMs: number;
+  durationMs: number;
+}) {
+  const eyebrowDelayMs = enterDelayMs;
+  const medallionDelayMs = enterDelayMs + 180;
+  const cryDelayMs = enterDelayMs + durationMs - 100;
+  return (
+    <Box
+      sx={{
+        textAlign: "center",
+        padding: "0.8rem 0 0.6rem",
+        marginBottom: "0.6rem",
+      }}
+    >
+      <Box
+        sx={{
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "0.78rem",
+          letterSpacing: "0.6em",
+          color: palette.blood,
+          animation: `${fadeIn} 400ms ease-out ${eyebrowDelayMs}ms both`,
+        }}
+      >
+        {t("cop.reckoning.verdictCopWins")}
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "1.5rem",
+          marginTop: "0.5rem",
+          animation: `${popIn} ${durationMs}ms cubic-bezier(.2,.7,.2,1.4) ${medallionDelayMs}ms both`,
+        }}
+      >
+        <Box
+          sx={{
+            position: "relative",
+            width: 156,
+            height: 108,
+            border: `4px solid ${palette.paper}`,
+            background: flagColor(cop.colorOrAvatar),
+            color: palette.paper,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: `6px 6px 0 ${palette.inkDeep}`,
+          }}
+        >
+          <FlagFor id={jollyRogerForColor(cop.colorOrAvatar)} size={84} />
+          <Box
+            sx={{
+              position: "absolute",
+              top: -14,
+              left: -14,
+              padding: "0.25rem 0.5rem",
+              background: palette.bloodDeep,
+              border: `2px solid ${palette.paper}`,
+              fontFamily: fonts.displayCaps,
+              fontFeatureSettings: '"smcp"',
+              fontSize: "0.65rem",
+              letterSpacing: "0.2em",
+              color: palette.paper,
+              boxShadow: `2px 2px 0 ${palette.inkDeep}`,
+              animation: `${fadeIn} 500ms ease-out ${medallionDelayMs + 160}ms both`,
+            }}
+          >
+            {t("cop.widget.cop")}
+          </Box>
+        </Box>
+        <Box sx={{ textAlign: "left" }}>
+          <Box
+            sx={{
+              fontFamily: fonts.blackletter,
+              fontSize: "3.5rem",
+              lineHeight: 0.9,
+              color: palette.paper,
+            }}
+          >
+            {cop.displayName}
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.45rem" }}>
+            <WoundPips count={cop.wounds} />
+            {cop.shame.length > 0 && <ShamePips markers={cop.shame} />}
+          </Box>
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          fontFamily: fonts.body,
+          fontStyle: "italic",
+          fontSize: "1.15rem",
+          color: palette.blood,
+          marginTop: "0.5rem",
+          animation: `${fadeIn} 500ms ease-out ${cryDelayMs}ms both`,
+        }}
+      >
+        the Navy claps the crew in irons — the loot stays with the Crown
       </Box>
     </Box>
   );
