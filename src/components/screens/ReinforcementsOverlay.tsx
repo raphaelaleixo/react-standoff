@@ -19,32 +19,29 @@ const TOTAL_MS = ENTER_MS + HOLD_MS + EXIT_MS;
 // number *during this mount*. Pirate copy: "SAILS ON THE HORIZON" —
 // the King's Navy is on its way.
 //
-// Lifecycle: enter (500ms wash+title) → hold (2.4s, siren hue cycle) →
-// exit (600ms fade) → unmount.
+// Lifecycle: enter (fade-in + title scale-up + delayed subtitle) →
+// hold (siren hue cycle) → exit (fade-out) → unmount.
 //
 // If we mount with reinforcements already on the way (e.g. a dev
 // scenario pre-seeds a post-call state, or the page reloads mid-game),
-// the shownRef starts true so the overlay does NOT replay — it's not
-// "news" anymore. The ref also means the effect only re-runs on
-// `round` changes; using useState here was the original bug, because
-// flipping shown→true caused the effect's cleanup to clear the
-// just-set timeout, leaving the overlay on screen forever.
+// firedRef starts true so the overlay does NOT replay — it's not
+// "news" anymore.
 export function ReinforcementsOverlay({ game }: Props) {
   const { t } = useTranslation();
   const round = game.cop?.reinforcementsRoundOnTheWay;
-  const shownRef = useRef(round !== undefined);
-  const [phase, setPhase] = useState<"idle" | "showing">("idle");
+  const firedRef = useRef(round !== undefined);
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
     if (round === undefined) return;
-    if (shownRef.current) return;
-    shownRef.current = true;
-    setPhase("showing");
-    const id = window.setTimeout(() => setPhase("idle"), TOTAL_MS);
+    if (firedRef.current) return;
+    firedRef.current = true;
+    setActive(true);
+    const id = window.setTimeout(() => setActive(false), TOTAL_MS);
     return () => clearTimeout(id);
   }, [round]);
 
-  if (phase === "idle") return null;
+  if (!active) return null;
   return (
     <Box
       sx={{
@@ -58,12 +55,11 @@ export function ReinforcementsOverlay({ game }: Props) {
         textAlign: "center",
         color: palette.paper,
         zIndex: 50,
-        opacity: 0,
-        animation: `reinforcementsBg ${TOTAL_MS}ms ease both, siren-wash 800ms ease-in-out ${ENTER_MS}ms infinite alternate`,
+        animation: `reinforcementsBg ${TOTAL_MS}ms ease forwards, siren-wash 800ms ease-in-out ${ENTER_MS}ms infinite alternate`,
         "@keyframes reinforcementsBg": {
           "0%": { opacity: 0 },
-          [`${(ENTER_MS / TOTAL_MS) * 100}%`]: { opacity: 1 },
-          [`${((ENTER_MS + HOLD_MS) / TOTAL_MS) * 100}%`]: { opacity: 1 },
+          "15%": { opacity: 1 },
+          "83%": { opacity: 1 },
           "100%": { opacity: 0 },
         },
         "@keyframes siren-wash": {
@@ -78,8 +74,6 @@ export function ReinforcementsOverlay({ game }: Props) {
           fontSize: "5rem",
           lineHeight: 1,
           textShadow: `4px 4px 0 ${palette.inkDeep}`,
-          opacity: 0,
-          transform: "scale(0.7)",
           animation: `reinforcementsTitle ${ENTER_MS}ms cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards`,
           "@keyframes reinforcementsTitle": {
             from: { opacity: 0, transform: "scale(0.7)" },
