@@ -253,3 +253,48 @@ describe('normalizeGame — cop variant fields', () => {
     ]);
   });
 });
+
+describe('normalizeGame — no undefined fields (Firebase-safe)', () => {
+  // Firebase RTDB rejects set()/update() patches containing any undefined
+  // value. The deserializer must omit optional keys rather than setting
+  // them to undefined explicitly, otherwise startNextRound(game) → fbSet
+  // throws and leaves the game stuck.
+  it('omits round.resolution when not present in raw', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: { number: 1, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: false },
+    };
+    const g = normalizeGame(raw)!;
+    expect('resolution' in g.round).toBe(false);
+  });
+
+  it('omits cop.reinforcementsRoundOnTheWay when no 3rd call has landed', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: { number: 1, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: true },
+      cop: { callsMade: 1 },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.cop).toBeDefined();
+    expect('reinforcementsRoundOnTheWay' in g.cop!).toBe(false);
+  });
+
+  it('preserves cop.reinforcementsRoundOnTheWay when present', () => {
+    const raw = {
+      phase: 'in_progress',
+      players: [],
+      round: { number: 5, phase: 'commit', loot: [], commits: {}, activations: {} },
+      bankDeck: [], discardedBullets: [], seed: 's',
+      variants: { superPowers: false, cop: true },
+      cop: { callsMade: 3, reinforcementsRoundOnTheWay: 4 },
+    };
+    const g = normalizeGame(raw)!;
+    expect(g.cop?.reinforcementsRoundOnTheWay).toBe(4);
+  });
+});

@@ -102,6 +102,11 @@ function normalizeResolution(raw: Raw): RoundResolution {
 
 function normalizeRound(raw: Raw): Round {
   const r = (raw ?? {}) as Record<string, unknown>;
+  // Omit optional fields when not present rather than setting them to
+  // `undefined`. Firebase RTDB rejects `undefined` values in set()/update(),
+  // and any spread of this Round into a fresh Game gets shipped right back
+  // through fbSet — so explicit-undefined here turns into a write failure
+  // later.
   const round: Round = {
     number: Number(r.number ?? 1),
     phase: (r.phase ?? 'commit') as Round['phase'],
@@ -109,8 +114,10 @@ function normalizeRound(raw: Raw): Round {
     loot: asArray<Banknote>(r.loot),
     commits: asRecord<Commit>(r.commits),
     activations: normalizeActivations(r.activations as Raw),
-    resolution: r.resolution ? normalizeResolution(r.resolution as Raw) : undefined,
   };
+  if (r.resolution) {
+    round.resolution = normalizeResolution(r.resolution as Raw);
+  }
   if (r.telephone && typeof r.telephone === 'object') {
     const t = r.telephone as Record<string, unknown>;
     round.telephone = {
@@ -153,10 +160,11 @@ export function normalizeGame(raw: Raw): Game | null {
     const c = r.cop as Record<string, unknown>;
     const callsMade = Math.min(3, Math.max(0, Number(c.callsMade ?? 0))) as 0 | 1 | 2 | 3;
     const reinf = c.reinforcementsRoundOnTheWay;
-    game.cop = {
-      callsMade,
-      reinforcementsRoundOnTheWay: typeof reinf === 'number' ? reinf : undefined,
-    };
+    // Omit reinforcementsRoundOnTheWay when not a number — see the comment
+    // in normalizeRound about Firebase rejecting `undefined` values.
+    const cop: NonNullable<Game['cop']> = { callsMade };
+    if (typeof reinf === 'number') cop.reinforcementsRoundOnTheWay = reinf;
+    game.cop = cop;
   }
   return game;
 }
