@@ -147,7 +147,7 @@ export function CrewRoster({ game, freshlyStruck }: CrewRosterProps) {
   for (const id of fresh) counts[id] = Math.max(counts[id] ?? 0, 1);
   const extraBadges = computeExtraBadges(game);
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "visible" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", overflow: "visible" }}>
       <SectionHeader title="The Crew" subtitle="six souls, one prize" />
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         {game.players.map(p => {
