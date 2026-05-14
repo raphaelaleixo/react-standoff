@@ -1,6 +1,6 @@
 import { describe, expect, it, test } from 'vitest';
-import type { Banknote, BulletCard, Commit, Player, PowerKind } from './types';
-import { resolveRound } from './resolver';
+import type { Banknote, BulletCard, Commit, Game, Player, PowerKind } from './types';
+import { applyDuckShame, applyTelephoneCall, resolveRound } from './resolver';
 
 let nextNoteId = 0;
 function note(value: Banknote['value']): Banknote;
@@ -676,5 +676,138 @@ describe('resolveRound — Insane (grenade)', () => {
       commits, players, [], { insane: { playerId: 'p1' } },
     );
     expect(resolution.powerActivations.some(a => a.kind === 'insane' && a.playerId === 'p1')).toBe(true);
+  });
+});
+
+function baseCopGame(callsMade: 0 | 1 | 2 | 3, roundNumber: number, reinforcementsRoundOnTheWay?: number): Game {
+  return {
+    phase: 'in_progress',
+    players: [],
+    round: {
+      number: roundNumber, phase: 'telephone', phaseStartedAt: 0,
+      loot: [], commits: {}, activations: {},
+      resolution: {
+        shots: [], ducks: [], standing: ['a', 'b'],
+        woundedThisRound: {}, eliminated: [], awards: {}, carryover: [],
+        powerActivations: [],
+      },
+    },
+    bankDeck: [], discardedBullets: [], seed: 's',
+    variants: { superPowers: false, cop: true },
+    cop: { callsMade, reinforcementsRoundOnTheWay },
+  };
+}
+
+describe('applyTelephoneCall', () => {
+  it('records the holder order and used=false when call did not land', () => {
+    const g = baseCopGame(0, 1);
+    const next = applyTelephoneCall(g, false, ['a', 'b']);
+    expect(next.round.telephone).toEqual({ used: false, holderOrder: ['a', 'b'] });
+    expect(next.cop?.callsMade).toBe(0);
+    expect(next.cop?.reinforcementsRoundOnTheWay).toBeUndefined();
+  });
+
+  it('increments callsMade and records holder order when used=true', () => {
+    const g = baseCopGame(0, 1);
+    const next = applyTelephoneCall(g, true, ['a', 'b']);
+    expect(next.round.telephone).toEqual({ used: true, holderOrder: ['a', 'b'] });
+    expect(next.cop?.callsMade).toBe(1);
+    expect(next.cop?.reinforcementsRoundOnTheWay).toBeUndefined();
+  });
+
+  it('sets reinforcementsRoundOnTheWay on the 3rd call', () => {
+    const g = baseCopGame(2, 4);
+    const next = applyTelephoneCall(g, true, ['a']);
+    expect(next.cop?.callsMade).toBe(3);
+    expect(next.cop?.reinforcementsRoundOnTheWay).toBe(4);
+  });
+
+  it('does not change reinforcementsRoundOnTheWay if already set', () => {
+    const g = baseCopGame(3, 5, 3);
+    // Hypothetical no-op 4th call; should be inert.
+    const next = applyTelephoneCall(g, false, ['a']);
+    expect(next.cop?.callsMade).toBe(3);
+    expect(next.cop?.reinforcementsRoundOnTheWay).toBe(3);
+  });
+
+  it('clamps callsMade at 3 if somehow called more', () => {
+    const g = baseCopGame(3, 5, 3);
+    const next = applyTelephoneCall(g, true, ['a']);
+    expect(next.cop?.callsMade).toBe(3);
+  });
+
+  it('is a no-op when cop variant is off', () => {
+    const g = baseCopGame(0, 1);
+    g.variants.cop = false;
+    g.cop = undefined;
+    const next = applyTelephoneCall(g, true, ['a']);
+    expect(next.cop).toBeUndefined();
+    expect(next.round.telephone).toBeUndefined();
+  });
+});
+
+describe('applyDuckShame', () => {
+  it('tags new shame markers as non-flashing when no reinforcements yet', () => {
+    const g = baseCopGame(0, 2);
+    g.players = [{
+      id: 'a', displayName: 'A', colorOrAvatar: '#000',
+      bullets: [], cash: [], wounds: 0,
+      shame: [], status: 'alive', effects: [], role: 'mafia',
+    }];
+    const next = applyDuckShame(g, 'a');
+    expect(next.players[0].shame).toEqual([{ flashing: false }]);
+  });
+
+  it('tags new shame as flashing when reinforcementsRoundOnTheWay is set and current round > that', () => {
+    const g = baseCopGame(3, 5, 3);
+    g.players = [{
+      id: 'a', displayName: 'A', colorOrAvatar: '#000',
+      bullets: [], cash: [], wounds: 0,
+      shame: [], status: 'alive', effects: [], role: 'cop',
+    }];
+    const next = applyDuckShame(g, 'a');
+    expect(next.players[0].shame).toEqual([{ flashing: true }]);
+  });
+
+  it('tags new shame as non-flashing when current round equals reinforcement round', () => {
+    // Paper rule: only new shame *after* the call counts. Markers earned
+    // in the same round as the call do not flash.
+    const g = baseCopGame(3, 4, 4);
+    g.players = [{
+      id: 'a', displayName: 'A', colorOrAvatar: '#000',
+      bullets: [], cash: [], wounds: 0,
+      shame: [], status: 'alive', effects: [], role: 'cop',
+    }];
+    const next = applyDuckShame(g, 'a');
+    expect(next.players[0].shame).toEqual([{ flashing: false }]);
+  });
+
+  it('preserves existing shame markers unchanged', () => {
+    const g = baseCopGame(3, 6, 3);
+    g.players = [{
+      id: 'a', displayName: 'A', colorOrAvatar: '#000',
+      bullets: [], cash: [], wounds: 0,
+      shame: [{ flashing: false }, { flashing: false }],
+      status: 'alive', effects: [], role: 'cop',
+    }];
+    const next = applyDuckShame(g, 'a');
+    expect(next.players[0].shame).toEqual([
+      { flashing: false },
+      { flashing: false },
+      { flashing: true },
+    ]);
+  });
+
+  it('non-cop variant adds non-flashing markers regardless of round', () => {
+    const g = baseCopGame(0, 5);
+    g.variants.cop = false;
+    g.cop = undefined;
+    g.players = [{
+      id: 'a', displayName: 'A', colorOrAvatar: '#000',
+      bullets: [], cash: [], wounds: 0,
+      shame: [], status: 'alive', effects: [],
+    }];
+    const next = applyDuckShame(g, 'a');
+    expect(next.players[0].shame).toEqual([{ flashing: false }]);
   });
 });

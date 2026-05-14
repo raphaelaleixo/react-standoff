@@ -3,6 +3,7 @@ import type {
   Banknote,
   BulletCard,
   Commit,
+  Game,
   Player,
   PowerActivation,
   PowerKind,
@@ -59,7 +60,21 @@ export function resolveRound(
   players: Player[],
   loot: Banknote[],
   activations: RoundActivations = {},
+  copContext?: {
+    variantCop: boolean;
+    roundNumber: number;
+    reinforcementsRoundOnTheWay?: number;
+  },
 ): ResolveRoundResult {
+  // Cop variant: shame markers earned *after* the reinforcement call lands
+  // are "flashing-light" markers — only the cop's mission cares which kind.
+  // When the variant is off (or no context passed), every marker is
+  // non-flashing, preserving prior behaviour for all existing callers.
+  const reinforced =
+    !!copContext &&
+    copContext.variantCop &&
+    copContext.reinforcementsRoundOnTheWay !== undefined &&
+    copContext.roundNumber > copContext.reinforcementsRoundOnTheWay;
   const powerActivations: PowerActivation[] = [];
   const ducks = new Set<string>();
   for (const [pid, c] of Object.entries(commits)) {
@@ -173,7 +188,7 @@ export function resolveRound(
       ...pl,
       bullets,
       effects,
-      shame: shameDelta > 0 ? [...pl.shame, { flashing: false }] : pl.shame,
+      shame: shameDelta > 0 ? [...pl.shame, { flashing: reinforced }] : pl.shame,
       wounds: willDie ? (threshold as Player['wounds']) : newWounds,
       status: willDie ? 'dead' : pl.status,
       cash: willDie ? [] : pl.cash,
@@ -300,4 +315,52 @@ export function resolveRound(
   };
 
   return { resolution, players: playersWithCash, discardedBullets };
+}
+
+// Finalises a telephone phase: writes the per-round telephone record on the
+// round, increments Game.cop.callsMade (clamped at 3), and stamps the
+// reinforcement round the first time callsMade hits 3. No-op when the cop
+// variant is off — both Game.cop and Round.telephone are left untouched.
+export function applyTelephoneCall(
+  game: Game,
+  used: boolean,
+  holderOrder: string[],
+): Game {
+  if (!game.variants.cop || !game.cop) return game;
+  const prev = game.cop;
+  const nextCallsMade = used ? Math.min(3, prev.callsMade + 1) as 0 | 1 | 2 | 3 : prev.callsMade;
+  const newlyReinforced =
+    prev.reinforcementsRoundOnTheWay === undefined && nextCallsMade === 3;
+  return {
+    ...game,
+    round: {
+      ...game.round,
+      telephone: { used, holderOrder },
+    },
+    cop: {
+      callsMade: nextCallsMade,
+      reinforcementsRoundOnTheWay: newlyReinforced
+        ? game.round.number
+        : prev.reinforcementsRoundOnTheWay,
+    },
+  };
+}
+
+// Pushes a shame marker on the named player, tagged flashing only when the
+// cop variant is on, reinforcements have already been called in, and the
+// current round is *after* the reinforcement round. Same-round-as-the-call
+// markers do not flash (paper rule).
+export function applyDuckShame(game: Game, playerId: string): Game {
+  const reinforced =
+    game.variants.cop &&
+    game.cop?.reinforcementsRoundOnTheWay !== undefined &&
+    game.round.number > game.cop.reinforcementsRoundOnTheWay;
+  return {
+    ...game,
+    players: game.players.map(p =>
+      p.id === playerId
+        ? { ...p, shame: [...p.shame, { flashing: reinforced }] }
+        : p,
+    ),
+  };
 }
