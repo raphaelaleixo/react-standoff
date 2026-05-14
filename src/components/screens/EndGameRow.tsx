@@ -124,7 +124,7 @@ export function EndGameRow({ rank, player, eliminatedRound, enterDelayMs = 0, to
           lit lantern before the name, mirroring the in-game shore-lanterns
           motif. */}
       <Box sx={{ minWidth: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        {isPrivateer && <Lantern lit size={20} />}
+        {isPrivateer && <Lantern lit={false} size={20} />}
         <Box
           sx={{
             fontFamily: fonts.displayCaps,
