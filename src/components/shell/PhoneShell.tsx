@@ -50,13 +50,27 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
   // flip (e.g. game state arrives after mount, or the mock deals a power)
   // still triggers the reveal — but the user's subsequent close is final.
   const hasTriggeredIntroRef = useRef(!!introOpen);
+
+  // ─── Role card (cop variant) — parallel lifecycle to the power card. ───
+  // Same recipe: auto-open on first intro, tap to close + tuck, subsequent
+  // taps just toggle. Wave 2 lifts the role + power mutual exclusion, so
+  // both cards can be queued simultaneously; the power intro effect below
+  // gates on `roleIntroActive` to sequence the reveals (role first).
+  const [roleOpen, setRoleOpen] = useState(!!roleIntroOpen);
+  const [roleIntroActive, setRoleIntroActive] = useState(!!roleIntroOpen);
+  const hasTriggeredRoleIntroRef = useRef(!!roleIntroOpen);
+
   useEffect(() => {
-    if (introOpen && !hasTriggeredIntroRef.current) {
-      hasTriggeredIntroRef.current = true;
-      setPowerOpen(true);
-      setIntroActive(true);
-    }
-  }, [introOpen]);
+    if (!introOpen || hasTriggeredIntroRef.current) return;
+    // Sequential intro: when both cards have an intro queued, wait for
+    // the role intro to close before triggering the power intro. The
+    // role's introActive flips false in closeRoleCard, which re-fires
+    // this effect.
+    if (roleIntroOpen && roleIntroActive) return;
+    hasTriggeredIntroRef.current = true;
+    setPowerOpen(true);
+    setIntroActive(true);
+  }, [introOpen, roleIntroOpen, roleIntroActive]);
   const closeCard = () => {
     setPowerOpen(false);
     setIntroActive(false);
@@ -69,13 +83,6 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
     setPowerOpen(o => !o);
   };
 
-  // ─── Role card (cop variant) — parallel lifecycle to the power card. ───
-  // Same recipe: auto-open on first intro, tap to close + tuck, subsequent
-  // taps just toggle. Wave 1 keeps role + power mutually exclusive at the
-  // engine level, so both cards can safely share the bottom-right corner.
-  const [roleOpen, setRoleOpen] = useState(!!roleIntroOpen);
-  const [roleIntroActive, setRoleIntroActive] = useState(!!roleIntroOpen);
-  const hasTriggeredRoleIntroRef = useRef(!!roleIntroOpen);
   useEffect(() => {
     if (roleIntroOpen && !hasTriggeredRoleIntroRef.current) {
       hasTriggeredRoleIntroRef.current = true;
