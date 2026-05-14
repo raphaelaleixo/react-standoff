@@ -107,6 +107,34 @@ export default function HowToPlayPage() {
               split.
             </li>
           </FinePrint>
+
+          <Ornament>variants — for a wilder voyage</Ornament>
+          <VariantBlock
+            title="Super Powers"
+            tagline="— each mate draws a hidden trick —"
+          >
+            Every crewmate is dealt one secret <SmallCaps>power card</SmallCaps>{" "}
+            at the start o' the voyage. Some hide on yer phone 'til ye spring
+            'em — Phantom Pain claims a share even when ye take a wound,
+            Pocket Inferno ends the round in a grenade. Others ride out in the
+            open: Dead Eye lets ye call yer mark <em>after</em> every other
+            gun be leveled. One card each, played once. The cards stack with
+            the base game's bookkeeping at the reckoning.
+          </VariantBlock>
+          <VariantBlock
+            title="A Privateer Among Us"
+            tagline="— the Crown has eyes in the crew —"
+          >
+            One mate is the <SmallCaps>Privateer</SmallCaps> — the Crown's
+            spy among pirates. The rest be ordinary mutineers. After each
+            split, a <SmallCaps>lantern</SmallCaps> passes from mate to mate;
+            the Privateer may secretly send word to the Navy. Three notes
+            ashore and the King's sails appear on the horizon — but every
+            yield the Privateer takes <em>after</em> that flashes a yellow
+            warning. The Privateer wins by callin' in time, stayin' alive,
+            and not flinchin' more than once after the alarm. Otherwise the
+            richest mutineer takes the day. Needs five or six mates.
+          </VariantBlock>
         </Box>
 
         <Box
@@ -219,6 +247,48 @@ function Body({
       }}
     >
       {children}
+    </Box>
+  );
+}
+
+// Variant block — a titled paragraph styled as a side-bar dispatch. Title
+// in displayCaps + small italic tagline + body copy. Used for the optional
+// rule variants at the end of the broadside.
+function VariantBlock({
+  title,
+  tagline,
+  children,
+}: {
+  title: string;
+  tagline: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Box sx={{ marginBottom: "1.4rem" }}>
+      <Box
+        sx={{
+          fontFamily: fonts.displayCaps,
+          fontFeatureSettings: '"smcp"',
+          fontSize: "1.05rem",
+          letterSpacing: "0.22em",
+          color: palette.paper,
+          marginBottom: "0.15rem",
+        }}
+      >
+        {title}
+      </Box>
+      <Box
+        sx={{
+          fontFamily: fonts.body,
+          fontStyle: "italic",
+          fontSize: "0.9rem",
+          color: palette.paperFaint,
+          marginBottom: "0.55rem",
+        }}
+      >
+        {tagline}
+      </Box>
+      <Body>{children}</Body>
     </Box>
   );
 }
