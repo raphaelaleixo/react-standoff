@@ -572,18 +572,6 @@ export const SCENARIOS: Scenario[] = [
     }),
   },
   {
-    id: "cop-never-calls",
-    kind: "cop",
-    label: "Cop never calls — mafia wins",
-    blurb:
-      "Cop sits on the call. Round 7 begins — too late. Mafia wins " +
-      "regardless of survival.",
-    build: () => buildCopScenario("cop-never-calls", game => {
-      game.cop = { callsMade: 0 };
-      game.round.number = 7;
-    }),
-  },
-  {
     id: "cop-killed-before-call",
     kind: "cop",
     label: "Cop killed in round 2",
@@ -678,3 +666,88 @@ function buildCopScenario(seed: string, mutate: (game: Game) => void): Game {
   mutate(game);
   return game;
 }
+
+// =============================================================================
+// Reckoning scenarios — end-state fixtures the MockBigScreen serves under the
+// "reckoning" surface. Each provides a Game already in `phase: "ended"` plus
+// the eliminatedByRound map the ReckoningScreen needs to narrate cop-death
+// rounds.
+// =============================================================================
+
+export interface ReckoningScenario {
+  id: string;
+  label: string;
+  blurb: string;
+  build: () => { game: Game; eliminatedByRound: Record<string, number> };
+}
+
+function endedCopGame(
+  seed: string,
+  mutate: (game: Game) => void,
+): Game {
+  const game = buildCopScenario(seed, mutate);
+  game.phase = "ended";
+  game.round.number = 8;
+  game.round.phase = "split";
+  return game;
+}
+
+export const RECKONING_SCENARIOS: ReckoningScenario[] = [
+  {
+    id: "default",
+    label: "Super-powers end (default)",
+    blurb: "Stock 4-player reckoning fixture with Six Feet Under bonus.",
+    build: () => ({
+      game: {
+        seed: "mock-reckoning",
+        phase: "ended",
+        round: { number: 8, phase: "split", phaseStartedAt: 0, loot: [], commits: {}, activations: {} },
+        bankDeck: [],
+        discardedBullets: [],
+        variants: { superPowers: true, cop: false },
+        players: [
+          { id: "a", displayName: "Cap'n Maud", colorOrAvatar: "calico_jack",
+            bullets: [], cash: [
+              { id: "ma1", value: 20000 }, { id: "ma2", value: 20000 },
+              { id: "ma3", value: 10000 }, { id: "ma4", value: 10000 }, { id: "ma5", value: 5000 },
+            ], wounds: 1, shame: [], status: "alive",
+            effects: [{ kind: "six_feet_under", revealed: true, used: false }] },
+          { id: "b", displayName: "Mad Mary", colorOrAvatar: "blackbeard",
+            bullets: [], cash: [{ id: "mb1", value: 20000 }, { id: "mb2", value: 5000 }],
+            wounds: 0, shame: [{ flashing: false }], status: "alive", effects: [] },
+          { id: "c", displayName: "Wet Match", colorOrAvatar: "edward_low",
+            bullets: [], cash: [], wounds: 3, shame: [], status: "dead", effects: [] },
+          { id: "d", displayName: "One-Eye", colorOrAvatar: "stede_bonnet",
+            bullets: [], cash: [{ id: "md1", value: 10000 }], wounds: 2, shame: [], status: "alive", effects: [] },
+        ],
+      },
+      eliminatedByRound: { c: 6 },
+    }),
+  },
+  {
+    id: "cop-never-calls",
+    label: "Privateer never called — Pirates win",
+    blurb:
+      "End of round 8. The Privateer survived but never sent a note from " +
+      "the bottle, so the Pirates take the haul — richest one wins.",
+    build: () => {
+      const game = endedCopGame("reckoning-cop-never-calls", g => {
+        g.cop = { callsMade: 1 };
+        // Cop alive but poor; one Pirate (b) clearly richest.
+        g.players[0].cash = [{ id: "rcnc-a1", value: 10000 }];
+        g.players[1].cash = [
+          { id: "rcnc-b1", value: 20000 },
+          { id: "rcnc-b2", value: 20000 },
+          { id: "rcnc-b3", value: 10000 },
+        ];
+        g.players[2].cash = [{ id: "rcnc-c1", value: 10000 }];
+        g.players[3].cash = [{ id: "rcnc-d1", value: 20000 }, { id: "rcnc-d2", value: 5000 }];
+        g.players[4].cash = [];
+        // Mid-game casualty for narrative texture.
+        g.players[4].status = "dead";
+        g.players[4].wounds = 3;
+      });
+      return { game, eliminatedByRound: { e: 4 } };
+    },
+  },
+];

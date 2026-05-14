@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Button, MenuItem, Select, Stack, Typography } from "@mui/material";
-import { SCENARIOS, type ScenarioKind } from "./scenarios";
+import { SCENARIOS, RECKONING_SCENARIOS, type ScenarioKind } from "./scenarios";
 import { palette } from "../../theme/colors";
 
 const GROUPS: { kind: ScenarioKind; label: string }[] = [
@@ -23,6 +23,10 @@ interface ScenarioDockProps {
   onReset(): void;
   playing: boolean;
   blurb: string;
+  // Reckoning picker (only relevant when surface === "reckoning"). Optional
+  // — pages that don't expose the reckoning surface can omit them.
+  reckoningId?: string;
+  onReckoningChange?(id: string): void;
   // Extra controls rendered below the play/reset row. Used by MockPlayerPage
   // for the seat selector + variant toggle.
   children?: React.ReactNode;
@@ -42,6 +46,8 @@ export function ScenarioDock({
   onReset,
   playing,
   blurb,
+  reckoningId,
+  onReckoningChange,
   children,
 }: ScenarioDockProps) {
   // Auto-collapse the dock when a scenario starts playing so the big-screen
@@ -205,6 +211,52 @@ export function ScenarioDock({
             </Stack>
             {children}
           </>
+        )}
+        {surface === "reckoning" && onReckoningChange && (
+          <Box>
+            <Typography
+              variant="caption"
+              sx={{
+                color: palette.paperDim,
+                fontFamily: "inherit",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                display: "block",
+                marginBottom: "0.2rem",
+              }}
+            >
+              Reckoning
+            </Typography>
+            <Select
+              size="small"
+              fullWidth
+              value={reckoningId ?? RECKONING_SCENARIOS[0].id}
+              onChange={e => onReckoningChange(e.target.value)}
+              sx={{
+                color: palette.paper,
+                "& .MuiSelect-icon": { color: palette.paper },
+                "& fieldset": { borderColor: palette.paper },
+              }}
+            >
+              {RECKONING_SCENARIOS.map(s => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <Typography
+              variant="caption"
+              sx={{
+                color: palette.paperDim,
+                fontStyle: "italic",
+                lineHeight: 1.3,
+                display: "block",
+                marginTop: "0.4rem",
+              }}
+            >
+              {RECKONING_SCENARIOS.find(s => s.id === reckoningId)?.blurb ?? ""}
+            </Typography>
+          </Box>
         )}
       </Stack>
     </Box>

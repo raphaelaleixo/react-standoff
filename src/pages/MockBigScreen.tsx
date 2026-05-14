@@ -21,17 +21,13 @@ import { toRoman } from "../lib/navyHours";
 import { useGameState } from "../hooks/useGameState";
 import { useBigScreenZoom } from "../hooks/useBigScreenZoom";
 import { createLocalGameStore, type LocalGameStore } from "../components/dev/localGameStore";
-import { SCENARIOS } from "../components/dev/scenarios";
+import { SCENARIOS, RECKONING_SCENARIOS } from "../components/dev/scenarios";
 import { ScenarioDock, type DockSurface } from "../components/dev/ScenarioDock";
 import { PUBLIC_POWER_KINDS } from "../game/powerKinds";
 import type { PowerActivation } from "../game/types";
 import { palette } from "../theme/colors";
 import { fonts } from "../theme/typography";
-import {
-  MOCK_ROOM_STATE,
-  RECKONING_GAME,
-  RECKONING_ELIMINATED_BY_ROUND,
-} from "../components/dev/mockFixtures";
+import { MOCK_ROOM_STATE } from "../components/dev/mockFixtures";
 
 const SURFACES: DockSurface[] = ["game", "muster", "reckoning"];
 
@@ -46,6 +42,9 @@ export default function MockBigScreen() {
 
   const [scenarioId, setScenarioId] = useState<string>(SCENARIOS[0].id);
   const [surface, setSurface] = useState<DockSurface>("game");
+  const [reckoningId, setReckoningId] = useState<string>(RECKONING_SCENARIOS[0].id);
+  const activeReckoning = RECKONING_SCENARIOS.find(r => r.id === reckoningId);
+  const reckoningFixture = (activeReckoning ?? RECKONING_SCENARIOS[0]).build();
 
   const loadScenario = useCallback(
     (id: string) => {
@@ -127,9 +126,9 @@ export default function MockBigScreen() {
         />
       ) : surface === "reckoning" ? (
         <ReckoningScreen
-          game={RECKONING_GAME}
+          game={reckoningFixture.game}
           roomId="MOCK"
-          eliminatedByRound={RECKONING_ELIMINATED_BY_ROUND}
+          eliminatedByRound={reckoningFixture.eliminatedByRound}
           onPlayAgain={() => {}}
           onReturn={() => {}}
         />
@@ -194,6 +193,8 @@ export default function MockBigScreen() {
         onReset={handleReset}
         playing={game !== null}
         blurb={activeScenario?.blurb ?? ""}
+        reckoningId={reckoningId}
+        onReckoningChange={setReckoningId}
       />
     </>
   );
