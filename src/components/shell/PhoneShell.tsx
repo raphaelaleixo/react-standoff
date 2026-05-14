@@ -42,14 +42,19 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
   const cash = cashTotal(me);
   const myPower = me.effects[0];
   const bothCards = !!me.role && !!myPower;
-  const [powerOpen, setPowerOpen] = useState(!!introOpen);
+  // Initial state: when a role intro is also queued, defer the power intro
+  // so role goes first (sequential reveal). Without this gate on the
+  // useState initialisers, both cards would auto-open on first mount and
+  // their backdrops + "Tap when ready" hints would overlap.
+  const powerIntroOnMount = !!introOpen && !roleIntroOpen;
+  const [powerOpen, setPowerOpen] = useState(powerIntroOnMount);
   // `introActive` flips false the first time the card closes. After that
   // taps just toggle, and the hint stays gone for the rest of the session.
-  const [introActive, setIntroActive] = useState(!!introOpen);
+  const [introActive, setIntroActive] = useState(powerIntroOnMount);
   // Track whether we've already auto-opened for the intro, so a late prop
   // flip (e.g. game state arrives after mount, or the mock deals a power)
   // still triggers the reveal — but the user's subsequent close is final.
-  const hasTriggeredIntroRef = useRef(!!introOpen);
+  const hasTriggeredIntroRef = useRef(powerIntroOnMount);
 
   // ─── Role card (cop variant) — parallel lifecycle to the power card. ───
   // Same recipe: auto-open on first intro, tap to close + tuck, subsequent
@@ -341,7 +346,7 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
                 position: "absolute",
                 cursor: "pointer",
                 zIndex: 6,
-                transformOrigin: bothCards ? "bottom left" : "bottom right",
+                transformOrigin: "bottom right",
                 perspective: "1200px",
                 transition:
                   "bottom 0.5s cubic-bezier(0.34, 1.32, 0.64, 1), right 0.5s cubic-bezier(0.34, 1.32, 0.64, 1), transform 0.5s cubic-bezier(0.34, 1.32, 0.64, 1)",
@@ -353,9 +358,11 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
                     }
                   : bothCards
                     ? {
+                        // Tuck just to the left of the power card, both at
+                        // the bottom-right corner. scale(0.35) of 300px =
+                        // 105px wide; offset by 120px to leave a small gap.
                         bottom: "0.8rem",
-                        left: "0.95rem",
-                        right: "auto",
+                        right: "calc(0.95rem + 120px)",
                         transform: "scale(0.35)",
                       }
                     : {
