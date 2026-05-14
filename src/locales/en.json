@@ -124,6 +124,58 @@
       }
     }
   },
+  "cop": {
+    "lobby": {
+      "toggleLabel": "A Cop in the Mafia",
+      "toggleSub": "one of you is a cop",
+      "requiresFiveSix": "requires 5 or 6 players",
+      "exclusiveWithPowers": "wave 1: choose one — cop or super powers",
+      "banner": "A cop is among you…"
+    },
+    "reveal": {
+      "title": "Your role…",
+      "cop": "You are the cop",
+      "copBody": "Call for backup. Stay alive. Don't blink.",
+      "mafia": "You are the mafia",
+      "mafiaBody": "The cop is among you. Find them. Kill them. Or get rich trying.",
+      "ack": "I'm in",
+      "allDealt": "ROLES DEALT"
+    },
+    "widget": {
+      "cop": "Cop",
+      "mafia": "Mafia",
+      "calls": "{{n}}/3",
+      "callsDone": "3/3 ✓",
+      "hintCallByRound6": "Call needs to land by round VI",
+      "hintOneDuckLeft": "One more duck and you're cooked"
+    },
+    "telephone": {
+      "heading": "THE PHONE IS WITH YOU",
+      "pass": "Pass",
+      "call": "Call",
+      "callPlaced": "Call placed",
+      "notUsed": "Telephone — not used",
+      "used": "Telephone — used"
+    },
+    "switchboard": {
+      "busy": "Busy",
+      "reinforcementsSent": "Reinforcements Sent"
+    },
+    "reinforcements": {
+      "overlayTitle": "REINFORCEMENTS ON THE WAY",
+      "overlaySub": "the sirens are coming"
+    },
+    "reckoning": {
+      "rolesIntro": "The roles…",
+      "calledRoundN": "Reinforcements were called in round {{n}}.",
+      "neverCame": "Reinforcements never came.",
+      "copSurvived": "The cop survived.",
+      "copKilledRoundN": "The cop was killed in round {{n}}.",
+      "copFlashingShame": "The cop took {{n}} flashing-light shame marker(s).",
+      "verdictCopWins": "JUSTICE SERVED",
+      "verdictMafiaWins": "The cop will not testify."
+    }
+  },
   "player": {
     "lobbyWaiting": "Waiting for the captain to call it…",
     "watchScreen": "Watch the big screen…",
