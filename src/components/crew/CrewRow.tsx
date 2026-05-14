@@ -14,7 +14,7 @@ const CASH_TICK_DURATION_MS = 700;
 
 export type CrewStatus =
   | "choosing" | "ready" | "yielded"
-  | "struck" | "dead";
+  | "struck" | "dead" | "lantern";
 
 const STATUS_LABEL: Record<CrewStatus, string> = {
   choosing: "CHOOSING",
@@ -22,6 +22,7 @@ const STATUS_LABEL: Record<CrewStatus, string> = {
   yielded: "YIELDED",
   struck: "STRUCK",
   dead: "DEAD",
+  lantern: "LANTERN",
 };
 
 interface CrewRowProps {
@@ -145,6 +146,7 @@ const STATUS_COLOR: Record<CrewStatus, string> = {
   yielded: palette.paperDim,  // passive — out of this round
   struck: palette.blood,
   dead: palette.paperDim,
+  lantern: palette.gold,      // warm — matches the lantern's lit glow
 };
 
 function StatusPill({ status, label }: { status?: CrewStatus; label: string }) {

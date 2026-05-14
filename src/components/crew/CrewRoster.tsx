@@ -105,6 +105,11 @@ function deriveStatus(
       if (c?.withdrew) return "yielded";
       // No pill for standing players — they're alive and (in split) get the take.
       return undefined;
+    case "telephone":
+      // Cop variant: only the current lantern holder gets a pill — same
+      // visual treatment as CHOOSING/READY, just labelled "HOLDING THE
+      // LANTERN" and tinted lit-lantern gold.
+      return game.round.telephone?.currentHolderId === p.id ? "lantern" : undefined;
     default:
       return undefined;
   }
