@@ -88,17 +88,41 @@ export default function HomePage() {
                 flexDirection: "column",
                 alignItems: "center",
                 gap: "0.7rem",
-                width: "min(320px, 100%)",
+                width: "100%",
                 marginTop: "1rem",
               }}
             >
-              <Button fullWidth onClick={onNewGame} disabled={creating}>
-                {(creating ? t("home.newGameSubmitting") : t("home.newGame")).toUpperCase()}
-              </Button>
-              {error && <Alert severity="error">{error}</Alert>}
-              <Button variant="ghost" fullWidth onClick={() => navigate("/join")} disabled={creating}>
-                {t("home.resumeGame").toUpperCase()}
-              </Button>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                  gap: "0.7rem",
+                  width: { xs: "min(320px, 100%)", sm: "min(480px, 100%)" },
+                  // When the chunky buttons sit side-by-side on sm+, the in-game
+                  // 2.6rem horizontal padding leaves too little room for "RESUME
+                  // GAME" and forces it to wrap. Slim that padding only here.
+                  "& .raised-key": {
+                    paddingLeft: { sm: "1rem" },
+                    paddingRight: { sm: "1rem" },
+                  },
+                }}
+              >
+                <Button fullWidth onClick={onNewGame} disabled={creating}>
+                  <Box component="span" sx={{ whiteSpace: "nowrap" }}>
+                    {(creating ? t("home.newGameSubmitting") : t("home.newGame")).toUpperCase()}
+                  </Box>
+                </Button>
+                <Button variant="ghost" fullWidth onClick={() => navigate("/join")} disabled={creating}>
+                  <Box component="span" sx={{ whiteSpace: "nowrap" }}>
+                    {t("home.resumeGame").toUpperCase()}
+                  </Box>
+                </Button>
+              </Box>
+              {error && (
+                <Alert severity="error" sx={{ width: { xs: "min(320px, 100%)", sm: "min(480px, 100%)" } }}>
+                  {error}
+                </Alert>
+              )}
               <Link
                 component="button"
                 type="button"
