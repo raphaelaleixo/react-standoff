@@ -494,6 +494,27 @@ export const SCENARIOS: Scenario[] = [
     }),
   },
   {
+    id: "cop-calls-third",
+    kind: "cop",
+    label: "Pick & play — Privateer's 3rd call (Sails on the Horizon)",
+    blurb:
+      "Round 5 commit, cop variant on, the Tide already shows 2/3. " +
+      "Seat 'a' (Privateer) is the only open commit; b–e are pre-filled. " +
+      "Play through to phase 8 and tap SEND — the Tide fills to 3/3, the " +
+      "Sails-on-Horizon overlay plays, and new shame markers switch to " +
+      "the flashing-light side.",
+    build: () => buildCopScenario("cop-calls-third", game => {
+      game.cop = { callsMade: 2 };
+      game.round.number = 5;
+      game.round.commits = {
+        b: { bullet: "clic", target: "c" },
+        c: { bullet: "clic", target: "b" },
+        d: { bullet: "clic", target: "e" },
+        e: { bullet: "clic", target: "d" },
+      };
+    }),
+  },
+  {
     id: "cop-never-calls",
     kind: "cop",
     label: "Cop never calls — mafia wins",
