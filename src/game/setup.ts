@@ -42,14 +42,14 @@ export function initGame(
     effects: [],
   }));
 
-  // Wave 1: cop and super-powers are mutually exclusive at the lobby
-  // toggle, so we deal at most one of them. If both flags somehow
-  // landed true, super-powers wins (it shipped first).
+  // Deal each variant's setup independently when its flag is on. Wave 2:
+  // both can be on at once, so super-powers AND cop both run their deals.
   let dealtPlayers = baseDealt;
   if (variants.superPowers) {
-    dealtPlayers = dealPowers(baseDealt, rng);
-  } else if (variants.cop) {
-    dealtPlayers = dealRoles(baseDealt, rng);
+    dealtPlayers = dealPowers(dealtPlayers, rng);
+  }
+  if (variants.cop) {
+    dealtPlayers = dealRoles(dealtPlayers, rng);
   }
 
   const round: Round = {

@@ -185,3 +185,18 @@ describe('initGame — cop variant', () => {
     expect(g.cop).toBeUndefined();
   });
 });
+
+describe('initGame with both variants', () => {
+  it('deals exactly one role per player AND one power per player', () => {
+    const players = makePlayers(5);
+    const game = initGame(players, 'seed-both', 0, { superPowers: true, cop: true });
+    // Every player has a role.
+    expect(game.players.every(p => p.role === 'cop' || p.role === 'mafia')).toBe(true);
+    // Exactly one cop.
+    expect(game.players.filter(p => p.role === 'cop').length).toBe(1);
+    // Every player has exactly one power effect.
+    expect(game.players.every(p => p.effects.length === 1)).toBe(true);
+    // Cop state initialised.
+    expect(game.cop).toEqual({ callsMade: 0 });
+  });
+});
