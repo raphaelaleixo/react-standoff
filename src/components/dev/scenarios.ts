@@ -571,57 +571,6 @@ export const SCENARIOS: Scenario[] = [
       };
     }),
   },
-  {
-    id: "cop-killed-before-call",
-    kind: "cop",
-    label: "Cop killed in round 2",
-    blurb:
-      "Mafia drops the cop before any call. Phase 8 keeps running as " +
-      "theater for the remaining rounds; mafia wins at reckoning.",
-    build: () => buildCopScenario("cop-killed-before-call", game => {
-      game.players[0].status = "dead";
-      game.players[0].wounds = 3;
-      game.cop = { callsMade: 0 };
-      game.round.number = 3;
-    }),
-  },
-  {
-    id: "cop-overducks",
-    kind: "cop",
-    label: "Cop calls but overducks",
-    blurb:
-      "Cop lands the call in round 4 but ducks twice after — too cautious. " +
-      "Mafia wins.",
-    build: () => buildCopScenario("cop-overducks", game => {
-      game.players[0].shame = [{ flashing: true }, { flashing: true }];
-      game.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 4 };
-      game.round.number = 8;
-    }),
-  },
-  {
-    id: "mafia-rich-cop-loses",
-    kind: "cop",
-    label: "Cop barely loses, mafia gets paid",
-    blurb:
-      "Reinforcements land but cop took 2 flashing-light shames. " +
-      "Richest mafia takes the crown.",
-    build: () => buildCopScenario("mafia-rich-cop-loses", game => {
-      game.players[0].shame = [
-        { flashing: false },
-        { flashing: true },
-        { flashing: true },
-      ];
-      game.players[0].cash = [{ id: "cop-cash-1", value: 10000 }];
-      // Richest mafia at seat 1 — 50k via 20+20+10.
-      game.players[1].cash = [
-        { id: "mafia-cash-1", value: 20000 },
-        { id: "mafia-cash-2", value: 20000 },
-        { id: "mafia-cash-3", value: 10000 },
-      ];
-      game.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 5 };
-      game.round.number = 8;
-    }),
-  },
 ];
 
 // All five seats committing peaceful clics in a ring — used by the
@@ -733,7 +682,6 @@ export const RECKONING_SCENARIOS: ReckoningScenario[] = [
     build: () => {
       const game = endedCopGame("reckoning-cop-never-calls", g => {
         g.cop = { callsMade: 1 };
-        // Cop alive but poor; one Pirate (b) clearly richest.
         g.players[0].cash = [{ id: "rcnc-a1", value: 10000 }];
         g.players[1].cash = [
           { id: "rcnc-b1", value: 20000 },
@@ -743,11 +691,87 @@ export const RECKONING_SCENARIOS: ReckoningScenario[] = [
         g.players[2].cash = [{ id: "rcnc-c1", value: 10000 }];
         g.players[3].cash = [{ id: "rcnc-d1", value: 20000 }, { id: "rcnc-d2", value: 5000 }];
         g.players[4].cash = [];
-        // Mid-game casualty for narrative texture.
         g.players[4].status = "dead";
         g.players[4].wounds = 3;
       });
       return { game, eliminatedByRound: { e: 4 } };
+    },
+  },
+  {
+    id: "cop-cut-down",
+    label: "Privateer cut down — Pirates win",
+    blurb:
+      "The Pirates spotted the Privateer in round 3 and fed them to the " +
+      "fishes. No notes were ever sent — Pirates take the haul.",
+    build: () => {
+      const game = endedCopGame("reckoning-cop-cut-down", g => {
+        g.cop = { callsMade: 0 };
+        g.players[0].status = "dead";
+        g.players[0].wounds = 3;
+        g.players[0].cash = [];
+        g.players[1].cash = [
+          { id: "rccd-b1", value: 20000 },
+          { id: "rccd-b2", value: 10000 },
+        ];
+        g.players[2].cash = [{ id: "rccd-c1", value: 20000 }];
+        g.players[3].cash = [{ id: "rccd-d1", value: 10000 }, { id: "rccd-d2", value: 5000 }];
+        g.players[4].cash = [{ id: "rccd-e1", value: 10000 }];
+      });
+      return { game, eliminatedByRound: { a: 3 } };
+    },
+  },
+  {
+    id: "cop-overducks",
+    label: "Privateer blinked twice — Pirates win",
+    blurb:
+      "The Privateer landed the call in round 4 but ducked twice after — " +
+      "too cautious. The Crown's mission fails; Pirates take the haul.",
+    build: () => {
+      const game = endedCopGame("reckoning-cop-overducks", g => {
+        g.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 4 };
+        g.players[0].shame = [
+          { flashing: false },
+          { flashing: true },
+          { flashing: true },
+        ];
+        g.players[0].cash = [{ id: "rco-a1", value: 10000 }];
+        g.players[1].cash = [
+          { id: "rco-b1", value: 20000 },
+          { id: "rco-b2", value: 10000 },
+        ];
+        g.players[2].cash = [{ id: "rco-c1", value: 20000 }];
+        g.players[3].cash = [{ id: "rco-d1", value: 10000 }];
+        g.players[4].cash = [{ id: "rco-e1", value: 5000 }];
+      });
+      return { game, eliminatedByRound: {} };
+    },
+  },
+  {
+    id: "cop-wins",
+    label: "Privateer wins — by the Crown's Justice",
+    blurb:
+      "Reinforcements landed in round 5. The Privateer survived with a " +
+      "single watched blink. The Navy claps them in irons and the Crown " +
+      "thanks the Privateer for their service.",
+    build: () => {
+      const game = endedCopGame("reckoning-cop-wins", g => {
+        g.cop = { callsMade: 3, reinforcementsRoundOnTheWay: 5 };
+        // ≤1 flashing-light shame keeps the Crown's verdict in the Privateer's
+        // favor. Cop alive at end. Mafia cash doesn't matter — cop's win
+        // condition is independent of who is richest.
+        g.players[0].shame = [{ flashing: true }];
+        g.players[0].cash = [{ id: "rcw-a1", value: 5000 }];
+        g.players[1].cash = [
+          { id: "rcw-b1", value: 20000 },
+          { id: "rcw-b2", value: 10000 },
+        ];
+        g.players[2].cash = [];
+        g.players[2].status = "dead";
+        g.players[2].wounds = 3;
+        g.players[3].cash = [{ id: "rcw-d1", value: 10000 }];
+        g.players[4].cash = [{ id: "rcw-e1", value: 5000 }];
+      });
+      return { game, eliminatedByRound: { c: 6 } };
     },
   },
 ];
