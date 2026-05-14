@@ -1,4 +1,4 @@
-import type { Banknote, Game } from './types';
+import type { Banknote, Game, Player } from './types';
 
 export function drawLoot(deck: Banknote[], count: number): { drawn: Banknote[]; remaining: Banknote[] } {
   const take = Math.min(count, deck.length);
@@ -51,4 +51,14 @@ export function telephoneHolderOrder(game: Game): string[] {
   const standingSet = new Set(game.round.resolution?.standing ?? []);
   // Seat order = order of game.players. Among those, keep only standing.
   return game.players.filter(p => standingSet.has(p.id)).map(p => p.id);
+}
+
+// Flip every player's effects[].revealed to true. Used at game-end so the
+// reckoning reveal can surface previously-unrevealed powers in the same
+// beat as the role-reveal flip.
+export function revealAllEffects(players: Player[]): Player[] {
+  return players.map(p => ({
+    ...p,
+    effects: p.effects.map(e => (e.revealed ? e : { ...e, revealed: true })),
+  }));
 }

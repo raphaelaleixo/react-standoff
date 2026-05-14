@@ -1,6 +1,6 @@
 import { describe, expect, it, test } from 'vitest';
 import type { Banknote, Game, Player, RoundResolution } from './types';
-import { drawLoot, endGameStatus, shouldRunTelephonePhase, startNextRound, telephoneHolderOrder } from './transitions';
+import { drawLoot, endGameStatus, revealAllEffects, shouldRunTelephonePhase, startNextRound, telephoneHolderOrder } from './transitions';
 
 let nid = 0;
 const note = (value: Banknote['value']): Banknote => ({ id: `n${nid++}`, value });
@@ -284,5 +284,24 @@ describe('telephoneHolderOrder', () => {
   it('returns [] when nobody participated', () => {
     const g = makeGameForTelephone({ copVariant: true, roundNumber: 1, standing: [] });
     expect(telephoneHolderOrder(g)).toEqual([]);
+  });
+});
+
+describe('revealAllEffects', () => {
+  it('flips every effect.revealed to true', () => {
+    const players: Player[] = [
+      { id: 'a', displayName: '', colorOrAvatar: '', bullets: [], cash: [], wounds: 0, shame: [], status: 'alive' as const,
+        effects: [{ kind: 'tough' as const, revealed: false, used: false }] },
+      { id: 'b', displayName: '', colorOrAvatar: '', bullets: [], cash: [], wounds: 0, shame: [], status: 'alive' as const,
+        effects: [{ kind: 'insane' as const, revealed: true, used: true }] },
+      { id: 'c', displayName: '', colorOrAvatar: '', bullets: [], cash: [], wounds: 0, shame: [], status: 'alive' as const,
+        effects: [] },
+    ];
+    const out = revealAllEffects(players);
+    expect(out[0].effects[0]).toEqual({ kind: 'tough', revealed: true, used: false });
+    expect(out[1].effects[0]).toEqual({ kind: 'insane', revealed: true, used: true });
+    expect(out[2].effects).toEqual([]);
+    // Non-mutation: the input players' effect arrays are not aliased.
+    expect(out[0].effects).not.toBe(players[0].effects);
   });
 });
