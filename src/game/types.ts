@@ -26,6 +26,8 @@ export interface PowerEffect {
 
 export type Effect = PowerEffect;
 
+export type Role = 'cop' | 'mafia';
+
 export interface Player {
   id: string;
   displayName: string;
@@ -33,9 +35,18 @@ export interface Player {
   bullets: BulletCard[];
   cash: Banknote[];
   wounds: 0 | 1 | 2 | 3 | 4;
-  shame: number;
+  shame: ShameMarker[];
   status: 'alive' | 'dead';
   effects: Effect[];
+  // Cop variant only. Undefined when the variant is off.
+  role?: Role;
+}
+
+export interface ShameMarker {
+  // Flashing-light markers are taken after reinforcements are on the way.
+  // Only the cop's mission cares about this — mafia treat every marker
+  // the same in scoring.
+  flashing: boolean;
 }
 
 export type RoundPhase =
@@ -55,6 +66,11 @@ export type RoundPhase =
   // so the reveal overlay finishes before the loot animation starts.
   | 'tough_reveal'
   | 'split'
+  // Cop variant only — rounds 1-6. The split's participants pass the
+  // phone in seat order; the cop (if among them) may secretly call
+  // for reinforcements. Auto-skips when variant off, round > 6, or
+  // no split participants.
+  | 'telephone'
   // Pocket Inferno (Insane) detonated. Round terminates after a short
   // linger — no further reveals, no split.
   | 'grenade';
@@ -116,12 +132,21 @@ export interface Round {
   commits: Record<string, Commit>;
   activations: RoundActivations;
   resolution?: RoundResolution;
+  // Cop variant only. Records the per-round telephone outcome plus the
+  // pass order (useful for replay/debugging). `currentHolderId` is set
+  // while the pass is in progress and unset once the pass finalises.
+  telephone?: {
+    used: boolean;
+    holderOrder: string[];
+    currentHolderId?: string;
+  };
 }
 
 export type GamePhase = 'lobby' | 'in_progress' | 'ended';
 
 export interface GameVariants {
   superPowers: boolean;
+  cop: boolean;
 }
 
 export interface Game {
@@ -133,4 +158,10 @@ export interface Game {
   seed: string;
   variants: GameVariants;
   previousRoundSummary?: { round: number; resolution: RoundResolution };
+  // Cop variant only. Tracks calls made + the round reinforcements
+  // landed (used for tagging future shame markers as flashing-light).
+  cop?: {
+    callsMade: 0 | 1 | 2 | 3;
+    reinforcementsRoundOnTheWay?: number;
+  };
 }
