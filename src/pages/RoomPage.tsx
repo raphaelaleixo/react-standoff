@@ -200,7 +200,6 @@ function GameView({
         game={game}
         roomId={roomId}
         eliminatedByRound={{}}
-        onPlayAgain={() => navigate("/")}
         onReturn={() => navigate("/")}
       />
     );

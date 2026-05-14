@@ -46,7 +46,7 @@ describe("ReckoningScreen", () => {
         game={makeGame()}
         roomId="QSPY"
         eliminatedByRound={{}}
-        onPlayAgain={() => {}}
+        
         onReturn={() => {}}
       />,
     );
@@ -59,7 +59,7 @@ describe("ReckoningScreen", () => {
         game={makeGame()}
         roomId="QSPY"
         eliminatedByRound={{}}
-        onPlayAgain={() => {}}
+        
         onReturn={() => {}}
       />,
     );
@@ -74,7 +74,7 @@ describe("ReckoningScreen", () => {
         game={makeGame()}
         roomId="QSPY"
         eliminatedByRound={{}}
-        onPlayAgain={() => {}}
+        
         onReturn={() => {}}
       />,
     );
@@ -83,21 +83,17 @@ describe("ReckoningScreen", () => {
     expect(screen.getByRole("img", { name: /standoff/i })).toBeInTheDocument();
   });
 
-  it("invokes the play-again and return callbacks via the foot buttons", () => {
-    let again = 0;
+  it("invokes the return callback via the foot button", () => {
     let port = 0;
     render(
       <ReckoningScreen
         game={makeGame()}
         roomId="QSPY"
         eliminatedByRound={{}}
-        onPlayAgain={() => { again += 1; }}
         onReturn={() => { port += 1; }}
       />,
     );
-    screen.getByText(/ANOTHER ROUND/i).closest("[role='button']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     screen.getByText(/RETURN TO PORT/i).closest("[role='button']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    expect(again).toBe(1);
     expect(port).toBe(1);
   });
 });

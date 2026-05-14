@@ -216,7 +216,6 @@
     "winnerCry": "— walks away with the lot —",
     "dead": "DEAD",
     "plankedRound": "walked the plank, rd. {{round}}",
-    "playAgain": "Another round",
     "returnToPort": "Return to port"
   }
 }

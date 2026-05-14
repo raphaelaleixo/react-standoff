@@ -129,7 +129,6 @@ export default function MockBigScreen() {
           game={reckoningFixture.game}
           roomId="MOCK"
           eliminatedByRound={reckoningFixture.eliminatedByRound}
-          onPlayAgain={() => {}}
           onReturn={() => {}}
         />
       ) : game ? (

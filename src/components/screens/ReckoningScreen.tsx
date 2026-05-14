@@ -45,11 +45,10 @@ interface ReckoningScreenProps {
   roomId: string;
   /** Map of playerId → round number when they were eliminated. Empty if not tracked. */
   eliminatedByRound: Record<string, number>;
-  onPlayAgain: () => void;
   onReturn: () => void;
 }
 
-export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, onReturn }: ReckoningScreenProps) {
+export function ReckoningScreen({ game, roomId, eliminatedByRound, onReturn }: ReckoningScreenProps) {
   const { t } = useTranslation();
   // Total kills across the voyage drives Davy Jones's Cut (six_feet_under)
   // bonuses inside finalScore + each EndGameRow. `dead` is the terminal status
@@ -178,10 +177,7 @@ export function ReckoningScreen({ game, roomId, eliminatedByRound, onPlayAgain, 
             animation: `${fadeIn} 500ms ease-out ${buttonsDelayMs}ms both`,
           }}
         >
-          <Button variant="primary" onClick={onPlayAgain}>
-            {t("reckoning.playAgain").toUpperCase()}
-          </Button>
-          <Button variant="ghost" onClick={onReturn}>
+          <Button variant="primary" onClick={onReturn}>
             {t("reckoning.returnToPort").toUpperCase()}
           </Button>
         </Box>
