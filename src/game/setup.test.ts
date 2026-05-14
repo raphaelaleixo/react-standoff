@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 import type { Player } from './types';
 import { buildBankDeck, initGame } from './setup';
 
@@ -142,5 +142,46 @@ describe('initGame variants', () => {
       { superPowers: true, cop: false },
     );
     expect(game.round.activations).toEqual({});
+  });
+});
+
+function makePlayers(n: number): Player[] {
+  return Array.from({ length: n }, (_, i) => ({
+    id: `p${i}`,
+    displayName: `P${i}`,
+    colorOrAvatar: '#000',
+    bullets: [],
+    cash: [],
+    wounds: 0,
+    shame: [],
+    status: 'alive' as const,
+    effects: [],
+  }));
+}
+
+describe('initGame — cop variant', () => {
+  it('deals roles when variants.cop is true at 5 players', () => {
+    const g = initGame(makePlayers(5), 'seed-cop', 0, { superPowers: false, cop: true });
+    const cops = g.players.filter(p => p.role === 'cop');
+    const mafia = g.players.filter(p => p.role === 'mafia');
+    expect(cops).toHaveLength(1);
+    expect(mafia).toHaveLength(4);
+    expect(g.variants.cop).toBe(true);
+  });
+
+  it('does not deal roles when variants.cop is false', () => {
+    const g = initGame(makePlayers(5), 'seed-cop', 0, { superPowers: false, cop: false });
+    expect(g.players.every(p => p.role === undefined)).toBe(true);
+    expect(g.variants.cop).toBe(false);
+  });
+
+  it('initializes Game.cop when variants.cop is true', () => {
+    const g = initGame(makePlayers(5), 'seed-cop', 0, { superPowers: false, cop: true });
+    expect(g.cop).toEqual({ callsMade: 0 });
+  });
+
+  it('omits Game.cop when variants.cop is false', () => {
+    const g = initGame(makePlayers(5), 'seed-cop', 0, { superPowers: false, cop: false });
+    expect(g.cop).toBeUndefined();
   });
 });
