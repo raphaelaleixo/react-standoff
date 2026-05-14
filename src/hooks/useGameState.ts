@@ -112,6 +112,10 @@ function endRoundFromGrenade(
     store.update("", { phase: "ended", players: revealAllEffects(result.players) });
     return;
   }
+  // No telephone phase: Insane's grenade ends the round per paper rule.
+  // Phase 8 is skipped this round even when the cop variant is on, because
+  // this branch never re-enters the split → telephone gate. Manual e2e
+  // covers this in the "cop-with-insane" scenario (Task 9).
   const nextGame = startNextRound(resolved, serverNowMs);
   store.set(nextGame);
 }
