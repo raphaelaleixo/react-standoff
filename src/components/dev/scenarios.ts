@@ -43,7 +43,7 @@ import type { GameStore } from "../../hooks/gameStore";
 // Seat ids run a, b, c, d, e, f and map to the CREW roster below.
 // =============================================================================
 
-export type ScenarioKind = "base" | "powers" | "cop";
+export type ScenarioKind = "base" | "powers" | "cop" | "cop_powers";
 
 export interface Scenario {
   id: string;
@@ -571,6 +571,40 @@ export const SCENARIOS: Scenario[] = [
       };
     }),
   },
+  {
+    id: "cop-powers-baseline",
+    kind: "cop_powers",
+    label: "Cop × Powers — baseline",
+    blurb: "Both variants on, no special interactions; verify layout and intros compose.",
+    build: () => buildCopPowersScenario("seed-cop-powers-baseline", () => {}),
+  },
+  {
+    id: "cop-with-insane",
+    kind: "cop_powers",
+    label: "Cop × Powers — cop holds Insane",
+    blurb: "Cop has Pocket Inferno armed; takes a wound; round terminates, phase 8 skipped.",
+    build: () => buildCopPowersScenario("seed-cop-with-insane", game => {
+      game.players[0].effects = [{ kind: "insane", revealed: false, used: false }];
+    }),
+  },
+  {
+    id: "cop-with-super-coward",
+    kind: "cop_powers",
+    label: "Cop × Powers — cop has Yellow-Belly's Purse",
+    blurb: "Cop ducks too much after the alarm; mission fails; shame inverts in scoring.",
+    build: () => buildCopPowersScenario("seed-cop-with-super-coward", game => {
+      game.players[0].effects = [{ kind: "super_coward", revealed: false, used: false }];
+    }),
+  },
+  {
+    id: "mafia-with-tough",
+    kind: "cop_powers",
+    label: "Cop × Powers — mafia holds Phantom Pain",
+    blurb: "Mafia player has Tough; cop calls successfully; both systems compose.",
+    build: () => buildCopPowersScenario("seed-mafia-with-tough", game => {
+      game.players[1].effects = [{ kind: "tough", revealed: false, used: false }];
+    }),
+  },
 ];
 
 // All five seats committing peaceful clics in a ring — used by the
@@ -610,6 +644,20 @@ function buildCopScenario(seed: string, mutate: (game: Game) => void): Game {
   });
   // Pin roles to specific seats so each scenario is reproducible regardless
   // of the deal RNG. Seat 0 is always the cop; the rest are mafia.
+  game.players[0].role = "cop";
+  game.players.slice(1).forEach(p => (p.role = "mafia"));
+  mutate(game);
+  return game;
+}
+
+// Build a scenario with BOTH variants on. Cop pinned to seat 0; powers
+// dealt by the engine (deterministic by seed). The mutate hook lets
+// scenarios pin specific powers per seat as needed.
+function buildCopPowersScenario(seed: string, mutate: (game: Game) => void): Game {
+  const game = initGame(copScenarioPlayers(), seed, Date.now(), {
+    superPowers: true,
+    cop: true,
+  });
   game.players[0].role = "cop";
   game.players.slice(1).forEach(p => (p.role = "mafia"));
   mutate(game);

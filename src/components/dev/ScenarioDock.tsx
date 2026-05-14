@@ -7,6 +7,7 @@ const GROUPS: { kind: ScenarioKind; label: string }[] = [
   { kind: "base", label: "Normal" },
   { kind: "powers", label: "Super Powers" },
   { kind: "cop", label: "Cop variant" },
+  { kind: "cop_powers", label: "Cop × Powers" },
 ];
 
 export type DockSurface = "game" | "muster" | "reckoning";
