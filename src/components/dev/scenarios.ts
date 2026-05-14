@@ -43,8 +43,11 @@ import type { GameStore } from "../../hooks/gameStore";
 // Seat ids run a, b, c, d, e, f and map to the CREW roster below.
 // =============================================================================
 
+export type ScenarioKind = "base" | "powers" | "cop";
+
 export interface Scenario {
   id: string;
+  kind: ScenarioKind;
   label: string;
   blurb: string;
   build: () => Game;
@@ -139,6 +142,7 @@ function scenario({
 export const SCENARIOS: Scenario[] = [
   {
     id: "pick-and-play-specialist",
+    kind: "powers",
     label: "Pick & play — Specialist (Spare Powder)",
     blurb:
       "Seat 'a' (Specialist) is the only open commit; b, c, d are pre-filled. " +
@@ -158,6 +162,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "pick-and-play-tough",
+    kind: "powers",
     label: "Pick & play — Tough (Phantom Pain)",
     blurb:
       "Seat 'a' (Tough) is the only open commit; b, c, d are pre-filled. " +
@@ -177,6 +182,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "pick-and-play-the-kid",
+    kind: "powers",
     label: "Pick & play — Dead Eye (Kid)",
     blurb:
       "Seat 'a' (Dead Eye) is the only open commit; b, c, d are " +
@@ -196,6 +202,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "pick-and-play-the-cunning",
+    kind: "powers",
     label: "Pick & play — Bloodhound (Cunning)",
     blurb:
       "Seat 'a' (Bloodhound) is the only open commit; b, c, d are " +
@@ -215,6 +222,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "pick-and-play-insane",
+    kind: "powers",
     label: "Pick & play — Insane (Pocket Inferno)",
     blurb:
       "Seat 'a' (Insane) is the only open commit; b, c, d are pre-filled. " +
@@ -234,6 +242,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "commit-loop",
+    kind: "powers",
     label: "Commit picker — all powers armed",
     blurb:
       "No pre-filled commits — state machine sits in commit phase. Use the " +
@@ -250,6 +259,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "krakenscale-double-shot",
+    kind: "powers",
     label: "Krakenscale clamps a double shot",
     blurb:
       "Cap'n Maud holds Krakenscale (unrevealed). Mad Mary and Wet Match both " +
@@ -269,6 +279,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "ironhide-saves",
+    kind: "powers",
     label: "Ironhide saves at 3 wounds",
     blurb:
       "Cap'n Maud holds Ironhide and enters healthy. Three bangs land this " +
@@ -288,6 +299,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "specialist-saves-bbb",
+    kind: "powers",
     label: "Spare Powder trims a Quickdraw",
     blurb:
       "Cap'n Maud plays Quickdraw with Spare Powder already armed " +
@@ -311,6 +323,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "tough-saves-struck",
+    kind: "powers",
     label: "Phantom Pain joins standing",
     blurb:
       "Mad Mary holds Tough and pre-arms it on her commit. Wet Match " +
@@ -331,6 +344,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "insane-detonates",
+    kind: "powers",
     label: "Pocket Inferno detonates",
     blurb:
       "Cap'n Maud holds Insane and pre-arms Pocket Inferno on her commit. " +
@@ -354,6 +368,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "dead-eye-late-aim",
+    kind: "powers",
     label: "Dead Eye calls the mark late",
     blurb:
       "Cap'n Maud holds Dead Eye. She locks her powder at commit (BANG) but " +
@@ -379,6 +394,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "kid-and-cunning-on-parade",
+    kind: "powers",
     label: "Dead Eye + Bloodhound on parade",
     blurb:
       "Cap'n Maud holds Dead Eye, Mad Mary holds Bloodhound. Both badges " +
@@ -408,6 +424,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "bloodhound-late-load",
+    kind: "powers",
     label: "Bloodhound loads the gun late",
     blurb:
       "Cap'n Maud holds Bloodhound. She locks Mad Mary as her mark at commit " +
@@ -432,6 +449,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "six-feet-bonus",
+    kind: "powers",
     label: "Davy Jones's Cut earns from a kill",
     blurb:
       "Cap'n Maud holds Six Feet Under. Wet Match enters at 2 wounds and gets " +
@@ -455,6 +473,7 @@ export const SCENARIOS: Scenario[] = [
   // ===========================================================================
   {
     id: "cop-calls-early",
+    kind: "cop",
     label: "Cop calls early — cruises to win",
     blurb:
       "Cop drops the call in round 1. Reinforcements arrive by round 3. " +
@@ -466,6 +485,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "cop-never-calls",
+    kind: "cop",
     label: "Cop never calls — mafia wins",
     blurb:
       "Cop sits on the call. Round 7 begins — too late. Mafia wins " +
@@ -477,6 +497,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "cop-killed-before-call",
+    kind: "cop",
     label: "Cop killed in round 2",
     blurb:
       "Mafia drops the cop before any call. Phase 8 keeps running as " +
@@ -490,6 +511,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "cop-overducks",
+    kind: "cop",
     label: "Cop calls but overducks",
     blurb:
       "Cop lands the call in round 4 but ducks twice after — too cautious. " +
@@ -502,6 +524,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "mafia-rich-cop-loses",
+    kind: "cop",
     label: "Cop barely loses, mafia gets paid",
     blurb:
       "Reinforcements land but cop took 2 flashing-light shames. " +

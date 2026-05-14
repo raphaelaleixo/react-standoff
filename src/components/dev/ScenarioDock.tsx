@@ -1,6 +1,12 @@
 import { Box, Button, MenuItem, Select, Stack, Typography } from "@mui/material";
-import { SCENARIOS } from "./scenarios";
+import { SCENARIOS, type ScenarioKind } from "./scenarios";
 import { palette } from "../../theme/colors";
+
+const GROUPS: { kind: ScenarioKind; label: string }[] = [
+  { kind: "base", label: "Normal" },
+  { kind: "powers", label: "Super Powers" },
+  { kind: "cop", label: "Cop variant" },
+];
 
 export type DockSurface = "game" | "muster" | "reckoning";
 
@@ -67,22 +73,54 @@ export function ScenarioDock({
         </Stack>
         {surface === "game" && (
           <>
-            <Select
-              size="small"
-              value={scenarioId}
-              onChange={e => onScenarioChange(e.target.value)}
-              sx={{
-                color: palette.paper,
-                "& .MuiSelect-icon": { color: palette.paper },
-                "& fieldset": { borderColor: palette.paper },
-              }}
-            >
-              {SCENARIOS.map(s => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.label}
-                </MenuItem>
-              ))}
-            </Select>
+            {GROUPS.map(({ kind, label }) => {
+              const group = SCENARIOS.filter(s => s.kind === kind);
+              const valueForGroup = group.some(s => s.id === scenarioId)
+                ? scenarioId
+                : "";
+              const empty = group.length === 0;
+              return (
+                <Box key={kind}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: palette.paperDim,
+                      fontFamily: "inherit",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      display: "block",
+                      marginBottom: "0.2rem",
+                    }}
+                  >
+                    {label}
+                  </Typography>
+                  <Select
+                    size="small"
+                    fullWidth
+                    value={valueForGroup}
+                    displayEmpty
+                    disabled={empty}
+                    onChange={e => onScenarioChange(e.target.value)}
+                    sx={{
+                      color: palette.paper,
+                      "& .MuiSelect-icon": { color: palette.paper },
+                      "& fieldset": { borderColor: palette.paper },
+                    }}
+                    renderValue={v => {
+                      if (empty) return "— no scenarios yet —";
+                      if (!v) return "—";
+                      return group.find(s => s.id === v)?.label ?? "—";
+                    }}
+                  >
+                    {group.map(s => (
+                      <MenuItem key={s.id} value={s.id}>
+                        {s.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Box>
+              );
+            })}
             <Typography
               variant="caption"
               sx={{
