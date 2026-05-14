@@ -327,10 +327,18 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
               : undefined,
           });
           // Arrow polygons stay hidden until the beige lines finish drawing,
-          // then fade in. Once visible they carry on with their existing
-          // fire-fill colour shift (handled inline below).
-          const arrowDrawStyleFor = (state: "pre" | "active" | "done"): React.CSSProperties => ({
-            opacity: state === "done" ? 1 : 0,
+          // then fade in. For stable lines (committed at standoff_hold
+          // entry) we keep the original "appear at done" beat — all
+          // arrows pop in together as a chorus. For LATE lines (Kid /
+          // Cunning late_commit picks) we show the arrow as soon as the
+          // line starts drawing ("active"), so a single late line never
+          // ends up missing its arrow if the per-key state machine
+          // misfires its "done" transition.
+          const arrowDrawStyleFor = (
+            state: "pre" | "active" | "done",
+            isLate: boolean,
+          ): React.CSSProperties => ({
+            opacity: state === "pre" ? 0 : isLate ? 1 : state === "done" ? 1 : 0,
             transition: `opacity ${durations.fast}ms ease-out`,
           });
           return (
@@ -356,12 +364,16 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
               // lines out instead of snapping them.
               const forwardCommitted = !!ci && ci.target === pj.id;
               const backwardCommitted = !!cj && cj.target === pi.id;
-              const fwdDrawState = effectiveDrawStateFor(`${pi.id}->${pj.id}`);
-              const bwdDrawState = effectiveDrawStateFor(`${pj.id}->${pi.id}`);
+              const fwdKey = `${pi.id}->${pj.id}`;
+              const bwdKey = `${pj.id}->${pi.id}`;
+              const fwdIsLate = !stableKeys?.has(fwdKey);
+              const bwdIsLate = !stableKeys?.has(bwdKey);
+              const fwdDrawState = effectiveDrawStateFor(fwdKey);
+              const bwdDrawState = effectiveDrawStateFor(bwdKey);
               const fwdMaskStyle = maskRevealStyleFor(fwdDrawState);
               const bwdMaskStyle = maskRevealStyleFor(bwdDrawState);
-              const fwdArrowDrawStyle = arrowDrawStyleFor(fwdDrawState);
-              const bwdArrowDrawStyle = arrowDrawStyleFor(bwdDrawState);
+              const fwdArrowDrawStyle = arrowDrawStyleFor(fwdDrawState, fwdIsLate);
+              const bwdArrowDrawStyle = arrowDrawStyleFor(bwdDrawState, bwdIsLate);
               const forwardVisible = forwardCommitted && lineVisible(ci, cj, pi.id, pj.id);
               const backwardVisible = backwardCommitted && lineVisible(cj, ci, pj.id, pi.id);
               const forwardFired = lineFired(ci?.bullet);
