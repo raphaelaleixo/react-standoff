@@ -40,61 +40,89 @@ export default function HomePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "0.4rem",
       }}
     >
-      <PageCanvas sx={{ width: "min(560px, 100%)", padding: "2rem 2rem" }}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1.2rem",
-            padding: "1rem",
-          }}
-        >
-          <Box
-            sx={{
-              color: palette.paper,
-              filter: "drop-shadow(0 0 16px rgba(255, 195, 120, 0.18))",
-            }}
-          >
-            <StandoffLogo width={300} />
-          </Box>
-          <Box
-            sx={{
-              fontFamily: fonts.body,
-              fontStyle: "italic",
-              textAlign: "center",
-              color: palette.paperDim,
-              fontSize: "1.125em",
-              lineHeight: 1.3,
-            }}
-          >
-            {t("home.subtitle")}
-          </Box>
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        <PageCanvas sx={{ width: "min(560px, 100%)", padding: "2rem 2rem" }}>
           <Box
             sx={{
               display: "flex",
               flexDirection: "column",
-              gap: "0.7rem",
-              width: "min(320px, 100%)",
-              marginTop: "1rem",
+              alignItems: "center",
+              gap: "1.2rem",
+              padding: "1rem",
             }}
           >
-            <Button fullWidth onClick={onNewGame} disabled={creating}>
-              {(creating ? t("home.newGameSubmitting") : t("home.newGame")).toUpperCase()}
-            </Button>
-            {error && <Alert severity="error">{error}</Alert>}
-            <Button variant="ghost" fullWidth onClick={() => navigate("/join")} disabled={creating}>
-              {t("home.resumeGame").toUpperCase()}
-            </Button>
-            <Button variant="text" fullWidth onClick={() => navigate("/how-to-play")}>
-              {t("home.howToPlay")}
-            </Button>
+            <Box
+              sx={{
+                color: palette.paper,
+                filter: "drop-shadow(0 0 16px rgba(255, 195, 120, 0.18))",
+              }}
+            >
+              <StandoffLogo width="min(440px, 100%)" />
+            </Box>
+            <Box
+              sx={{
+                fontFamily: fonts.body,
+                fontStyle: "italic",
+                textAlign: "center",
+                color: palette.paperDim,
+                fontSize: "1.125em",
+                lineHeight: 1.3,
+              }}
+            >
+              {t("home.subtitle")}
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "0.7rem",
+                width: "min(320px, 100%)",
+                marginTop: "1rem",
+              }}
+            >
+              <Button fullWidth onClick={onNewGame} disabled={creating}>
+                {(creating ? t("home.newGameSubmitting") : t("home.newGame")).toUpperCase()}
+              </Button>
+              {error && <Alert severity="error">{error}</Alert>}
+              <Button variant="ghost" fullWidth onClick={() => navigate("/join")} disabled={creating}>
+                {t("home.resumeGame").toUpperCase()}
+              </Button>
+              <Link
+                component="button"
+                type="button"
+                onClick={() => navigate("/how-to-play")}
+                underline="hover"
+                sx={{
+                  marginTop: "0.4rem",
+                  fontFamily: fonts.body,
+                  fontStyle: "italic",
+                  fontSize: "1rem",
+                  color: palette.paperDim,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  "&:hover": { color: palette.paper },
+                }}
+              >
+                {t("home.howToPlay")}
+              </Link>
+            </Box>
           </Box>
-        </Box>
-      </PageCanvas>
+        </PageCanvas>
+      </Box>
       <Box
         component="footer"
         sx={{
