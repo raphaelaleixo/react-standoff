@@ -444,6 +444,12 @@ export function useGameState(
   // phase has its own init effect + finalisation effect below.
   useEffect(() => {
     if (!store || !game) return;
+    // Once `game.phase` flips to "ended", the split → ended write keeps
+    // `round.phase` at "split" (we never close out the round phase). Without
+    // this guard the firebase echo would re-trigger the effect, re-run
+    // resolveRound, and append the same awards to player.cash every cycle —
+    // the cash-inflation + wounds=684 bug seen in room 3MBRB.
+    if (game.phase === "ended") return;
     if (game.round.phase !== "split") return;
     const resolution = game.round.resolution;
     const isRollover =
@@ -512,6 +518,10 @@ export function useGameState(
   // since the pass itself may have taken many seconds.
   useEffect(() => {
     if (!store || !game) return;
+    // Mirror the split-effect guard: the telephone → ended write doesn't
+    // change `round.phase`, so without this the firebase echo would loop on
+    // revealAllEffects writes (no cash damage, but a noisy write storm).
+    if (game.phase === "ended") return;
     if (game.round.phase !== "telephone") return;
     if (!game.round.telephone) return; // Awaiting init.
     if (game.round.telephone.currentHolderId) return; // Pass still in progress.
