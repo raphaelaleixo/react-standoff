@@ -193,8 +193,9 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
       if (!tc?.withdrew) bbbVictims.add(c.target);
     }
   }
-  // Bang victims: from reveal_others on, any non-yielded non-BBB-victim bang
-  // shooter lands a wound on a non-yielded non-BBB-victim target.
+  // Bang victims: from reveal_others on, any non-yielded non-BBB-shooter
+  // bang lands a wound on a non-yielded target. A target who's already a
+  // BBB victim isn't immune — they can take additional bangs.
   const bangVictims = new Set<string>();
   if (FROM_OTHERS_REVEAL.has(game.round.phase)) {
     for (const p of players) {
@@ -203,7 +204,6 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
         if (bbbVictims.has(p.id)) continue; // shooter's bullet was discarded by surprise
         const tc = game.round.commits[c.target];
         if (tc?.withdrew) continue;        // gangster rule
-        if (bbbVictims.has(c.target)) continue; // target already laid down
         bangVictims.add(c.target);
       }
     }
@@ -273,23 +273,23 @@ export function TargetingMap({ game, dim, overlay }: TargetingMapProps) {
           // a ducked player is voided — both the duckee's shot and any shot
           // aimed at them, per the gangster rule.
           //
-          // From reveal_bbb on, BBB victims are also out of the round: their
-          // own bullet was discarded by the surprise hit, and any non-BBB shot
-          // aimed at them is wasted on a wounded target. BBB shots themselves
-          // still fire (mutual BBB lands on both shooters).
+          // From reveal_bbb on, a BBB victim's OWN bullet is discarded by the
+          // surprise hit, so we hide their outgoing non-BBB line. Lines aimed
+          // AT the BBB victim stay visible — those bangs can still fire in
+          // reveal_others (a wounded target isn't immune to further hits).
+          // BBB shots themselves stay visible regardless (mutual BBB lands on
+          // both shooters; that's why we gate on `!isBbbLine`).
           const lineVisible = (
             shooter: typeof game.round.commits[string],
             target: typeof game.round.commits[string],
             shooterId: string,
-            targetId: string,
+            _targetId: string,
           ) => {
             if (phase === "standoff_hold" || phase === "withdraw") return true;
             if (shooter?.withdrew || target?.withdrew) return false;
             if (FROM_BBB_REVEAL.has(phase)) {
               const isBbbLine = shooter?.bullet === "bang_bang_bang";
-              if (!isBbbLine && (bbbVictims.has(shooterId) || bbbVictims.has(targetId))) {
-                return false;
-              }
+              if (!isBbbLine && bbbVictims.has(shooterId)) return false;
             }
             return true;
           };

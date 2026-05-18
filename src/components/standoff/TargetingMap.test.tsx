@@ -102,21 +102,36 @@ describe("TargetingMap", () => {
     expect(container.querySelectorAll('[data-state="struck"]')).toHaveLength(1);
   });
 
-  it("hides non-BBB lines from/to BBB victims (their bullet is discarded by surprise)", () => {
+  it("hides a BBB victim's own outgoing line but keeps lines aimed at them — those bangs still land in the shot phase", () => {
     const g = makeGame();
     g.round = {
       ...g.round,
       phase: "reveal_bbb",
       commits: {
         a: { bullet: "bang_bang_bang", target: "b" },  // BBB → b is victim
-        b: { bullet: "bang", target: "c" },            // b's bang voided (b is victim)
-        d: { bullet: "bang", target: "b" },            // bang at b voided (b is victim)
+        b: { bullet: "bang", target: "c" },            // b's outgoing bang voided (surprise discards b's bullet)
+        d: { bullet: "bang", target: "b" },            // bang AT b stays — d's shot will fire in reveal_others
       },
     };
     const { container } = render(<TargetingMap game={g} />);
-    // Only a→b survives.
-    expect(container.querySelectorAll('[data-line-visible="true"]')).toHaveLength(1);
-    expect(container.querySelectorAll('[data-line-visible="false"]')).toHaveLength(2);
+    // a→b (BBB) and d→b (incoming bang at the victim) both visible; only b→c hidden.
+    expect(container.querySelectorAll('[data-line-visible="true"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-line-visible="false"]')).toHaveLength(1);
+  });
+
+  it("fires a bang aimed at a BBB victim red in reveal_others (the victim takes a second wound)", () => {
+    const g = makeGame();
+    g.round = {
+      ...g.round,
+      phase: "reveal_others",
+      commits: {
+        a: { bullet: "bang_bang_bang", target: "b" },  // BBB → b is laid down in reveal_bbb
+        d: { bullet: "bang", target: "b" },            // bang at b fires now — b takes another wound
+      },
+    };
+    const { container } = render(<TargetingMap game={g} />);
+    // a→b (BBB) and d→b (bang) both fired.
+    expect(container.querySelectorAll('[data-line-fired="true"]')).toHaveLength(2);
   });
 
   it("hides lines from/to yielded players during reveal_bbb", () => {
