@@ -176,7 +176,7 @@ export function PhoneShell({ me, roomId, children, introOpen, roleIntroOpen, arm
             ${cash.toLocaleString()}
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <WoundPips count={me.wounds} size={14} />
+            <WoundPips count={me.wounds} size={14} pulse />
             {me.shame.length > 0 && <ShamePips markers={me.shame} size={14} />}
           </Box>
         </Box>

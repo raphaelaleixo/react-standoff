@@ -134,7 +134,7 @@ export function CrewRow({ player, status, freshWoundIndex, extraBadgeKinds, woun
       </Box>
       <Box sx={{ display: "flex", flexDirection: "column", gap: "0.18rem", alignItems: "flex-end" }}>
         <StatusPill status={status} label={status ? STATUS_LABEL[status] : ""} />
-        <WoundPips count={player.wounds} freshIndex={freshWoundIndex} slots={woundSlots} />
+        <WoundPips count={player.wounds} freshIndex={freshWoundIndex} slots={woundSlots} pulse />
       </Box>
     </Box>
   );
